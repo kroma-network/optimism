@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-import { KromaMintableERC20 } from "../universal/KromaMintableERC20.sol";
+import { KromaMintableERC20 } from "src/universal/KromaMintableERC20.sol";
 
 /**
  * @custom:proxied

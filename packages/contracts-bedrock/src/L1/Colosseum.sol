@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+// Contracts
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { SecurityCouncil } from "src/L1/SecurityCouncil.sol";
+import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
-import { Types } from "../libraries/Types.sol";
-import { ISemver } from "../universal/ISemver.sol";
-import { L2OutputOracle } from "./L2OutputOracle.sol";
-import { SecurityCouncil } from "./SecurityCouncil.sol";
-import { ZKProofVerifier } from "./ZKProofVerifier.sol";
+// Libraries
+import { Types } from "src/libraries/Types.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
+
 
 contract Colosseum is Initializable, ISemver {
     /**

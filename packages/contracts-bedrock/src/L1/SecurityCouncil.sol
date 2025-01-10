@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { TokenMultiSigWallet } from "../universal/TokenMultiSigWallet.sol";
-import { ISemver } from "../universal/ISemver.sol";
-import { Colosseum } from "./Colosseum.sol";
+// Contracts
+import { TokenMultiSigWallet } from "src/universal/TokenMultiSigWallet.sol";
+import { Colosseum } from "src/L1/Colosseum.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /**
  * @custom:proxied

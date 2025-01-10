@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC5805Upgradeable.sol";
+// Contracts
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import { UpgradeGovernor } from "src/governance/UpgradeGovernor.sol";
 
-import { UpgradeGovernor } from "../governance/UpgradeGovernor.sol";
-import { SafeCall } from "../libraries/SafeCall.sol";
-import { Types } from "../libraries/Types.sol";
-import { ITokenMultiSigWallet } from "./ITokenMultiSigWallet.sol";
+// Libraries
+import { SafeCall } from "src/libraries/SafeCall.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
+
+// Interfaces
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC5805Upgradeable.sol";
+import { ITokenMultiSigWallet } from "interfaces/universal/ITokenMultiSigWallet.sol";
 
 /**
  * @custom:upgradeable
@@ -25,12 +29,12 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
     /**
      * @notice A mapping of transactions submitted.
      */
-    mapping(uint256 => Types.MultiSigTransaction) public transactions;
+    mapping(uint256 => KromaTypes.MultiSigTransaction) public transactions;
 
     /**
      * @notice A mapping of confirmations.
      */
-    mapping(uint256 => Types.MultiSigConfirmation) public confirmations;
+    mapping(uint256 => KromaTypes.MultiSigConfirmation) public confirmations;
 
     /**
      * @notice Spacer for backwards compatibility.
@@ -116,7 +120,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
             "TokenMultiSigWallet: transaction already exists"
         );
 
-        transactions[transactionId] = Types.MultiSigTransaction({
+        transactions[transactionId] = KromaTypes.MultiSigTransaction({
             target: _target,
             value: _value,
             data: _data,
@@ -139,7 +143,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         onlyTokenOwner(msg.sender)
         transactionExists(_transactionId)
     {
-        Types.MultiSigConfirmation storage confirms = confirmations[_transactionId];
+        KromaTypes.MultiSigConfirmation storage confirms = confirmations[_transactionId];
         require(!confirms.confirmedBy[msg.sender], "TokenMultiSigWallet: already confirmed");
         confirms.confirmedBy[msg.sender] = true;
         confirms.confirmationCount += getVotes(msg.sender);
@@ -165,7 +169,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
             "TokenMultiSigWallet: not confirmed yet"
         );
 
-        Types.MultiSigConfirmation storage confirms = confirmations[_transactionId];
+        KromaTypes.MultiSigConfirmation storage confirms = confirmations[_transactionId];
         confirms.confirmedBy[msg.sender] = false;
         confirms.confirmationCount -= getVotes(msg.sender);
         emit ConfirmationRevoked(msg.sender, _transactionId);
@@ -182,7 +186,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
     {
         require(isConfirmed(_transactionId), "TokenMultiSigWallet: quorum not reached");
 
-        Types.MultiSigTransaction storage txn = transactions[_transactionId];
+        KromaTypes.MultiSigTransaction storage txn = transactions[_transactionId];
         txn.executed = true;
         bool success = SafeCall.call(txn.target, gasleft(), txn.value, txn.data);
         require(success, "TokenMultiSigWallet: call transaction failed");

@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// Contracts
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+// Libraries
+import { Uint128Math } from "src/libraries/Uint128Math.sol";
+
+// Interfaces
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-
-import { Uint128Math } from "../libraries/Uint128Math.sol";
-import { ISemver } from "../universal/ISemver.sol";
-import { IAssetManager } from "./interfaces/IAssetManager.sol";
-import { IValidatorManager } from "./interfaces/IValidatorManager.sol";
+import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 /**
  * @title AssetManager

@@ -4,7 +4,7 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import { ISemver } from "../universal/ISemver.sol";
+import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /**
  * @custom:proxied

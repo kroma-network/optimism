@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+// Contracts
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { ValidatorPool } from "src/:1/ValidatorPool.sol";
 
-import { Constants } from "../libraries/Constants.sol";
-import { Types } from "../libraries/Types.sol";
-import { ISemver } from "../universal/ISemver.sol";
-import { IValidatorManager } from "./interfaces/IValidatorManager.sol";
-import { ValidatorPool } from "./ValidatorPool.sol";
+// Libraries
+import { Constants } from "src/libraries/Constants.sol";
+import { KromaConstants } from "src/libraries/KromaConstants.sol";
+import { Types } from "src/libraries/Types.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 /**
  * @custom:proxied

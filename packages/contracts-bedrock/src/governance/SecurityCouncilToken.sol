@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import { ISemver } from "../universal/ISemver.sol";
-import "../universal/KromaSoulBoundERC721.sol";
+// Contracts
+import { KromaSoulBoundERC721 } from "src/universal/KromaSoulBoundERC721.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /**
  * @custom:proxied

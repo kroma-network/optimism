@@ -2,17 +2,17 @@
 pragma solidity 0.8.15;
 
 // Contracts
-import { ZKVerifier } from "contracts/L1/ZKVerifier.sol";
+import { ZKVerifier } from "src/L1/ZKVerifier.sol";
 
 // Libraries
-import { Hashing } from "contracts/libraries/Hashing.sol";
-import { Predeploys } from "contracts/libraries/Predeploys.sol";
-import { Types } from "contracts/libraries/Types.sol";
+import { Hashing } from "src/libraries/Hashing.sol";
+import { Predeploys } from "src/libraries/Predeploys.sol";
+import { Types } from "src/libraries/Types.sol";
 
 // Interfaces
-import { ISemver } from "contracts/universal/ISemver.sol";
-import { ISP1Verifier } from "contracts/vendor/ISP1Verifier.sol";
-import { IZKMerkleTrie } from "contracts/L1/interfaces/IZKMerkleTrie.sol";
+import { ISemver } from "interfaces/universal/ISemver.sol";
+import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
+import { IZKMerkleTrie } from "interfaces/L1/IZKMerkleTrie.sol";
 
 /// @custom:proxied true
 /// @title ZKProofVerifier

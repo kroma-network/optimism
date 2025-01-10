@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-/* Contract Imports */
-import { KromaMintableERC20 } from "../universal/KromaMintableERC20.sol";
-import { ISemver } from "./ISemver.sol";
+// Contracts
+import { KromaMintableERC20 } from "src/universal/KromaMintableERC20.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /**
  * @custom:proxied

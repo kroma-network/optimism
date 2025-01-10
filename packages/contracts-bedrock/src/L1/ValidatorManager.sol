@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+// Contracts
+import { AssetManager } from "src/L1/AssetManager.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 
-import { Atan2 } from "../libraries/Atan2.sol";
-import { BalancedWeightTree } from "../libraries/BalancedWeightTree.sol";
-import { Constants } from "../libraries/Constants.sol";
-import { Types } from "../libraries/Types.sol";
-import { Uint128Math } from "../libraries/Uint128Math.sol";
-import { ISemver } from "../universal/ISemver.sol";
-import { AssetManager } from "./AssetManager.sol";
-import { IValidatorManager } from "./interfaces/IValidatorManager.sol";
-import { L2OutputOracle } from "./L2OutputOracle.sol";
+// Libraries
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Atan2 } from "src/libraries/Atan2.sol";
+import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
+import { Constants } from "src/libraries/Constants.sol";
+import { Types } from "src/libraries/Types.sol";
+import { Uint128Math } from "src/libraries/Uint128Math.sol";
+
+// Interfaces
+import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 /**
  * @custom:proxied
