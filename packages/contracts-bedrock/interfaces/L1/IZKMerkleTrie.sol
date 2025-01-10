@@ -21,5 +21,8 @@ interface IZKMerkleTrie {
         bytes memory _value,
         bytes[] memory _proofs,
         bytes32 _root
-    ) external view returns (bool);
+    )
+        external
+        view
+        returns (bool);
 }
