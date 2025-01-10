@@ -147,13 +147,16 @@ contract ZKProofVerifier is ISemver {
         Types.ZkEvmProof calldata _zkEvmProof,
         bytes32 _storedSrcOutput,
         bytes32 _storedDstOutput
-    ) external view returns (bytes32 publicInputHash_) {
+    )
+        external
+        view
+        returns (bytes32 publicInputHash_)
+    {
         Types.PublicInputProof calldata publicInputProof = _zkEvmProof.publicInputProof;
 
-        if (
-            publicInputProof.srcOutputRootProof.nextBlockHash !=
-            publicInputProof.dstOutputRootProof.latestBlockhash
-        ) revert BlockHashMismatchedBtwSrcAndDst();
+        if (publicInputProof.srcOutputRootProof.nextBlockHash != publicInputProof.dstOutputRootProof.latestBlockhash) {
+            revert BlockHashMismatchedBtwSrcAndDst();
+        }
 
         _validatePublicInputOutput(
             _storedSrcOutput,
@@ -162,9 +165,7 @@ contract ZKProofVerifier is ISemver {
             Hashing.hashOutputRootProof(publicInputProof.dstOutputRootProof)
         );
         _validateZkEvmPublicInput(
-            publicInputProof.dstOutputRootProof,
-            publicInputProof.publicInput,
-            publicInputProof.rlps
+            publicInputProof.dstOutputRootProof, publicInputProof.publicInput, publicInputProof.rlps
         );
         _validateWithdrawalStorageRoot(
             publicInputProof.merkleProof,
@@ -174,13 +175,12 @@ contract ZKProofVerifier is ISemver {
             publicInputProof.dstOutputRootProof.stateRoot
         );
 
-        publicInputHash_ = _hashZkEvmPublicInput(
-            publicInputProof.srcOutputRootProof.stateRoot,
-            publicInputProof.publicInput
-        );
+        publicInputHash_ =
+            _hashZkEvmPublicInput(publicInputProof.srcOutputRootProof.stateRoot, publicInputProof.publicInput);
 
-        if (!ZK_VERIFIER.verify(_zkEvmProof.proof, _zkEvmProof.pair, publicInputHash_))
+        if (!ZK_VERIFIER.verify(_zkEvmProof.proof, _zkEvmProof.pair, publicInputHash_)) {
             revert InvalidZkProof();
+        }
     }
 
     /// @notice Verifies zkVM public inputs and proof.
@@ -194,7 +194,11 @@ contract ZKProofVerifier is ISemver {
         bytes32 _storedSrcOutput,
         bytes32 _storedDstOutput,
         bytes32 _storedL1Head
-    ) external view returns (bytes32 publicInputHash_) {
+    )
+        external
+        view
+        returns (bytes32 publicInputHash_)
+    {
         if (_zkVmProof.zkVmProgramVKey != ZKVM_PROGRAM_V_KEY) revert InvalidZkVmVKey();
 
         _validatePublicInputOutput(
@@ -208,11 +212,7 @@ contract ZKProofVerifier is ISemver {
         // Skip ABI-encoding prefix at publicValues[80:88].
         if (bytes32(_zkVmProof.publicValues[88:120]) != _storedL1Head) revert InvalidPublicInput();
 
-        SP1_VERIFIER.verifyProof(
-            ZKVM_PROGRAM_V_KEY,
-            _zkVmProof.publicValues,
-            _zkVmProof.proofBytes
-        );
+        SP1_VERIFIER.verifyProof(ZKVM_PROGRAM_V_KEY, _zkVmProof.publicValues, _zkVmProof.proofBytes);
 
         publicInputHash_ = keccak256(_zkVmProof.publicValues);
     }
@@ -227,7 +227,10 @@ contract ZKProofVerifier is ISemver {
         bytes32 _storedDstOutput,
         bytes32 _publicInputSrcOutput,
         bytes32 _publicInputDstOutput
-    ) internal pure {
+    )
+        internal
+        pure
+    {
         if (_storedSrcOutput != _publicInputSrcOutput) revert SrcOutputMismatched();
         // If _storedDstOutput is non-zero, it is fault proving case, not validity proving.
         // Then assert _publicInputDstOutput is different with on-chain stored destination output.
@@ -245,7 +248,10 @@ contract ZKProofVerifier is ISemver {
         Types.OutputRootProof calldata _dstOutputRootProof,
         Types.PublicInput calldata _publicInput,
         Types.BlockHeaderRLP calldata _rlps
-    ) internal pure {
+    )
+        internal
+        pure
+    {
         if (_publicInput.stateRoot != _dstOutputRootProof.stateRoot) revert StateRootMismatched();
 
         // parentBeaconRoot is non-zero for Cancun block
@@ -268,7 +274,10 @@ contract ZKProofVerifier is ISemver {
         bytes32 _l2ToL1MessagePasserCodeHash,
         bytes32 _messagePasserStorageRoot,
         bytes32 _stateRoot
-    ) internal view {
+    )
+        internal
+        view
+    {
         // TODO(chokobole): Can we fix the codeHash?
         bytes memory l2ToL1MessagePasserAccount = abi.encodePacked(
             uint256(0), // nonce
@@ -294,13 +303,14 @@ contract ZKProofVerifier is ISemver {
     function _hashZkEvmPublicInput(
         bytes32 _prevStateRoot,
         Types.PublicInput calldata _publicInput
-    ) internal view returns (bytes32) {
+    )
+        internal
+        view
+        returns (bytes32)
+    {
         bytes32[] memory dummyHashes;
         if (_publicInput.txHashes.length < MAX_TXS) {
-            dummyHashes = Hashing.generateDummyHashes(
-                DUMMY_HASH,
-                MAX_TXS - _publicInput.txHashes.length
-            );
+            dummyHashes = Hashing.generateDummyHashes(DUMMY_HASH, MAX_TXS - _publicInput.txHashes.length);
         }
 
         // NOTE(chokobole): We cannot calculate the Ethereum transaction root solely

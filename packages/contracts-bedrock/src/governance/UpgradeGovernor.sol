@@ -61,13 +61,12 @@ contract UpgradeGovernor is
         uint256 _initialVotingPeriod,
         uint256 _initialProposalThreshold,
         uint256 _votesQuorumFraction
-    ) public initializer {
+    )
+        public
+        initializer
+    {
         __Governor_init("UpgradeGovernor");
-        __GovernorSettings_init(
-            _initialVotingDelay,
-            _initialVotingPeriod,
-            _initialProposalThreshold
-        );
+        __GovernorSettings_init(_initialVotingDelay, _initialVotingPeriod, _initialProposalThreshold);
         __GovernorCountingSimple_init();
         __GovernorVotes_init(IVotesUpgradeable(_token));
         __GovernorVotesQuorumFraction_init(_votesQuorumFraction);
@@ -76,21 +75,11 @@ contract UpgradeGovernor is
 
     // The following functions are overridden cause required by Solidity.
 
-    function votingDelay()
-        public
-        view
-        override(IGovernorUpgradeable, GovernorSettingsUpgradeable)
-        returns (uint256)
-    {
+    function votingDelay() public view override(IGovernorUpgradeable, GovernorSettingsUpgradeable) returns (uint256) {
         return super.votingDelay();
     }
 
-    function votingPeriod()
-        public
-        view
-        override(IGovernorUpgradeable, GovernorSettingsUpgradeable)
-        returns (uint256)
-    {
+    function votingPeriod() public view override(IGovernorUpgradeable, GovernorSettingsUpgradeable) returns (uint256) {
         return super.votingPeriod();
     }
 
@@ -117,7 +106,11 @@ contract UpgradeGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         string memory description
-    ) public override(GovernorUpgradeable, IGovernorUpgradeable) returns (uint256) {
+    )
+        public
+        override(GovernorUpgradeable, IGovernorUpgradeable)
+        returns (uint256)
+    {
         return super.propose(targets, values, calldatas, description);
     }
 
@@ -150,7 +143,10 @@ contract UpgradeGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(GovernorUpgradeable, GovernorTimelockControlUpgradeable) {
+    )
+        internal
+        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+    {
         super._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
@@ -159,7 +155,11 @@ contract UpgradeGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override(GovernorUpgradeable, GovernorTimelockControlUpgradeable) returns (uint256) {
+    )
+        internal
+        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+        returns (uint256)
+    {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 

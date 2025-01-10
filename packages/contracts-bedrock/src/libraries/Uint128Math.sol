@@ -15,15 +15,12 @@ library Uint128Math {
     }
 
     /**
-     * @notice Calculates floor(x * y / denominator) with full precision. Throws if result overflows a uint128 or denominator == 0
+     * @notice Calculates floor(x * y / denominator) with full precision. Throws if result overflows a uint128 or
+     * denominator == 0
      * @dev Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv)
      * with further edits by Uniswap Labs and Openzeppelin also under MIT license.
      */
-    function mulDiv(
-        uint128 x,
-        uint128 y,
-        uint128 denominator
-    ) internal pure returns (uint128 result) {
+    function mulDiv(uint128 x, uint128 y, uint128 denominator) internal pure returns (uint128 result) {
         unchecked {
             uint256 prod;
             assembly {

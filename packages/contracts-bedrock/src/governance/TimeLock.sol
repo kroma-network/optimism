@@ -31,7 +31,10 @@ contract TimeLock is Initializable, TimelockControllerUpgradeable, ISemver {
         address[] memory _proposers,
         address[] memory _executors,
         address _admin
-    ) public initializer {
+    )
+        public
+        initializer
+    {
         __TimelockController_init(_minDelay, _proposers, _executors, _admin);
     }
 }

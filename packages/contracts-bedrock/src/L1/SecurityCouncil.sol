@@ -32,11 +32,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
      * @param outputRoot    The L2 output of the checkpoint block to be validated.
      * @param l2BlockNumber The L2 block number to be validated.
      */
-    event ValidationRequested(
-        uint256 indexed transactionId,
-        bytes32 outputRoot,
-        uint256 l2BlockNumber
-    );
+    event ValidationRequested(uint256 indexed transactionId, bytes32 outputRoot, uint256 l2BlockNumber);
 
     /**
      * @notice Emitted when an output is requested to be deleted.
@@ -50,10 +46,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
      * @notice Disallow calls from anyone except Colosseum.
      */
     modifier onlyColosseum() {
-        require(
-            msg.sender == COLOSSEUM,
-            "SecurityCouncil: only the colosseum contract can be a sender"
-        );
+        require(msg.sender == COLOSSEUM, "SecurityCouncil: only the colosseum contract can be a sender");
         _;
     }
 
@@ -80,11 +73,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
      * @param _l2BlockNumber The L2 block number to be validated.
      * @param _data          Calldata for callback purpose.
      */
-    function requestValidation(
-        bytes32 _outputRoot,
-        uint256 _l2BlockNumber,
-        bytes memory _data
-    ) public onlyColosseum {
+    function requestValidation(bytes32 _outputRoot, uint256 _l2BlockNumber, bytes memory _data) public onlyColosseum {
         uint256 transactionId = _submitTransaction(msg.sender, 0, _data);
         emit ValidationRequested(transactionId, _outputRoot, _l2BlockNumber);
     }
@@ -101,10 +90,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
             !outputsDeleteRequested[_outputIndex] || _force,
             "SecurityCouncil: the output has already been requested to be deleted"
         );
-        bytes memory message = abi.encodeWithSelector(
-            Colosseum.forceDeleteOutput.selector,
-            _outputIndex
-        );
+        bytes memory message = abi.encodeWithSelector(Colosseum.forceDeleteOutput.selector, _outputIndex);
         uint256 transactionId = submitTransaction(address(COLOSSEUM), 0, message);
         // auto-confirmed by requester
         confirmTransaction(transactionId);

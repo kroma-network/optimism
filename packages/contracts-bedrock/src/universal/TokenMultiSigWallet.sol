@@ -51,10 +51,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
      *         This ensures that function is only executed by governance.
      */
     modifier onlyTokenOwner(address _address) {
-        require(
-            getVotes(_address) > 0,
-            "TokenMultiSigWallet: only allowed to governance token owner"
-        );
+        require(getVotes(_address) > 0, "TokenMultiSigWallet: only allowed to governance token owner");
         _;
     }
 
@@ -64,10 +61,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
      * @param _transactionId The ID of submitted transaction requested.
      */
     modifier transactionExists(uint256 _transactionId) {
-        require(
-            transactions[_transactionId].target != address(0),
-            "TokenMultiSigWallet: transaction does not exist"
-        );
+        require(transactions[_transactionId].target != address(0), "TokenMultiSigWallet: transaction does not exist");
         _;
     }
 
@@ -105,7 +99,11 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         address _target,
         uint256 _value,
         bytes memory _data
-    ) public onlyTokenOwner(msg.sender) returns (uint256) {
+    )
+        public
+        onlyTokenOwner(msg.sender)
+        returns (uint256)
+    {
         return _submitTransaction(_target, _value, _data);
     }
 
@@ -113,19 +111,16 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         address _target,
         uint256 _value,
         bytes memory _data
-    ) internal validAddress(_target) returns (uint256) {
+    )
+        internal
+        validAddress(_target)
+        returns (uint256)
+    {
         uint256 transactionId = generateTransactionId(_target, _value, _data);
-        require(
-            transactions[transactionId].target == address(0),
-            "TokenMultiSigWallet: transaction already exists"
-        );
+        require(transactions[transactionId].target == address(0), "TokenMultiSigWallet: transaction already exists");
 
-        transactions[transactionId] = KromaTypes.MultiSigTransaction({
-            target: _target,
-            value: _value,
-            data: _data,
-            executed: false
-        });
+        transactions[transactionId] =
+            KromaTypes.MultiSigTransaction({ target: _target, value: _value, data: _data, executed: false });
 
         unchecked {
             ++transactionCount;
@@ -164,10 +159,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         transactionExists(_transactionId)
         transactionNotExcuted(_transactionId)
     {
-        require(
-            isConfirmedBy(_transactionId, msg.sender),
-            "TokenMultiSigWallet: not confirmed yet"
-        );
+        require(isConfirmedBy(_transactionId, msg.sender), "TokenMultiSigWallet: not confirmed yet");
 
         KromaTypes.MultiSigConfirmation storage confirms = confirmations[_transactionId];
         confirms.confirmedBy[msg.sender] = false;
@@ -205,9 +197,10 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
      */
     function quorum() public view returns (uint256) {
         uint256 currentTimepoint = clock() - 1;
-        return
-            (IERC5805Upgradeable(address(GOVERNOR.token())).getPastTotalSupply(currentTimepoint) *
-                GOVERNOR.quorumNumerator(currentTimepoint)) / GOVERNOR.quorumDenominator();
+        return (
+            IERC5805Upgradeable(address(GOVERNOR.token())).getPastTotalSupply(currentTimepoint)
+                * GOVERNOR.quorumNumerator(currentTimepoint)
+        ) / GOVERNOR.quorumDenominator();
     }
 
     /**
@@ -244,7 +237,12 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         address _target,
         uint256 _value,
         bytes memory _data
-    ) public view validAddress(_target) returns (uint256) {
+    )
+        public
+        view
+        validAddress(_target)
+        returns (uint256)
+    {
         return uint256(keccak256(abi.encode(_target, _value, _data, clock())));
     }
 

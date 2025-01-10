@@ -78,7 +78,10 @@ abstract contract KromaSoulBoundERC721 is
         string memory _name,
         string memory _symbol,
         address _owner
-    ) internal onlyInitializing {
+    )
+        internal
+        onlyInitializing
+    {
         __KromaSoulBoundERC721_init_unchained(true);
         __ERC721_init(_name, _symbol);
         __ERC721Enumerable_init();
@@ -118,7 +121,11 @@ abstract contract KromaSoulBoundERC721 is
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) whenNotPaused {
+    )
+        internal
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+        whenNotPaused
+    {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
@@ -134,14 +141,14 @@ abstract contract KromaSoulBoundERC721 is
         address to,
         uint256 tokenId,
         uint256 batchSize
-    ) internal override(ERC721Upgradeable, ERC721VotesUpgradeable) {
+    )
+        internal
+        override(ERC721Upgradeable, ERC721VotesUpgradeable)
+    {
         super._afterTokenTransfer(from, to, tokenId, batchSize);
     }
 
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-    {
+    function _burn(uint256 tokenId) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(tokenId);
     }
 
@@ -159,7 +166,11 @@ abstract contract KromaSoulBoundERC721 is
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) checkLock {
+    )
+        public
+        override(IERC721Upgradeable, ERC721Upgradeable)
+        checkLock
+    {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
@@ -167,7 +178,11 @@ abstract contract KromaSoulBoundERC721 is
         address from,
         address to,
         uint256 tokenId
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) checkLock {
+    )
+        public
+        override(IERC721Upgradeable, ERC721Upgradeable)
+        checkLock
+    {
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -175,11 +190,18 @@ abstract contract KromaSoulBoundERC721 is
         address from,
         address to,
         uint256 tokenId
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) checkLock {
+    )
+        public
+        override(IERC721Upgradeable, ERC721Upgradeable)
+        checkLock
+    {
         super.transferFrom(from, to, tokenId);
     }
 
-    function approve(address approved, uint256 tokenId)
+    function approve(
+        address approved,
+        uint256 tokenId
+    )
         public
         virtual
         override(IERC721Upgradeable, ERC721Upgradeable)
@@ -188,7 +210,10 @@ abstract contract KromaSoulBoundERC721 is
         super.approve(approved, tokenId);
     }
 
-    function setApprovalForAll(address operator, bool approved)
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    )
         public
         override(IERC721Upgradeable, ERC721Upgradeable)
         checkLock

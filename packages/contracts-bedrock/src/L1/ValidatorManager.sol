@@ -184,8 +184,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @param _constructorParams The constructor parameters.
      */
     constructor(ConstructorParams memory _constructorParams) {
-        if (_constructorParams._minRegisterAmount > _constructorParams._minActivateAmount)
+        if (_constructorParams._minRegisterAmount > _constructorParams._minActivateAmount) {
             revert InvalidConstructorParams();
+        }
 
         L2_ORACLE = _constructorParams._l2Oracle;
         ASSET_MANAGER = _constructorParams._assetManager;
@@ -206,11 +207,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
     /**
      * @inheritdoc IValidatorManager
      */
-    function registerValidator(
-        uint128 assets,
-        uint8 commissionRate,
-        address withdrawAccount
-    ) external {
+    function registerValidator(uint128 assets, uint8 commissionRate, address withdrawAccount) external {
         if (msg.sender.code.length > 0 || msg.sender != tx.origin) revert NotAllowedCaller();
         if (getStatus(msg.sender) != ValidatorStatus.NONE) revert ImproperValidatorStatus();
         if (assets < MIN_REGISTER_AMOUNT) revert InsufficientAsset();
@@ -234,8 +231,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @inheritdoc IValidatorManager
      */
     function activateValidator() external {
-        if (getStatus(msg.sender) != ValidatorStatus.READY || inJail(msg.sender))
+        if (getStatus(msg.sender) != ValidatorStatus.READY || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
+        }
 
         _activateValidator(msg.sender);
     }
@@ -244,8 +242,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @inheritdoc IValidatorManager
      */
     function tryActivateValidator(address validator) external onlyAssetManager {
-        if (getStatus(validator) == ValidatorStatus.READY && !inJail(validator))
+        if (getStatus(validator) == ValidatorStatus.READY && !inJail(validator)) {
             _activateValidator(validator);
+        }
     }
 
     /**
@@ -272,8 +271,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @inheritdoc IValidatorManager
      */
     function initCommissionChange(uint8 newCommissionRate) external {
-        if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender))
+        if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
+        }
 
         if (newCommissionRate > COMMISSION_RATE_DENOM) revert MaxCommissionRateExceeded();
 
@@ -291,8 +291,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @inheritdoc IValidatorManager
      */
     function finalizeCommissionChange() external {
-        if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender))
+        if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
+        }
 
         uint128 canFinalizeAt = canFinalizeCommissionChangeAt(msg.sender);
         if (canFinalizeAt == COMMISSION_CHANGE_DELAY_SECONDS) revert NotInitiatedCommissionChange();
@@ -399,10 +400,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
      */
     function checkSubmissionEligibility(address validator) external view onlyL2OutputOracle {
         address _nextValidator = nextValidator();
-        if (
-            _nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS &&
-            validator != _nextValidator
-        ) revert NotSelectedPriorityValidator();
+        if (_nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS && validator != _nextValidator) {
+            revert NotSelectedPriorityValidator();
+        }
 
         if (!isActive(validator)) revert ImproperValidatorStatus();
     }
@@ -540,8 +540,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
      * @inheritdoc IValidatorManager
      */
     function canFinalizeCommissionChangeAt(address validator) public view returns (uint128) {
-        return
-            _validatorInfo[validator].commissionChangeInitiatedAt + COMMISSION_CHANGE_DELAY_SECONDS;
+        return _validatorInfo[validator].commissionChangeInitiatedAt + COMMISSION_CHANGE_DELAY_SECONDS;
     }
 
     /**
@@ -583,33 +582,15 @@ contract ValidatorManager is ISemver, IValidatorManager {
             if (L2_ORACLE.isFinalized(outputIndex)) {
                 submitter = L2_ORACLE.getSubmitter(outputIndex);
 
-                (
-                    uint128 baseReward,
-                    uint128 boostedReward,
-                    uint128 validatorReward
-                ) = _calculateReward(submitter);
+                (uint128 baseReward, uint128 boostedReward, uint128 validatorReward) = _calculateReward(submitter);
 
-                ASSET_MANAGER.increaseBalanceWithReward(
-                    submitter,
-                    baseReward,
-                    boostedReward,
-                    validatorReward
-                );
+                ASSET_MANAGER.increaseBalanceWithReward(submitter, baseReward, boostedReward, validatorReward);
 
-                emit RewardDistributed(
-                    outputIndex,
-                    submitter,
-                    validatorReward,
-                    baseReward,
-                    boostedReward
-                );
+                emit RewardDistributed(outputIndex, submitter, validatorReward, baseReward, boostedReward);
 
                 uint128 challengeReward = _pendingChallengeReward[outputIndex];
                 if (challengeReward > 0) {
-                    challengeReward = ASSET_MANAGER.increaseBalanceWithChallenge(
-                        submitter,
-                        challengeReward
-                    );
+                    challengeReward = ASSET_MANAGER.increaseBalanceWithChallenge(submitter, challengeReward);
                     delete _pendingChallengeReward[outputIndex];
 
                     emit ChallengeRewardDistributed(outputIndex, submitter, challengeReward);
@@ -668,18 +649,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
         uint128 validatorReward;
 
         unchecked {
-            validatorReward = (BASE_REWARD + boostedReward).mulDiv(
-                commissionRate,
-                COMMISSION_RATE_DENOM
-            );
-            baseReward = BASE_REWARD.mulDiv(
-                COMMISSION_RATE_DENOM - commissionRate,
-                COMMISSION_RATE_DENOM
-            );
-            boostedReward = boostedReward.mulDiv(
-                COMMISSION_RATE_DENOM - commissionRate,
-                COMMISSION_RATE_DENOM
-            );
+            validatorReward = (BASE_REWARD + boostedReward).mulDiv(commissionRate, COMMISSION_RATE_DENOM);
+            baseReward = BASE_REWARD.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
+            boostedReward = boostedReward.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
 
             uint128 validatorKro = ASSET_MANAGER.totalValidatorKro(validator);
             uint128 totalKro = ASSET_MANAGER.totalKroAssets(validator);
@@ -702,9 +674,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         uint256 nextFinalizeOutputIndex = L2_ORACLE.nextFinalizeOutputIndex();
 
         if (weightSum > 0 && nextFinalizeOutputIndex > 0) {
-            Types.CheckpointOutput memory output = L2_ORACLE.getL2Output(
-                nextFinalizeOutputIndex - 1
-            );
+            Types.CheckpointOutput memory output = L2_ORACLE.getL2Output(nextFinalizeOutputIndex - 1);
 
             uint120 weight = uint120(
                 uint256(

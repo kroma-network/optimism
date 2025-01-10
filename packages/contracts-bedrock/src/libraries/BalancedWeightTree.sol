@@ -105,9 +105,7 @@ library BalancedWeightTree {
                 _promote(_tree, newNodeIndex);
 
                 return;
-            } else if (
-                _tree.nodes[node.leftChild].weightSum > _tree.nodes[node.rightChild].weightSum
-            ) {
+            } else if (_tree.nodes[node.leftChild].weightSum > _tree.nodes[node.rightChild].weightSum) {
                 index = node.rightChild;
             } else {
                 index = node.leftChild;
@@ -384,9 +382,7 @@ library BalancedWeightTree {
                 node.addr = _tree.nodes[node.leftChild].addr;
                 node.weight = _tree.nodes[node.leftChild].weight;
                 unchecked {
-                    node.weightSum =
-                        _tree.nodes[node.leftChild].weightSum +
-                        _tree.nodes[node.rightChild].weightSum;
+                    node.weightSum = _tree.nodes[node.leftChild].weightSum + _tree.nodes[node.rightChild].weightSum;
                 }
 
                 _tree.nodeMap[_tree.nodes[node.leftChild].addr] = _index;
@@ -396,9 +392,7 @@ library BalancedWeightTree {
                 node.addr = _tree.nodes[node.rightChild].addr;
                 node.weight = _tree.nodes[node.rightChild].weight;
                 unchecked {
-                    node.weightSum =
-                        _tree.nodes[node.leftChild].weightSum +
-                        _tree.nodes[node.rightChild].weightSum;
+                    node.weightSum = _tree.nodes[node.leftChild].weightSum + _tree.nodes[node.rightChild].weightSum;
                 }
 
                 _tree.nodeMap[_tree.nodes[node.rightChild].addr] = _index;

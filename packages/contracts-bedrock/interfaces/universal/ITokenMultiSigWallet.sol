@@ -47,11 +47,7 @@ interface ITokenMultiSigWallet {
      *
      * @return Returns transaction ID.
      */
-    function submitTransaction(
-        address _target,
-        uint256 _value,
-        bytes memory _data
-    ) external returns (uint256);
+    function submitTransaction(address _target, uint256 _value, bytes memory _data) external returns (uint256);
 
     /**
      * @notice Allows an owner to confirm a transaction.

@@ -6,7 +6,6 @@ import { Types } from "./Types.sol";
 /// @title KromaTypes
 /// @notice Contains various types used throughout the Kroma contract system.
 library KromaTypes {
-
     /**
      * @notice CheckpointOutput represents a commitment to the state of L2 checkpoint. The timestamp
      *         is the L1 timestamp that the output root is posted. This timestamp is used to verify

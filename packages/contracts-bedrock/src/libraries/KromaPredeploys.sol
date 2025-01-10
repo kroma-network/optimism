@@ -14,8 +14,7 @@ library Predeploys {
     /**
      * @notice Address of the KromaL1Block predeploy used before Kroma MPT hardfork.
      */
-    address internal constant KROMA_L1_BLOCK_ATTRIBUTES =
-        0x4200000000000000000000000000000000000002;
+    address internal constant KROMA_L1_BLOCK_ATTRIBUTES = 0x4200000000000000000000000000000000000002;
 
     /**
      * @notice Address of the L2ToL1MessagePasser predeploy.
@@ -25,8 +24,7 @@ library Predeploys {
     /**
      * @notice Address of the L2CrossDomainMessenger predeploy.
      */
-    address internal constant L2_CROSS_DOMAIN_MESSENGER =
-        0x4200000000000000000000000000000000000004;
+    address internal constant L2_CROSS_DOMAIN_MESSENGER = 0x4200000000000000000000000000000000000004;
 
     /**
      * @notice Address of the GasPriceOracle predeploy. Includes fee information
@@ -62,14 +60,12 @@ library Predeploys {
     /**
      * @notice Address of the KromaMintableERC20Factory predeploy.
      */
-    address internal constant KROMA_MINTABLE_ERC20_FACTORY =
-        0x420000000000000000000000000000000000000B;
+    address internal constant KROMA_MINTABLE_ERC20_FACTORY = 0x420000000000000000000000000000000000000B;
 
     /**
      * @notice Address of the KromaMintableERC721Factory predeploy.
      */
-    address internal constant KROMA_MINTABLE_ERC721_FACTORY =
-        0x420000000000000000000000000000000000000c;
+    address internal constant KROMA_MINTABLE_ERC721_FACTORY = 0x420000000000000000000000000000000000000c;
 
     /**
      * @notice Address of the SequencerFeeWallet predeploy used after Kroma MPT hardfork.

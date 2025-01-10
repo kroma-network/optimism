@@ -83,10 +83,7 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param l1Timestamp   The L1 timestamp when submitted.
      */
     event OutputSubmitted(
-        bytes32 indexed outputRoot,
-        uint256 indexed l2OutputIndex,
-        uint256 indexed l2BlockNumber,
-        uint256 l1Timestamp
+        bytes32 indexed outputRoot, uint256 indexed l2OutputIndex, uint256 indexed l2BlockNumber, uint256 l1Timestamp
     );
 
     /**
@@ -96,11 +93,7 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param newSubmitter  Output submitter after replacement.
      * @param newOutputRoot L2 output root after replacement.
      */
-    event OutputReplaced(
-        uint256 indexed outputIndex,
-        address indexed newSubmitter,
-        bytes32 newOutputRoot
-    );
+    event OutputReplaced(uint256 indexed outputIndex, address indexed newSubmitter, bytes32 newOutputRoot);
 
     /**
      * @notice Semantic version.
@@ -131,10 +124,7 @@ contract L2OutputOracle is Initializable, ISemver {
         uint256 _finalizationPeriodSeconds
     ) {
         require(_l2BlockTime > 0, "L2OutputOracle: L2 block time must be greater than 0");
-        require(
-            _submissionInterval > 0,
-            "L2OutputOracle: submission interval must be greater than 0"
-        );
+        require(_submissionInterval > 0, "L2OutputOracle: submission interval must be greater than 0");
 
         VALIDATOR_POOL = _validatorPool;
         VALIDATOR_MANAGER = _validatorManager;
@@ -152,10 +142,7 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param _startingBlockNumber Block number for the first recorded L2 block.
      * @param _startingTimestamp   Timestamp for the first recorded L2 block.
      */
-    function initialize(
-        uint256 _startingBlockNumber,
-        uint256 _startingTimestamp
-    ) public initializer {
+    function initialize(uint256 _startingBlockNumber, uint256 _startingTimestamp) public initializer {
         require(
             _startingTimestamp <= block.timestamp,
             "L2OutputOracle: starting L2 timestamp must be less than current time"
@@ -173,22 +160,14 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param _newOutputRoot The L2 output root to replace the existing one.
      * @param _submitter     Address of the L2 output submitter.
      */
-    function replaceL2Output(
-        uint256 _l2OutputIndex,
-        bytes32 _newOutputRoot,
-        address _submitter
-    ) external {
-        require(
-            msg.sender == COLOSSEUM,
-            "L2OutputOracle: only the colosseum contract can replace an output"
-        );
+    function replaceL2Output(uint256 _l2OutputIndex, bytes32 _newOutputRoot, address _submitter) external {
+        require(msg.sender == COLOSSEUM, "L2OutputOracle: only the colosseum contract can replace an output");
 
         require(_submitter != address(0), "L2OutputOracle: submitter address cannot be zero");
 
         // Make sure we're not *increasing* the length of the array.
         require(
-            _l2OutputIndex < l2Outputs.length,
-            "L2OutputOracle: cannot replace an output after the latest output index"
+            _l2OutputIndex < l2Outputs.length, "L2OutputOracle: cannot replace an output after the latest output index"
         );
 
         Types.CheckpointOutput storage output = l2Outputs[_l2OutputIndex];
@@ -219,7 +198,10 @@ contract L2OutputOracle is Initializable, ISemver {
         uint256 _l2BlockNumber,
         bytes32 _l1BlockHash,
         uint256 _l1BlockNumber
-    ) external payable {
+    )
+        external
+        payable
+    {
         uint256 outputIndex = nextOutputIndex();
 
         // Upgrade validator system after validator pool contract is terminated.
@@ -232,13 +214,8 @@ contract L2OutputOracle is Initializable, ISemver {
         }
 
         // If it's not a public round, only selected validators can submit output.
-        if (
-            !isValidatorPoolTerminated && nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS
-        ) {
-            require(
-                msg.sender == nextValidator,
-                "L2OutputOracle: only the next selected validator can submit output"
-            );
+        if (!isValidatorPoolTerminated && nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS) {
+            require(msg.sender == nextValidator, "L2OutputOracle: only the next selected validator can submit output");
         }
 
         require(
@@ -246,15 +223,9 @@ contract L2OutputOracle is Initializable, ISemver {
             "L2OutputOracle: block number must be equal to next expected block number"
         );
 
-        require(
-            nextOutputMinL2Timestamp() <= block.timestamp,
-            "L2OutputOracle: cannot submit L2 output in the future"
-        );
+        require(nextOutputMinL2Timestamp() <= block.timestamp, "L2OutputOracle: cannot submit L2 output in the future");
 
-        require(
-            _outputRoot != bytes32(0),
-            "L2OutputOracle: L2 checkpoint output cannot be the zero hash"
-        );
+        require(_outputRoot != bytes32(0), "L2OutputOracle: L2 checkpoint output cannot be the zero hash");
 
         if (_l1BlockHash != bytes32(0) && blockhash(_l1BlockNumber) != bytes32(0)) {
             // This check allows the validator to submit an output based on a given L1 block,
@@ -281,10 +252,7 @@ contract L2OutputOracle is Initializable, ISemver {
         if (isValidatorPoolTerminated) {
             VALIDATOR_MANAGER.afterSubmitL2Output(outputIndex);
         } else {
-            VALIDATOR_POOL.createBond(
-                outputIndex,
-                uint128(block.timestamp + FINALIZATION_PERIOD_SECONDS)
-            );
+            VALIDATOR_POOL.createBond(outputIndex, uint128(block.timestamp + FINALIZATION_PERIOD_SECONDS));
         }
     }
 
@@ -318,9 +286,7 @@ contract L2OutputOracle is Initializable, ISemver {
      *
      * @return The output at the given index.
      */
-    function getL2Output(
-        uint256 _l2OutputIndex
-    ) external view returns (Types.CheckpointOutput memory) {
+    function getL2Output(uint256 _l2OutputIndex) external view returns (Types.CheckpointOutput memory) {
         return l2Outputs[_l2OutputIndex];
     }
 
@@ -340,10 +306,7 @@ contract L2OutputOracle is Initializable, ISemver {
         );
 
         // Make sure there's at least one output submitted.
-        require(
-            l2Outputs.length > 0,
-            "L2OutputOracle: cannot get output as no outputs have been submitted yet"
-        );
+        require(l2Outputs.length > 0, "L2OutputOracle: cannot get output as no outputs have been submitted yet");
 
         // Find the output via binary search, guaranteed to exist.
         uint256 lo = 0;
@@ -367,9 +330,7 @@ contract L2OutputOracle is Initializable, ISemver {
      *
      * @return First checkpoint that commits to the given L2 block number.
      */
-    function getL2OutputAfter(
-        uint256 _l2BlockNumber
-    ) external view returns (Types.CheckpointOutput memory) {
+    function getL2OutputAfter(uint256 _l2BlockNumber) external view returns (Types.CheckpointOutput memory) {
         return l2Outputs[getL2OutputIndexAfter(_l2BlockNumber)];
     }
 
@@ -399,10 +360,7 @@ contract L2OutputOracle is Initializable, ISemver {
      * @return Latest submitted L2 block number.
      */
     function latestBlockNumber() public view returns (uint256) {
-        return
-            l2Outputs.length == 0
-                ? startingBlockNumber
-                : l2Outputs[l2Outputs.length - 1].l2BlockNumber;
+        return l2Outputs.length == 0 ? startingBlockNumber : l2Outputs[l2Outputs.length - 1].l2BlockNumber;
     }
 
     /**
@@ -413,8 +371,7 @@ contract L2OutputOracle is Initializable, ISemver {
      * @return Next L2 block number.
      */
     function nextBlockNumber() public view returns (uint256) {
-        return
-            l2Outputs.length == 0 ? latestBlockNumber() : latestBlockNumber() + SUBMISSION_INTERVAL;
+        return l2Outputs.length == 0 ? latestBlockNumber() : latestBlockNumber() + SUBMISSION_INTERVAL;
     }
 
     /**

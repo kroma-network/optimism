@@ -55,14 +55,9 @@ contract KromaVestingWallet is VestingWalletUpgradeable {
      * @param _startTimestamp  The timestamp to start vesting.
      * @param _durationSeconds The time period for funds to fully vest.
      */
-    function initialize(
-        address _beneficiary,
-        uint64 _startTimestamp,
-        uint64 _durationSeconds
-    ) public initializer {
+    function initialize(address _beneficiary, uint64 _startTimestamp, uint64 _durationSeconds) public initializer {
         require(
-            _durationSeconds % VESTING_CYCLE == 0,
-            "KromaVestingWallet: duration should be multiple of vesting cycle"
+            _durationSeconds % VESTING_CYCLE == 0, "KromaVestingWallet: duration should be multiple of vesting cycle"
         );
 
         __VestingWallet_init(_beneficiary, _startTimestamp, _durationSeconds);
@@ -94,10 +89,7 @@ contract KromaVestingWallet is VestingWalletUpgradeable {
      * @return The amount vested, as a function of time, for an asset given its total historical
      *         allocation.
      */
-    function _vestingSchedule(
-        uint256 totalAllocation,
-        uint64 timestamp
-    ) internal view override returns (uint256) {
+    function _vestingSchedule(uint256 totalAllocation, uint64 timestamp) internal view override returns (uint256) {
         if (timestamp < start()) {
             return 0;
         } else if (timestamp >= start() + duration()) {
@@ -110,8 +102,7 @@ contract KromaVestingWallet is VestingWalletUpgradeable {
             // Since vested in units of cycle, remove any seconds over the end of last cycle.
             uint256 vestedSeconds = timestamp - start();
             uint256 vestedSecondsFloored = vestedSeconds - (vestedSeconds % VESTING_CYCLE);
-            uint256 afterVestedAmount = ((totalAllocation - cliffAmount) * vestedSecondsFloored) /
-                duration();
+            uint256 afterVestedAmount = ((totalAllocation - cliffAmount) * vestedSecondsFloored) / duration();
 
             return cliffAmount + afterVestedAmount;
         }

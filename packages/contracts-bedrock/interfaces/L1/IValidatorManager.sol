@@ -57,8 +57,8 @@ interface IValidatorManager {
      * @custom:field _minRegisterAmount            Minimum amount to register as a validator.
      * @custom:field _minActivateAmount            Minimum amount to activate a validator.
      * @custom:field _mptFirstOutputIndex          First output index after the MPT transition.
-                                                   Only TrustedValidator is allowed to submit output.
-                                                   Challenges for this outputIndex are also restricted.
+     *                                                Only TrustedValidator is allowed to submit output.
+     *                                                Challenges for this outputIndex are also restricted.
      */
     struct ConstructorParams {
         L2OutputOracle _l2Oracle;
@@ -102,12 +102,7 @@ interface IValidatorManager {
      * @param commissionRate The commission rate the validator sets.
      * @param assets         The number of assets the validator deposits.
      */
-    event ValidatorRegistered(
-        address indexed validator,
-        bool activated,
-        uint8 commissionRate,
-        uint128 assets
-    );
+    event ValidatorRegistered(address indexed validator, bool activated, uint8 commissionRate, uint128 assets);
 
     /**
      * @notice Emitted when a validator activated, which means added to the validator tree.
@@ -133,9 +128,7 @@ interface IValidatorManager {
      * @param newCommissionRate The new commission rate.
      */
     event ValidatorCommissionChangeInitiated(
-        address indexed validator,
-        uint8 oldCommissionRate,
-        uint8 newCommissionRate
+        address indexed validator, uint8 oldCommissionRate, uint8 newCommissionRate
     );
 
     /**
@@ -146,9 +139,7 @@ interface IValidatorManager {
      * @param newCommissionRate The new commission rate.
      */
     event ValidatorCommissionChangeFinalized(
-        address indexed validator,
-        uint8 oldCommissionRate,
-        uint8 newCommissionRate
+        address indexed validator, uint8 oldCommissionRate, uint8 newCommissionRate
     );
 
     /**
@@ -190,11 +181,7 @@ interface IValidatorManager {
      * @param recipient   Address of the reward recipient.
      * @param amount      The amount of challenge reward.
      */
-    event ChallengeRewardDistributed(
-        uint256 indexed outputIndex,
-        address indexed recipient,
-        uint128 amount
-    );
+    event ChallengeRewardDistributed(uint256 indexed outputIndex, address indexed recipient, uint128 amount);
 
     /**
      * @notice Emitted when the validator is slashed.
@@ -278,11 +265,7 @@ interface IValidatorManager {
      * @param withdrawAccount An account where assets can be withdrawn to. Only this account can
      *                        withdraw the assets.
      */
-    function registerValidator(
-        uint128 assets,
-        uint8 commissionRate,
-        address withdrawAccount
-    ) external;
+    function registerValidator(uint128 assets, uint8 commissionRate, address withdrawAccount) external;
 
     /**
      * @notice Activates a validator and adds the validator to validator tree. To submit outputs,

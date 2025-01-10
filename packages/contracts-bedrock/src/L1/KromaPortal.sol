@@ -62,7 +62,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     address public immutable VALIDATOR_POOL;
 
     /**
-    /**
+     * /**
      * @notice Address of the SystemConfig contract.
      */
     SystemConfig public immutable SYSTEM_CONFIG;
@@ -110,12 +110,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @param version    Version of this deposit transaction event.
      * @param opaqueData ABI encoded deposit data to be parsed off-chain.
      */
-    event TransactionDeposited(
-        address indexed from,
-        address indexed to,
-        uint256 indexed version,
-        bytes opaqueData
-    );
+    event TransactionDeposited(address indexed from, address indexed to, uint256 indexed version, bytes opaqueData);
 
     /**
      * @notice Emitted when a withdrawal transaction is proven.
@@ -124,11 +119,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @param from           Address that triggered the withdrawal transaction.
      * @param to             Address that the withdrawal transaction is directed to.
      */
-    event WithdrawalProven(
-        bytes32 indexed withdrawalHash,
-        address indexed from,
-        address indexed to
-    );
+    event WithdrawalProven(bytes32 indexed withdrawalHash, address indexed from, address indexed to);
 
     /**
      * @notice Emitted when a withdrawal transaction is finalized.
@@ -238,12 +229,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      *
      * @return ResourceMetering ResourceConfig
      */
-    function _resourceConfig()
-        internal
-        view
-        override
-        returns (ResourceMetering.ResourceConfig memory)
-    {
+    function _resourceConfig() internal view override returns (ResourceMetering.ResourceConfig memory) {
         return SYSTEM_CONFIG.resourceConfig();
     }
 
@@ -260,24 +246,21 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         uint256 _l2OutputIndex,
         Types.OutputRootProof calldata _outputRootProof,
         bytes[] calldata _withdrawalProof
-    ) external whenNotPaused {
+    )
+        external
+        whenNotPaused
+    {
         // Prevent users from creating a deposit transaction where this address is the message
         // sender on L2. Because this is checked here, we do not need to check again in
         // `finalizeWithdrawalTransaction`.
-        require(
-            _tx.target != address(this),
-            "KromaPortal: you cannot send messages to the portal contract"
-        );
+        require(_tx.target != address(this), "KromaPortal: you cannot send messages to the portal contract");
 
         // Get the output root and load onto the stack to prevent multiple mloads. This will
         // revert if there is no output root for the given block number.
         bytes32 outputRoot = L2_ORACLE.getL2Output(_l2OutputIndex).outputRoot;
 
         // Verify that the output root can be generated with the elements in the proof.
-        require(
-            outputRoot == Hashing.hashOutputRootProof(_outputRootProof),
-            "KromaPortal: invalid output root proof"
-        );
+        require(outputRoot == Hashing.hashOutputRootProof(_outputRootProof), "KromaPortal: invalid output root proof");
 
         // Load the ProvenWithdrawal into memory, using the withdrawal hash as a unique identifier.
         bytes32 withdrawalHash = Hashing.hashWithdrawal(_tx);
@@ -290,9 +273,8 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // to re-prove their withdrawal only in the case that the output root for their specified
         // output index has been updated.
         require(
-            provenWithdrawal.timestamp == 0 ||
-                L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex).outputRoot !=
-                provenWithdrawal.outputRoot,
+            provenWithdrawal.timestamp == 0
+                || L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex).outputRoot != provenWithdrawal.outputRoot,
             "KromaPortal: withdrawal hash has already been proven"
         );
 
@@ -315,10 +297,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         if (_outputRootProof.nextBlockHash == bytes32(0)) {
             require(
                 SecureMerkleTrie.verifyInclusionProof(
-                    abi.encode(storageKey),
-                    hex"01",
-                    _withdrawalProof,
-                    _outputRootProof.messagePasserStorageRoot
+                    abi.encode(storageKey), hex"01", _withdrawalProof, _outputRootProof.messagePasserStorageRoot
                 ),
                 "KromaPortal: invalid withdrawal inclusion proof"
             );
@@ -352,16 +331,11 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      *
      * @param _tx Withdrawal transaction to finalize.
      */
-    function finalizeWithdrawalTransaction(
-        Types.WithdrawalTransaction memory _tx
-    ) external whenNotPaused {
+    function finalizeWithdrawalTransaction(Types.WithdrawalTransaction memory _tx) external whenNotPaused {
         // Make sure that the l2Sender has not yet been set. The l2Sender is set to a value other
         // than the default value when a withdrawal transaction is being finalized. This check is
         // a defacto reentrancy guard.
-        require(
-            l2Sender == Constants.DEFAULT_L2_SENDER,
-            "KromaPortal: can only trigger one withdrawal per transaction"
-        );
+        require(l2Sender == Constants.DEFAULT_L2_SENDER, "KromaPortal: can only trigger one withdrawal per transaction");
 
         // Grab the proven withdrawal from the `provenWithdrawals` map.
         bytes32 withdrawalHash = Hashing.hashWithdrawal(_tx);
@@ -391,9 +365,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
         // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
         // corresponds to the given index has not been submitted yet.
-        Types.CheckpointOutput memory checkpointOutput = L2_ORACLE.getL2Output(
-            provenWithdrawal.l2OutputIndex
-        );
+        Types.CheckpointOutput memory checkpointOutput = L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is
@@ -410,10 +382,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         );
 
         // Check that this withdrawal has not already been finalized, this is replay protection.
-        require(
-            finalizedWithdrawals[withdrawalHash] == false,
-            "KromaPortal: withdrawal has already been finalized"
-        );
+        require(finalizedWithdrawals[withdrawalHash] == false, "KromaPortal: withdrawal has already been finalized");
 
         // Mark the withdrawal as finalized so it can't be replayed.
         finalizedWithdrawals[withdrawalHash] = true;
@@ -463,14 +432,15 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         uint64 _gasLimit,
         bool _isCreation,
         bytes memory _data
-    ) public payable metered(_gasLimit) {
+    )
+        public
+        payable
+        metered(_gasLimit)
+    {
         // Just to be safe, make sure that people specify address(0) as the target when doing
         // contract creations.
         if (_isCreation) {
-            require(
-                _to == address(0),
-                "KromaPortal: must send to address(0) when creating a contract"
-            );
+            require(_to == address(0), "KromaPortal: must send to address(0) when creating a contract");
         }
 
         // Prevent depositing transactions that have too small of a gas limit.
@@ -485,13 +455,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Compute the opaque data that will be emitted as part of the TransactionDeposited event.
         // We use opaque data so that we can update the TransactionDeposited event in the future
         // without breaking the current interface.
-        bytes memory opaqueData = abi.encodePacked(
-            msg.value,
-            _value,
-            _gasLimit,
-            _isCreation,
-            _data
-        );
+        bytes memory opaqueData = abi.encodePacked(msg.value, _value, _gasLimit, _isCreation, _data);
 
         // Emit a TransactionDeposited event so that the rollup node can derive a deposit
         // transaction for this deposit.
@@ -506,15 +470,8 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @param _gasLimit Minimum L2 gas limit (can be greater than or equal to this value).
      * @param _data     Data to trigger the recipient with.
      */
-    function depositTransactionByValidatorPool(
-        address _to,
-        uint64 _gasLimit,
-        bytes memory _data
-    ) public {
-        require(
-            msg.sender == VALIDATOR_POOL,
-            "KromaPortal: function can only be called from the ValidatorPool"
-        );
+    function depositTransactionByValidatorPool(address _to, uint64 _gasLimit, bytes memory _data) public {
+        require(msg.sender == VALIDATOR_POOL, "KromaPortal: function can only be called from the ValidatorPool");
 
         // Transform the from-address to its alias.
         address from = AddressAliasHelper.applyL1ToL2Alias(msg.sender);

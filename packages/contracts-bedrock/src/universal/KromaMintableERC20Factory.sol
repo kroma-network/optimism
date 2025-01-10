@@ -29,11 +29,7 @@ contract KromaMintableERC20Factory is ISemver {
      * @param remoteToken Address of the corresponding token on the remote chain.
      * @param deployer    Address of the account that deployed the token.
      */
-    event KromaMintableERC20Created(
-        address indexed localToken,
-        address indexed remoteToken,
-        address deployer
-    );
+    event KromaMintableERC20Created(address indexed localToken, address indexed remoteToken, address deployer);
 
     /**
      * @notice Semantic version.
@@ -67,15 +63,13 @@ contract KromaMintableERC20Factory is ISemver {
         address _remoteToken,
         string memory _name,
         string memory _symbol
-    ) public returns (address) {
-        require(
-            _remoteToken != address(0),
-            "KromaMintableERC20Factory: must provide remote token address"
-        );
+    )
+        public
+        returns (address)
+    {
+        require(_remoteToken != address(0), "KromaMintableERC20Factory: must provide remote token address");
 
-        address localToken = address(
-            new KromaMintableERC20(BRIDGE, _remoteToken, _name, _symbol)
-        );
+        address localToken = address(new KromaMintableERC20(BRIDGE, _remoteToken, _name, _symbol));
 
         emit KromaMintableERC20Created(localToken, _remoteToken, msg.sender);
 

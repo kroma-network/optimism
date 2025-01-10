@@ -71,7 +71,9 @@ contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
         address _remoteToken,
         string memory _name,
         string memory _symbol
-    ) ERC20(_name, _symbol) {
+    )
+        ERC20(_name, _symbol)
+    {
         REMOTE_TOKEN = _remoteToken;
         BRIDGE = _bridge;
     }
@@ -82,12 +84,7 @@ contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
      * @param _to     Address to mint tokens to.
      * @param _amount Amount of tokens to mint.
      */
-    function mint(address _to, uint256 _amount)
-        external
-        virtual
-        override(IKromaMintableERC20)
-        onlyBridge
-    {
+    function mint(address _to, uint256 _amount) external virtual override(IKromaMintableERC20) onlyBridge {
         _mint(_to, _amount);
         emit Mint(_to, _amount);
     }
@@ -98,12 +95,7 @@ contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
      * @param _from   Address to burn tokens from.
      * @param _amount Amount of tokens to burn.
      */
-    function burn(address _from, uint256 _amount)
-        external
-        virtual
-        override(IKromaMintableERC20)
-        onlyBridge
-    {
+    function burn(address _from, uint256 _amount) external virtual override(IKromaMintableERC20) onlyBridge {
         _burn(_from, _amount);
         emit Burn(_from, _amount);
     }

@@ -28,12 +28,8 @@ library Atan2 {
             let frac
 
             switch lt(real_x, real_y)
-            case 0 {
-                frac := div(mul(real_y, shl(40, 1)), real_x)
-            }
-            case 1 {
-                frac := div(mul(real_x, shl(40, 1)), real_y)
-            }
+            case 0 { frac := div(mul(real_y, shl(40, 1)), real_x) }
+            case 1 { frac := div(mul(real_x, shl(40, 1)), real_y) }
 
             // Initialize variables to be used in the polynomial.
             let frac_squared := shr(40, mul(frac, frac))
@@ -62,9 +58,7 @@ library Atan2 {
             // x^11 term, subtract because original coefficient is negative
             result := sub(result, shr(40, mul(12606780422, frac_eleven_squared)))
 
-            if gt(real_y, real_x) {
-                result := sub(REAL_HALF_PI, result)
-            }
+            if gt(real_y, real_x) { result := sub(REAL_HALF_PI, result) }
         }
     }
 }
