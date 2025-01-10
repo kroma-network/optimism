@@ -10,6 +10,8 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Atan2 } from "src/libraries/Atan2.sol";
 import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
 import { Constants } from "src/libraries/Constants.sol";
+import { KromaConstants } from "src/libraries/KromaConstants.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Types } from "src/libraries/Types.sol";
 import { Uint128Math } from "src/libraries/Uint128Math.sol";
 
@@ -400,7 +402,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
      */
     function checkSubmissionEligibility(address validator) external view onlyL2OutputOracle {
         address _nextValidator = nextValidator();
-        if (_nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS && validator != _nextValidator) {
+        if (_nextValidator != KromaConstants.VALIDATOR_PUBLIC_ROUND_ADDRESS && validator != _nextValidator) {
             revert NotSelectedPriorityValidator();
         }
 
@@ -477,7 +479,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
                 uint256 elapsed = block.timestamp - l2Timestamp;
                 // If the current time exceeds one round time, it is a public round.
                 if (elapsed > ROUND_DURATION_SECONDS) {
-                    return Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS;
+                    return KromaConstants.VALIDATOR_PUBLIC_ROUND_ADDRESS;
                 }
             }
 
@@ -670,7 +672,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         uint256 nextFinalizeOutputIndex = L2_ORACLE.nextFinalizeOutputIndex();
 
         if (weightSum > 0 && nextFinalizeOutputIndex > 0) {
-            Types.CheckpointOutput memory output = L2_ORACLE.getL2Output(nextFinalizeOutputIndex - 1);
+            KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(nextFinalizeOutputIndex - 1);
 
             uint120 weight = uint120(
                 uint256(

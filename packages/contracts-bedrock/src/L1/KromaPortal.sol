@@ -154,12 +154,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @param _paused        Sets the contract's pausability state.
      * @param _config        Address of the SystemConfig contract.
      */
-    constructor(
-        L2OutputOracle _l2Oracle,
-        address _guardian,
-        bool _paused,
-        SystemConfig _config,
-    ) {
+    constructor(L2OutputOracle _l2Oracle, address _guardian, bool _paused, SystemConfig _config) {
         L2_ORACLE = _l2Oracle;
         GUARDIAN = _guardian;
         SYSTEM_CONFIG = _config;

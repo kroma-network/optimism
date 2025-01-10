@@ -7,6 +7,7 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 // Libraries
 import { Constants } from "src/libraries/Constants.sol";
 import { KromaConstants } from "src/libraries/KromaConstants.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Types } from "src/libraries/Types.sol";
 
 // Interfaces
@@ -61,7 +62,7 @@ contract L2OutputOracle is Initializable, ISemver {
     /**
      * @notice Array of L2 checkpoint outputs.
      */
-    Types.CheckpointOutput[] internal l2Outputs;
+    KromaTypes.CheckpointOutput[] internal l2Outputs;
 
     /**
      * @notice The output index of the next finalization target output.
@@ -161,7 +162,7 @@ contract L2OutputOracle is Initializable, ISemver {
             _l2OutputIndex < l2Outputs.length, "L2OutputOracle: cannot replace an output after the latest output index"
         );
 
-        Types.CheckpointOutput storage output = l2Outputs[_l2OutputIndex];
+        KromaTypes.CheckpointOutput storage output = l2Outputs[_l2OutputIndex];
         // Do not allow replacing any outputs that have already been finalized.
         require(
             block.timestamp - output.timestamp < FINALIZATION_PERIOD_SECONDS,
@@ -218,7 +219,7 @@ contract L2OutputOracle is Initializable, ISemver {
         }
 
         l2Outputs.push(
-            Types.CheckpointOutput({
+            KromaTypes.CheckpointOutput({
                 submitter: msg.sender,
                 outputRoot: _outputRoot,
                 timestamp: uint128(block.timestamp),
@@ -254,7 +255,7 @@ contract L2OutputOracle is Initializable, ISemver {
      *
      * @return The output at the given index.
      */
-    function getL2Output(uint256 _l2OutputIndex) external view returns (Types.CheckpointOutput memory) {
+    function getL2Output(uint256 _l2OutputIndex) external view returns (KromaTypes.CheckpointOutput memory) {
         return l2Outputs[_l2OutputIndex];
     }
 
@@ -298,7 +299,7 @@ contract L2OutputOracle is Initializable, ISemver {
      *
      * @return First checkpoint that commits to the given L2 block number.
      */
-    function getL2OutputAfter(uint256 _l2BlockNumber) external view returns (Types.CheckpointOutput memory) {
+    function getL2OutputAfter(uint256 _l2BlockNumber) external view returns (KromaTypes.CheckpointOutput memory) {
         return l2Outputs[getL2OutputIndexAfter(_l2BlockNumber)];
     }
 

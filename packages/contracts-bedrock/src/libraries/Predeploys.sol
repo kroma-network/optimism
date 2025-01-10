@@ -26,15 +26,16 @@ library Predeploys {
     /// @notice Address of the canonical WETH contract.
     address internal constant WETH = 0x4200000000000000000000000000000000000006;
 
-    /// @notice Address of the L2CrossDomainMessenger predeploy.
-    address internal constant L2_CROSS_DOMAIN_MESSENGER = 0x4200000000000000000000000000000000000007;
+    /// @notice Address of the L2CrossDomainMessenger predeploy. Note that the address is for Kroma.
+    address internal constant L2_CROSS_DOMAIN_MESSENGER = 0x4200000000000000000000000000000000000004;
 
     /// @notice Address of the GasPriceOracle predeploy. Includes fee information
     ///         and helpers for computing the L1 portion of the transaction fee.
-    address internal constant GAS_PRICE_ORACLE = 0x420000000000000000000000000000000000000F;
+    ///         Note that the address is for Kroma.
+    address internal constant GAS_PRICE_ORACLE = 0x4200000000000000000000000000000000000005;
 
-    /// @notice Address of the L2StandardBridge predeploy.
-    address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000010;
+    /// @notice Address of the L2StandardBridge predeploy. Note that the address is for Kroma.
+    address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000009;
 
     //// @notice Address of the SequencerFeeWallet predeploy.
     address internal constant SEQUENCER_FEE_WALLET = 0x4200000000000000000000000000000000000011;
@@ -53,14 +54,14 @@ library Predeploys {
     /// @notice Address of the L1Block predeploy.
     address internal constant L1_BLOCK_ATTRIBUTES = 0x4200000000000000000000000000000000000015;
 
-    /// @notice Address of the L2ToL1MessagePasser predeploy.
-    address internal constant L2_TO_L1_MESSAGE_PASSER = 0x4200000000000000000000000000000000000016;
+    /// @notice Address of the L2ToL1MessagePasser predeploy. Note that the address is for Kroma.
+    address internal constant L2_TO_L1_MESSAGE_PASSER = 0x4200000000000000000000000000000000000003;
 
     /// @notice Address of the OptimismMintableERC721Factory predeploy.
     address internal constant OPTIMISM_MINTABLE_ERC721_FACTORY = 0x4200000000000000000000000000000000000017;
 
-    /// @notice Address of the ProxyAdmin predeploy.
-    address internal constant PROXY_ADMIN = 0x4200000000000000000000000000000000000018;
+    /// @notice Address of the ProxyAdmin predeploy. Note that the address is for Kroma.
+    address internal constant PROXY_ADMIN = 0x4200000000000000000000000000000000000000;
 
     /// @notice Address of the BaseFeeVault predeploy.
     address internal constant BASE_FEE_VAULT = 0x4200000000000000000000000000000000000019;
@@ -108,6 +109,12 @@ library Predeploys {
     /// @notice Address of the SuperchainTokenBridge predeploy.
     address internal constant SUPERCHAIN_TOKEN_BRIDGE = 0x4200000000000000000000000000000000000028;
 
+    /// @notice Address of the KromaMintableERC20Factory predeploy. Note that the address is for Kroma.
+    address internal constant KROMA_MINTABLE_ERC20_FACTORY = 0x420000000000000000000000000000000000000B;
+
+    /// @notice Address of the KromaMintableERC721Factory predeploy. Note that the address is for Kroma.
+    address internal constant KROMA_MINTABLE_ERC721_FACTORY = 0x420000000000000000000000000000000000000c;
+
     /// @notice Returns the name of the predeploy at the given address.
     function getName(address _addr) internal pure returns (string memory out_) {
         require(isPredeployNamespace(_addr), "Predeploys: address must be a predeploy");
@@ -139,6 +146,10 @@ library Predeploys {
         if (_addr == OPTIMISM_SUPERCHAIN_ERC20_FACTORY) return "OptimismSuperchainERC20Factory";
         if (_addr == OPTIMISM_SUPERCHAIN_ERC20_BEACON) return "OptimismSuperchainERC20Beacon";
         if (_addr == SUPERCHAIN_TOKEN_BRIDGE) return "SuperchainTokenBridge";
+        /// [Kroma: START]
+        if (_addr == KROMA_MINTABLE_ERC20_FACTORY) return "KromaMintableERC20Factory";
+        if (_addr == KROMA_MINTABLE_ERC721_FACTORY) return "KromaMintableERC721Factory";
+        /// [Kroma: END]
         revert("Predeploys: unnamed predeploy");
     }
 
@@ -155,6 +166,9 @@ library Predeploys {
             || _addr == L2_ERC721_BRIDGE || _addr == L1_BLOCK_ATTRIBUTES || _addr == L2_TO_L1_MESSAGE_PASSER
             || _addr == OPTIMISM_MINTABLE_ERC721_FACTORY || _addr == PROXY_ADMIN || _addr == BASE_FEE_VAULT
             || _addr == L1_FEE_VAULT || _addr == SCHEMA_REGISTRY || _addr == EAS || _addr == GOVERNANCE_TOKEN
+            /// [Kroma: START]
+            || _addr == KROMA_MINTABLE_ERC20_FACTORY || _addr == KROMA_MINTABLE_ERC721_FACTORY
+            /// [Kroma: END]
             || (_useInterop && _addr == CROSS_L2_INBOX) || (_useInterop && _addr == L2_TO_L2_CROSS_DOMAIN_MESSENGER)
             || (_useInterop && _addr == SUPERCHAIN_WETH) || (_useInterop && _addr == ETH_LIQUIDITY)
             || (_useInterop && _addr == OPTIMISM_SUPERCHAIN_ERC20_FACTORY)

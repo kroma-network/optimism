@@ -2,7 +2,7 @@
 pragma solidity 0.8.15;
 
 // Libraries
-import { Types } from "src/libraries/Types.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
@@ -64,7 +64,7 @@ contract ZKProofVerifier is ISemver {
     /// @param _storedL1Head The stored L1 block hash.
     /// @return publicInputHash_ Hash of public input.
     function verifyZkVmProof(
-        Types.ZkVmProof calldata _zkVmProof,
+        KromaTypes.ZkVmProof calldata _zkVmProof,
         bytes32 _storedSrcOutput,
         bytes32 _storedDstOutput,
         bytes32 _storedL1Head

@@ -8,6 +8,7 @@ import { SecurityCouncil } from "src/L1/SecurityCouncil.sol";
 import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 // Libraries
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Types } from "src/libraries/Types.sol";
 
 // Interfaces
@@ -97,7 +98,7 @@ contract Colosseum is Initializable, ISemver {
     /**
      * @notice A mapping of the challenge.
      */
-    mapping(uint256 => mapping(address => Types.Challenge)) public challenges;
+    mapping(uint256 => mapping(address => KromaTypes.Challenge)) public challenges;
 
     /**
      * @notice A mapping indicating whether a public input is verified or not.
@@ -107,7 +108,7 @@ contract Colosseum is Initializable, ISemver {
     /**
      * @notice A mapping of deleted output index to the deleted output.
      */
-    mapping(uint256 => Types.CheckpointOutput) public deletedOutputs;
+    mapping(uint256 => KromaTypes.CheckpointOutput) public deletedOutputs;
 
     /**
      * @notice Emitted when the challenge is created.
@@ -367,7 +368,7 @@ contract Colosseum is Initializable, ISemver {
             revert ImproperValidatorStatus();
         }
 
-        Types.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
 
         if (challenge.turn >= TURN_INIT) {
             if (_challengeStatus(challenge) != ChallengeStatus.CHALLENGER_TIMEOUT) {
@@ -377,7 +378,7 @@ contract Colosseum is Initializable, ISemver {
             _challengerTimeout(_outputIndex, msg.sender);
         }
 
-        Types.CheckpointOutput memory targetOutput = L2_ORACLE.getL2Output(_outputIndex);
+        KromaTypes.CheckpointOutput memory targetOutput = L2_ORACLE.getL2Output(_outputIndex);
 
         if (targetOutput.timestamp + CREATION_PERIOD_SECONDS < block.timestamp) {
             revert CreationPeriodPassed();
@@ -392,7 +393,7 @@ contract Colosseum is Initializable, ISemver {
             if (blockhash(_l1BlockNumber) != _l1BlockHash) revert L1Reorged();
         }
 
-        Types.CheckpointOutput memory prevOutput = L2_ORACLE.getL2Output(_outputIndex - 1);
+        KromaTypes.CheckpointOutput memory prevOutput = L2_ORACLE.getL2Output(_outputIndex - 1);
 
         // If the previous output has been deleted, the first segment will not be compared with the previous output.
         if (prevOutput.outputRoot == DELETED_OUTPUT_ROOT) {
@@ -430,7 +431,7 @@ contract Colosseum is Initializable, ISemver {
     function bisect(uint256 _outputIndex, address _challenger, uint256 _pos, bytes32[] calldata _segments) external {
         _checkOutputNotFinalized(_outputIndex);
 
-        Types.Challenge storage challenge = challenges[_outputIndex][_challenger];
+        KromaTypes.Challenge storage challenge = challenges[_outputIndex][_challenger];
         ChallengeStatus status = _challengeStatus(challenge);
 
         if (_cancelIfOutputDeleted(_outputIndex, challenge.challenger, status)) {
@@ -470,7 +471,7 @@ contract Colosseum is Initializable, ISemver {
      * @param _pos         Position of the last valid segment.
      * @param _zkVmProof   The public input and proof using zkVM.
      */
-    function proveFaultWithZkVm(uint256 _outputIndex, uint256 _pos, Types.ZkVmProof calldata _zkVmProof) external {
+    function proveFaultWithZkVm(uint256 _outputIndex, uint256 _pos, KromaTypes.ZkVmProof calldata _zkVmProof) external {
         _proveFault(_outputIndex, _pos, _zkVmProof);
     }
 
@@ -496,7 +497,7 @@ contract Colosseum is Initializable, ISemver {
      * @param _outputIndex Index of the L2 checkpoint output.
      */
     function cancelChallenge(uint256 _outputIndex) external {
-        Types.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
 
         if (!_cancelIfOutputDeleted(_outputIndex, challenge.challenger, _challengeStatus(challenge))) {
             revert CannotCancelChallenge();
@@ -560,7 +561,7 @@ contract Colosseum is Initializable, ISemver {
         _checkOutputNotFinalized(_outputIndex);
 
         // Check if the output is deleted.
-        Types.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
+        KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
         if (output.outputRoot == DELETED_OUTPUT_ROOT) revert OutputAlreadyDeleted();
 
         // Delete output root.
@@ -619,7 +620,7 @@ contract Colosseum is Initializable, ISemver {
      * @param _segSize   The number of L2 blocks.
      */
     function _updateSegments(
-        Types.Challenge storage _challenge,
+        KromaTypes.Challenge storage _challenge,
         bytes32[] memory _segments,
         uint256 _segStart,
         uint256 _segSize
@@ -636,7 +637,7 @@ contract Colosseum is Initializable, ISemver {
      *
      * @param _challenge The challenge data to update.
      */
-    function _updateTimeout(Types.Challenge storage _challenge) private {
+    function _updateTimeout(KromaTypes.Challenge storage _challenge) private {
         if (!_isAbleToBisect(_challenge)) {
             _challenge.timeoutAt = uint64(block.timestamp + PROVING_TIMEOUT);
         } else {
@@ -651,16 +652,10 @@ contract Colosseum is Initializable, ISemver {
      * @param _pos         Position of the last valid segment.
      * @param _zkVmProof   The public input and proof using zkVM.
      */
-    function _proveFault(
-        uint256 _outputIndex,
-        uint256 _pos,
-        Types.ZkVmProof memory _zkVmProof
-    )
-        private
-    {
+    function _proveFault(uint256 _outputIndex, uint256 _pos, KromaTypes.ZkVmProof memory _zkVmProof) private {
         _checkOutputNotFinalized(_outputIndex);
 
-        Types.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
         ChallengeStatus status = _challengeStatus(challenge);
 
         if (_cancelIfOutputDeleted(_outputIndex, challenge.challenger, status)) {
@@ -678,14 +673,15 @@ contract Colosseum is Initializable, ISemver {
         if (!_isAbleToBisect(challenge)) dstSegment = challenge.segments[_pos + 1];
 
         // Verify ZK proof according to the given proof type.
-        bytes32 publicInputHash = ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
+        bytes32 publicInputHash =
+            ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
         if (verifiedPublicInputs[publicInputHash]) revert AlreadyVerifiedPublicInput();
 
         emit Proven(_outputIndex, msg.sender, block.timestamp);
 
         // Scope to call the security council, to avoid stack too deep.
         {
-            Types.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
+            KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
 
             bytes memory callbackData = abi.encodeWithSelector(
                 this.dismissChallenge.selector,
@@ -772,7 +768,7 @@ contract Colosseum is Initializable, ISemver {
      *
      * @return The number of L2 blocks for the next turn.
      */
-    function _nextSegSize(Types.Challenge storage _challenge) internal view returns (uint256) {
+    function _nextSegSize(KromaTypes.Challenge storage _challenge) internal view returns (uint256) {
         return _challenge.segSize / (segmentsLengths[_challenge.turn - 1] - 1);
     }
 
@@ -783,7 +779,7 @@ contract Colosseum is Initializable, ISemver {
      *
      * @return Whether bisection is possible.
      */
-    function _isAbleToBisect(Types.Challenge storage _challenge) internal view returns (bool) {
+    function _isAbleToBisect(KromaTypes.Challenge storage _challenge) internal view returns (bool) {
         return _nextSegSize(_challenge) > 1;
     }
 
@@ -794,7 +790,7 @@ contract Colosseum is Initializable, ISemver {
      *
      * @return The status of the challenge.
      */
-    function _challengeStatus(Types.Challenge storage _challenge) internal view returns (ChallengeStatus) {
+    function _challengeStatus(KromaTypes.Challenge storage _challenge) internal view returns (ChallengeStatus) {
         if (_challenge.turn < TURN_INIT) {
             return ChallengeStatus.NONE;
         }
@@ -836,7 +832,14 @@ contract Colosseum is Initializable, ISemver {
      *
      * @return The challenge data.
      */
-    function getChallenge(uint256 _outputIndex, address _challenger) external view returns (Types.Challenge memory) {
+    function getChallenge(
+        uint256 _outputIndex,
+        address _challenger
+    )
+        external
+        view
+        returns (KromaTypes.Challenge memory)
+    {
         return challenges[_outputIndex][_challenger];
     }
 
