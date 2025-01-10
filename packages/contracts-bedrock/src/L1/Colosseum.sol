@@ -360,13 +360,11 @@ contract Colosseum is Initializable, ISemver {
         external
     {
         if (_outputIndex == 0) revert NotAllowedGenesisOutput();
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            L2_ORACLE.VALIDATOR_MANAGER().checkChallengeEligibility(_outputIndex);
-            // Only the validators whose status is active can create challenge.
-            if (!L2_ORACLE.VALIDATOR_MANAGER().isActive(msg.sender)) {
-                revert ImproperValidatorStatus();
-            }
+
+        L2_ORACLE.VALIDATOR_MANAGER().checkChallengeEligibility(_outputIndex);
+        // Only the validators whose status is active can create challenge.
+        if (!L2_ORACLE.VALIDATOR_MANAGER().isActive(msg.sender)) {
+            revert ImproperValidatorStatus();
         }
 
         Types.Challenge storage challenge = challenges[_outputIndex][msg.sender];
@@ -403,13 +401,8 @@ contract Colosseum is Initializable, ISemver {
             _validateSegments(TURN_INIT, prevOutput.outputRoot, targetOutput.outputRoot, _segments);
         }
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            // Bond validator KRO to reserve slashing amount.
-            L2_ORACLE.VALIDATOR_MANAGER().bondValidatorKro(msg.sender);
-        } else {
-            L2_ORACLE.VALIDATOR_POOL().addPendingBond(_outputIndex, msg.sender);
-        }
+        // Bond validator KRO to reserve slashing amount.
+        L2_ORACLE.VALIDATOR_MANAGER().bondValidatorKro(msg.sender);
 
         _updateSegments(
             challenge,
@@ -470,19 +463,6 @@ contract Colosseum is Initializable, ISemver {
     }
 
     /**
-     * @notice Proves that a specific output is invalid using zkEVM proof.
-     *         This function can only be called in the READY_TO_PROVE and ASSERTER_TIMEOUT statuses.
-     *
-     * @param _outputIndex Index of the L2 checkpoint output.
-     * @param _pos         Position of the last valid segment.
-     * @param _zkEvmProof  The public input and proof using zkEVM.
-     */
-    function proveFaultWithZkEvm(uint256 _outputIndex, uint256 _pos, Types.ZkEvmProof calldata _zkEvmProof) external {
-        Types.ZkVmProof memory emptyZkVmProof;
-        _proveFault(_outputIndex, _pos, false, _zkEvmProof, emptyZkVmProof);
-    }
-
-    /**
      * @notice Proves that a specific output is invalid using zkVM proof.
      *         This function can only be called in the READY_TO_PROVE and ASSERTER_TIMEOUT statuses.
      *
@@ -491,8 +471,7 @@ contract Colosseum is Initializable, ISemver {
      * @param _zkVmProof   The public input and proof using zkVM.
      */
     function proveFaultWithZkVm(uint256 _outputIndex, uint256 _pos, Types.ZkVmProof calldata _zkVmProof) external {
-        Types.ZkEvmProof memory emptyZkEvmProof;
-        _proveFault(_outputIndex, _pos, true, emptyZkEvmProof, _zkVmProof);
+        _proveFault(_outputIndex, _pos, _zkVmProof);
     }
 
     /**
@@ -562,13 +541,10 @@ contract Colosseum is Initializable, ISemver {
         // Rollback output root.
         L2_ORACLE.replaceL2Output(_outputIndex, _outputRoot, _asserter);
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            // Revert slash asserter.
-            L2_ORACLE.VALIDATOR_MANAGER().revertSlash(_outputIndex, _asserter);
-            // Slash challenger.
-            L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, _asserter, _challenger);
-        }
+        // Revert slash asserter.
+        L2_ORACLE.VALIDATOR_MANAGER().revertSlash(_outputIndex, _asserter);
+        // Slash challenger.
+        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, _asserter, _challenger);
 
         emit ChallengeDismissed(_outputIndex, _challenger, block.timestamp);
     }
@@ -590,11 +566,8 @@ contract Colosseum is Initializable, ISemver {
         // Delete output root.
         L2_ORACLE.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, SECURITY_COUNCIL);
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            // Slash the asserter's asset and move it to pending challenge reward for the output.
-            L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, SECURITY_COUNCIL, output.submitter);
-        }
+        // Slash the asserter's asset and move it to pending challenge reward for the output.
+        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, SECURITY_COUNCIL, output.submitter);
 
         emit OutputForceDeleted(_outputIndex, output.submitter, block.timestamp);
     }
@@ -673,19 +646,14 @@ contract Colosseum is Initializable, ISemver {
 
     /**
      * @notice Proves that a specific output is invalid using ZKP.
-     *         Note that if _isZkVm is true, _proveFault is verified based on zkVM, otherwise zkEVM.
      *
      * @param _outputIndex Index of the L2 checkpoint output.
      * @param _pos         Position of the last valid segment.
-     * @param _isZkVm      If zkEVM proof is given or not.
-     * @param _zkEvmProof  The public input and proof using zkEVM.
      * @param _zkVmProof   The public input and proof using zkVM.
      */
     function _proveFault(
         uint256 _outputIndex,
         uint256 _pos,
-        bool _isZkVm,
-        Types.ZkEvmProof memory _zkEvmProof,
         Types.ZkVmProof memory _zkVmProof
     )
         private
@@ -710,12 +678,7 @@ contract Colosseum is Initializable, ISemver {
         if (!_isAbleToBisect(challenge)) dstSegment = challenge.segments[_pos + 1];
 
         // Verify ZK proof according to the given proof type.
-        bytes32 publicInputHash;
-        if (_isZkVm) {
-            publicInputHash = ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
-        } else {
-            publicInputHash = ZK_PROOF_VERIFIER.verifyZkEvmProof(_zkEvmProof, srcSegment, dstSegment);
-        }
+        bytes32 publicInputHash = ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
         if (verifiedPublicInputs[publicInputHash]) revert AlreadyVerifiedPublicInput();
 
         emit Proven(_outputIndex, msg.sender, block.timestamp);
@@ -739,14 +702,8 @@ contract Colosseum is Initializable, ISemver {
             deletedOutputs[_outputIndex] = output;
         }
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            // Slash the asseter's asset and move it to pending challenge reward for the output.
-            L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, msg.sender, challenge.asserter);
-        } else {
-            // The challenger's bond is also included in the bond for that output.
-            L2_ORACLE.VALIDATOR_POOL().increaseBond(_outputIndex, msg.sender);
-        }
+        // Slash the asseter's asset and move it to pending challenge reward for the output.
+        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, msg.sender, challenge.asserter);
 
         verifiedPublicInputs[publicInputHash] = true;
         delete challenges[_outputIndex][msg.sender];
@@ -789,12 +746,7 @@ contract Colosseum is Initializable, ISemver {
         delete challenges[_outputIndex][msg.sender];
         emit ChallengeCanceled(_outputIndex, msg.sender, block.timestamp);
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            L2_ORACLE.VALIDATOR_MANAGER().unbondValidatorKro(msg.sender);
-        } else {
-            L2_ORACLE.VALIDATOR_POOL().releasePendingBond(_outputIndex, msg.sender, msg.sender);
-        }
+        L2_ORACLE.VALIDATOR_MANAGER().unbondValidatorKro(msg.sender);
 
         return true;
     }
@@ -810,21 +762,7 @@ contract Colosseum is Initializable, ISemver {
         delete challenges[_outputIndex][_challenger];
         emit ChallengerTimedOut(_outputIndex, _challenger, block.timestamp);
 
-        // Switch validator system after validator pool contract terminated.
-        if (L2_ORACLE.VALIDATOR_POOL().isTerminated(_outputIndex)) {
-            L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, L2_ORACLE.getSubmitter(_outputIndex), _challenger);
-            return;
-        }
-
-        // After output is finalized, the challenger's bond is included in the balance of output submitter.
-        if (L2_ORACLE.isFinalized(_outputIndex)) {
-            L2_ORACLE.VALIDATOR_POOL().releasePendingBond(
-                _outputIndex, _challenger, L2_ORACLE.getSubmitter(_outputIndex)
-            );
-        } else {
-            // Because the challenger lost, the challenger's bond is included in the bond for that output.
-            L2_ORACLE.VALIDATOR_POOL().increaseBond(_outputIndex, _challenger);
-        }
+        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, L2_ORACLE.getSubmitter(_outputIndex), _challenger);
     }
 
     /**

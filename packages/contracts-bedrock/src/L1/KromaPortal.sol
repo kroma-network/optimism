@@ -7,7 +7,6 @@ import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { ResourceMetering } from "src/L1/ResourceMetering.sol";
 import { SystemConfig } from "src/L1/SystemConfig.sol";
-import { ZKMerkleTrie } from "src/L1/ZKMerkleTrie.sol";
 
 // Libraries
 import { Constants } from "src/libraries/Constants.sol";
@@ -57,11 +56,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     L2OutputOracle public immutable L2_ORACLE;
 
     /**
-     * @notice Address of the ValidatorPool contract.
-     */
-    address public immutable VALIDATOR_POOL;
-
-    /**
      * /**
      * @notice Address of the SystemConfig contract.
      */
@@ -71,11 +65,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @notice MultiSig wallet address that has the ability to pause and unpause withdrawals.
      */
     address public immutable GUARDIAN;
-
-    /**
-     * @notice Address of the ZKMerkleTrie.
-     */
-    ZKMerkleTrie public immutable ZK_MERKLE_TRIE;
 
     /**
      * @notice Address of the L2 account which initiated a withdrawal in this transaction.
@@ -161,25 +150,19 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @notice Constructs the KromaPortal contract.
      *
      * @param _l2Oracle      Address of the L2OutputOracle contract.
-     * @param _validatorPool Address of the ValidatorPool contract.
      * @param _guardian      MultiSig wallet address that can pause deposits and withdrawals.
      * @param _paused        Sets the contract's pausability state.
      * @param _config        Address of the SystemConfig contract.
-     * @param _zkMerkleTrie  Address of the ZKMerkleTrie contract.
      */
     constructor(
         L2OutputOracle _l2Oracle,
-        address _validatorPool,
         address _guardian,
         bool _paused,
         SystemConfig _config,
-        ZKMerkleTrie _zkMerkleTrie
     ) {
         L2_ORACLE = _l2Oracle;
-        VALIDATOR_POOL = _validatorPool;
         GUARDIAN = _guardian;
         SYSTEM_CONFIG = _config;
-        ZK_MERKLE_TRIE = _zkMerkleTrie;
         initialize(_paused);
     }
 
@@ -292,26 +275,12 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // on L2. If this is true, under the assumption that the MerkleTrie does not have
         // bugs, then we know that this withdrawal was actually triggered on L2 and can therefore
         // be relayed on L1.
-        // Note that MerkleTrie is ZKMerkleTrie when output has nextBlockHash (KromaOutputV0),
-        // otherwise SecureMerkleTrie (OutputV0).
-        if (_outputRootProof.nextBlockHash == bytes32(0)) {
-            require(
-                SecureMerkleTrie.verifyInclusionProof(
-                    abi.encode(storageKey), hex"01", _withdrawalProof, _outputRootProof.messagePasserStorageRoot
-                ),
-                "KromaPortal: invalid withdrawal inclusion proof"
-            );
-        } else {
-            require(
-                ZK_MERKLE_TRIE.verifyInclusionProof(
-                    storageKey,
-                    hex"0000000000000000000000000000000000000000000000000000000000000001",
-                    _withdrawalProof,
-                    _outputRootProof.messagePasserStorageRoot
-                ),
-                "KromaPortal: invalid withdrawal inclusion proof"
-            );
-        }
+        require(
+            SecureMerkleTrie.verifyInclusionProof(
+                abi.encode(storageKey), hex"01", _withdrawalProof, _outputRootProof.messagePasserStorageRoot
+            ),
+            "KromaPortal: invalid withdrawal inclusion proof"
+        );
 
         // Designate the withdrawalHash as proven by storing the `outputRoot`, `timestamp`, and
         // `l2OutputIndex` in the `provenWithdrawals` mapping. A `withdrawalHash` can only be
@@ -365,7 +334,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
         // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
         // corresponds to the given index has not been submitted yet.
-        Types.CheckpointOutput memory checkpointOutput = L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex);
+        KromaTypes.CheckpointOutput memory checkpointOutput = L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is
@@ -456,28 +425,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // We use opaque data so that we can update the TransactionDeposited event in the future
         // without breaking the current interface.
         bytes memory opaqueData = abi.encodePacked(msg.value, _value, _gasLimit, _isCreation, _data);
-
-        // Emit a TransactionDeposited event so that the rollup node can derive a deposit
-        // transaction for this deposit.
-        emit TransactionDeposited(from, _to, DEPOSIT_VERSION, opaqueData);
-    }
-
-    /**
-     * @notice Accepts deposits of data from ValidatorPool contract, and emits a TransactionDeposited event for use in
-     *         deriving deposit transactions on L2.
-     *
-     * @param _to       Target address on L2.
-     * @param _gasLimit Minimum L2 gas limit (can be greater than or equal to this value).
-     * @param _data     Data to trigger the recipient with.
-     */
-    function depositTransactionByValidatorPool(address _to, uint64 _gasLimit, bytes memory _data) public {
-        require(msg.sender == VALIDATOR_POOL, "KromaPortal: function can only be called from the ValidatorPool");
-
-        // Transform the from-address to its alias.
-        address from = AddressAliasHelper.applyL1ToL2Alias(msg.sender);
-
-        // Compute the opaque data that will be emitted as part of the TransactionDeposited event.
-        bytes memory opaqueData = abi.encodePacked(uint256(0), uint256(0), _gasLimit, false, _data);
 
         // Emit a TransactionDeposited event so that the rollup node can derive a deposit
         // transaction for this deposit.

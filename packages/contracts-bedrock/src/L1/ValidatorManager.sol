@@ -571,10 +571,6 @@ contract ValidatorManager is ISemver, IValidatorManager {
         uint256 outputIndex = L2_ORACLE.nextFinalizeOutputIndex();
         uint256 latestOutputIndex = L2_ORACLE.latestOutputIndex();
 
-        if (!L2_ORACLE.VALIDATOR_POOL().isTerminated(outputIndex)) {
-            return false;
-        }
-
         uint128 finalizedOutputNum = 0;
         address submitter;
 

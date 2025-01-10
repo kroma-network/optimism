@@ -3,7 +3,6 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { ValidatorPool } from "src/:1/ValidatorPool.sol";
 
 // Libraries
 import { Constants } from "src/libraries/Constants.sol";
@@ -22,11 +21,6 @@ import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
  *         these outputs to verify information about the state of L2.
  */
 contract L2OutputOracle is Initializable, ISemver {
-    /**
-     * @notice The address of the validator pool contract. Can be updated via upgrade.
-     */
-    ValidatorPool public immutable VALIDATOR_POOL;
-
     /**
      * @notice The address of the validator manager contract. Can be updated via upgrade.
      */
@@ -104,7 +98,6 @@ contract L2OutputOracle is Initializable, ISemver {
     /**
      * @notice Constructs the L2OutputOracle contract.
      *
-     * @param _validatorPool             The address of the ValidatorPool contract.
      * @param _validatorManager          The address of the ValidatorManager contract.
      * @param _colosseum                 The address of the Colosseum contract.
      * @param _submissionInterval        Interval in blocks at which checkpoints must be submitted.
@@ -114,7 +107,6 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param _finalizationPeriodSeconds Output finalization time in seconds.
      */
     constructor(
-        ValidatorPool _validatorPool,
         IValidatorManager _validatorManager,
         address _colosseum,
         uint256 _submissionInterval,
@@ -126,7 +118,6 @@ contract L2OutputOracle is Initializable, ISemver {
         require(_l2BlockTime > 0, "L2OutputOracle: L2 block time must be greater than 0");
         require(_submissionInterval > 0, "L2OutputOracle: submission interval must be greater than 0");
 
-        VALIDATOR_POOL = _validatorPool;
         VALIDATOR_MANAGER = _validatorManager;
         COLOSSEUM = _colosseum;
         SUBMISSION_INTERVAL = _submissionInterval;
@@ -204,19 +195,7 @@ contract L2OutputOracle is Initializable, ISemver {
     {
         uint256 outputIndex = nextOutputIndex();
 
-        // Upgrade validator system after validator pool contract is terminated.
-        bool isValidatorPoolTerminated = VALIDATOR_POOL.isTerminated(outputIndex);
-        address nextValidator;
-        if (isValidatorPoolTerminated) {
-            VALIDATOR_MANAGER.checkSubmissionEligibility(msg.sender);
-        } else {
-            nextValidator = VALIDATOR_POOL.nextValidator();
-        }
-
-        // If it's not a public round, only selected validators can submit output.
-        if (!isValidatorPoolTerminated && nextValidator != Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS) {
-            require(msg.sender == nextValidator, "L2OutputOracle: only the next selected validator can submit output");
-        }
+        VALIDATOR_MANAGER.checkSubmissionEligibility(msg.sender);
 
         require(
             _l2BlockNumber == nextBlockNumber(),
@@ -249,11 +228,7 @@ contract L2OutputOracle is Initializable, ISemver {
 
         emit OutputSubmitted(_outputRoot, outputIndex, _l2BlockNumber, block.timestamp);
 
-        if (isValidatorPoolTerminated) {
-            VALIDATOR_MANAGER.afterSubmitL2Output(outputIndex);
-        } else {
-            VALIDATOR_POOL.createBond(outputIndex, uint128(block.timestamp + FINALIZATION_PERIOD_SECONDS));
-        }
+        VALIDATOR_MANAGER.afterSubmitL2Output(outputIndex);
     }
 
     /**
@@ -264,17 +239,10 @@ contract L2OutputOracle is Initializable, ISemver {
      * @param _outputIndex Index of the next output to be finalized.
      */
     function setNextFinalizeOutputIndex(uint256 _outputIndex) external {
-        if (VALIDATOR_POOL.isTerminated(_outputIndex - 1)) {
-            require(
-                msg.sender == address(VALIDATOR_MANAGER),
-                "L2OutputOracle: only the validator manager contract can set next finalize output index"
-            );
-        } else {
-            require(
-                msg.sender == address(VALIDATOR_POOL),
-                "L2OutputOracle: only the validator pool contract can set next finalize output index"
-            );
-        }
+        require(
+            msg.sender == address(VALIDATOR_MANAGER),
+            "L2OutputOracle: only the validator manager contract can set next finalize output index"
+        );
 
         nextFinalizeOutputIndex = _outputIndex;
     }
