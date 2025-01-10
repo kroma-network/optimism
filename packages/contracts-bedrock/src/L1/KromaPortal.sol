@@ -18,6 +18,7 @@ import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 
 /**
  * @custom:proxied
@@ -208,7 +209,15 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
      * @return ResourceMetering ResourceConfig
      */
     function _resourceConfig() internal view override returns (ResourceMetering.ResourceConfig memory) {
-        return SYSTEM_CONFIG.resourceConfig();
+        IResourceMetering.ResourceConfig memory config = SYSTEM_CONFIG.resourceConfig();
+        return ResourceConfig({
+            maxResourceLimit: config.maxResourceLimit,
+            elasticityMultiplier: config.elasticityMultiplier,
+            baseFeeMaxChangeDenominator: config.baseFeeMaxChangeDenominator,
+            minimumBaseFee: config.minimumBaseFee,
+            systemTxMaxGas: config.systemTxMaxGas,
+            maximumBaseFee: config.maximumBaseFee
+        });
     }
 
     /**

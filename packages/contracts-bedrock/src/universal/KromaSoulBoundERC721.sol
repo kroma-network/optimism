@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721VotesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/token/ERC721/extensions/ERC721VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/cryptography/EIP712Upgradeable.sol";
 
 /**
  * @title IERC5192

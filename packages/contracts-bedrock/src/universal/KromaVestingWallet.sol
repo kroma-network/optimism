@@ -2,7 +2,7 @@
 pragma solidity 0.8.15;
 
 // Contracts
-import "@openzeppelin/contracts-upgradeable/finance/VestingWalletUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/finance/VestingWalletUpgradeable.sol";
 
 /**
  * @custom:proxied

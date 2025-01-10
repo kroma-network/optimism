@@ -2,8 +2,8 @@
 pragma solidity 0.8.15;
 
 // Contracts
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/math/SafeCastUpgradeable.sol";
 import { UpgradeGovernor } from "src/governance/UpgradeGovernor.sol";
 
 // Libraries
@@ -11,7 +11,7 @@ import { SafeCall } from "src/libraries/SafeCall.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC5805Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/interfaces/IERC5805Upgradeable.sol";
 import { ITokenMultiSigWallet } from "interfaces/universal/ITokenMultiSigWallet.sol";
 
 /**

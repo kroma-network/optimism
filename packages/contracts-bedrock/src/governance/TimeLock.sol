@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/governance/TimelockControllerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable-v4.9.3/proxy/utils/Initializable.sol";
 
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
