@@ -16,11 +16,9 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
-/**
- * @custom:proxied
- * @title UpgradeGovernor
- * @notice The UpgradeGovernor is a basic ERC20, ERC721 based DAO using OpenZeppelin Governor.
- */
+/// @custom:proxied
+/// @title UpgradeGovernor
+/// @notice The UpgradeGovernor is a basic ERC20, ERC721 based DAO using OpenZeppelin Governor.
 contract UpgradeGovernor is
     Initializable,
     GovernorUpgradeable,
@@ -31,29 +29,22 @@ contract UpgradeGovernor is
     GovernorTimelockControlUpgradeable,
     ISemver
 {
-    /**
-     * @notice Semantic version.
-     * @custom:semver 1.0.0
-     */
+    /// @notice Semantic version.
+    /// @custom:semver 1.0.0
     string private constant _version = "1.0.0";
 
-    /**
-     * @notice Constructs the UpgradeGovernor contract.
-     */
+    /// @notice Constructs the UpgradeGovernor contract.
     constructor() {
         _disableInitializers();
     }
 
-    /**
-     * @notice Initializer.
-     *
-     * @param _token                    Address of the token(ERC20 or ERC721).
-     * @param _timelock                 Address of the timelock controller.
-     * @param _initialVotingDelay       Voting delay.(unit: 1 block = 12 seconds on L1)
-     * @param _initialVotingPeriod      Voting period.(unit: 1 block = 12 seconds on L1)
-     * @param _initialProposalThreshold Proposal threshold.
-     * @param _votesQuorumFraction      Quorum as a fraction of the token's total supply.
-     */
+    /// @notice Initializer.
+    /// @param _token                    Address of the token(ERC20 or ERC721).
+    /// @param _timelock                 Address of the timelock controller.
+    /// @param _initialVotingDelay       Voting delay.(unit: 1 block = 12 seconds on L1)
+    /// @param _initialVotingPeriod      Voting period.(unit: 1 block = 12 seconds on L1)
+    /// @param _initialProposalThreshold Proposal threshold.
+    /// @param _votesQuorumFraction      Quorum as a fraction of the token's total supply.
     function initialize(
         address _token,
         address payable _timelock,
@@ -123,11 +114,8 @@ contract UpgradeGovernor is
         return super.proposalThreshold();
     }
 
-    /**
-     * @notice Returns the full contract version.
-     *
-     * @return contract version as a string.
-     */
+    /// @notice Returns the full contract version.
+    /// @return contract version as a string.
     function version()
         public
         pure

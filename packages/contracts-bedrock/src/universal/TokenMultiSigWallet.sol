@@ -14,87 +14,60 @@ import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import "@openzeppelin/contracts-upgradeable-v4.9.3/interfaces/IERC5805Upgradeable.sol";
 import { ITokenMultiSigWallet } from "interfaces/universal/ITokenMultiSigWallet.sol";
 
-/**
- * @custom:upgradeable
- * @title TokenMultiSigWallet
- * @notice This contract implements `ITokenMultiSigWallet`.
- *         Allows multiple parties to agree on transactions before execution.
- */
+/// @custom:upgradeable
+/// @title TokenMultiSigWallet
+/// @notice This contract implements `ITokenMultiSigWallet`.
+///         Allows multiple parties to agree on transactions before execution.
 abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUpgradeable {
-    /**
-     * @notice The address of the governor contract. Can be updated via upgrade.
-     */
+    /// @notice The address of the governor contract. Can be updated via upgrade.
     UpgradeGovernor public immutable GOVERNOR;
 
-    /**
-     * @notice A mapping of transactions submitted.
-     */
+    /// @notice A mapping of transactions submitted.
     mapping(uint256 => KromaTypes.MultiSigTransaction) public transactions;
 
-    /**
-     * @notice A mapping of confirmations.
-     */
+    /// @notice A mapping of confirmations.
     mapping(uint256 => KromaTypes.MultiSigConfirmation) public confirmations;
 
-    /**
-     * @notice Spacer for backwards compatibility.
-     */
+    /// @notice Spacer for backwards compatibility.
     uint256[3] private spacer_53_0_96;
 
-    /**
-     * @notice The number of transactions submitted.
-     */
+    /// @notice The number of transactions submitted.
     uint256 public transactionCount;
 
-    /**
-     * @notice Only allow the owner of governance token to call the functions.
-     *         This ensures that function is only executed by governance.
-     */
+    /// @notice Only allow the owner of governance token to call the functions.
+    ///         This ensures that function is only executed by governance.
     modifier onlyTokenOwner(address _address) {
         require(getVotes(_address) > 0, "TokenMultiSigWallet: only allowed to governance token owner");
         _;
     }
 
-    /**
-     * @notice Ensure that the transaction exists.
-     *
-     * @param _transactionId The ID of submitted transaction requested.
-     */
+    /// @notice Ensure that the transaction exists.
+    /// @param _transactionId The ID of submitted transaction requested.
     modifier transactionExists(uint256 _transactionId) {
         require(transactions[_transactionId].target != address(0), "TokenMultiSigWallet: transaction does not exist");
         _;
     }
 
-    /**
-     * @notice Ensure that the transaction not exceuted.
-     *
-     * @param _transactionId The ID of transaction to check.
-     */
+    /// @notice Ensure that the transaction not exceuted.
+    /// @param _transactionId The ID of transaction to check.
     modifier transactionNotExcuted(uint256 _transactionId) {
         require(!transactions[_transactionId].executed, "TokenMultiSigWallet: already executed");
         _;
     }
 
-    /**
-     * @notice Ensure that the address is not zero address.
-     *
-     * @param _address Address resource requested.
-     */
+    /// @notice Ensure that the address is not zero address.
+    /// @param _address Address resource requested.
     modifier validAddress(address _address) {
         require(_address != address(0), "TokenMultiSigWallet: address is not valid");
         _;
     }
 
-    /**
-     * @param _governor Address of the Governor contract.
-     */
+    /// @param _governor Address of the Governor contract.
     constructor(address payable _governor) {
         GOVERNOR = UpgradeGovernor(_governor);
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function submitTransaction(
         address _target,
         uint256 _value,
@@ -130,9 +103,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         return transactionId;
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function confirmTransaction(uint256 _transactionId)
         public
         onlyTokenOwner(msg.sender)
@@ -150,9 +121,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         }
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function revokeConfirmation(uint256 _transactionId)
         public
         onlyTokenOwner(msg.sender)
@@ -167,9 +136,7 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         emit ConfirmationRevoked(msg.sender, _transactionId);
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function executeTransaction(uint256 _transactionId)
         public
         nonReentrant
@@ -185,16 +152,12 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         emit TransactionExecuted(msg.sender, _transactionId);
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function isConfirmed(uint256 _transactionId) public view returns (bool) {
         return confirmations[_transactionId].confirmationCount >= quorum();
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function quorum() public view returns (uint256) {
         uint256 currentTimepoint = clock() - 1;
         return (
@@ -203,36 +166,26 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         ) / GOVERNOR.quorumDenominator();
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function getVotes(address account) public view returns (uint256) {
         return IERC5805Upgradeable(address(GOVERNOR.token())).getVotes(account);
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function isConfirmedBy(uint256 _transactionId, address _account) public view returns (bool) {
         return confirmations[_transactionId].confirmedBy[_account];
     }
 
-    /**
-     * @inheritdoc ITokenMultiSigWallet
-     */
+    /// @inheritdoc ITokenMultiSigWallet
     function getConfirmationCount(uint256 _transactionId) public view returns (uint256) {
         return confirmations[_transactionId].confirmationCount;
     }
 
-    /**
-     * @notice Generate id of the transaction.
-     *
-     * @param _target Transaction target address.
-     * @param _value  Transaction ether value.
-     * @param _data   Transaction data payload.
-     *
-     * @return Generated transaction id.
-     */
+    /// @notice Generate id of the transaction.
+    /// @param _target Transaction target address.
+    /// @param _value  Transaction ether value.
+    /// @param _data   Transaction data payload.
+    /// @return Generated transaction id.
     function generateTransactionId(
         address _target,
         uint256 _value,
@@ -246,10 +199,8 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         return uint256(keccak256(abi.encode(_target, _value, _data, clock())));
     }
 
-    /**
-     * @dev Clock (as specified in EIP-6372) is set to match the token's clock.
-     *      Fallback to block numbers if the token does not implement EIP-6372.
-     */
+    /// @dev Clock (as specified in EIP-6372) is set to match the token's clock.
+    ///      Fallback to block numbers if the token does not implement EIP-6372.
     function clock() public view returns (uint48) {
         try IERC5805Upgradeable(address(GOVERNOR.token())).clock() returns (uint48 timepoint) {
             return timepoint;

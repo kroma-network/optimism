@@ -7,23 +7,16 @@ import { KromaSoulBoundERC721 } from "src/universal/KromaSoulBoundERC721.sol";
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
-/**
- * @custom:proxied
- * @title SecurityCouncilToken
- * @notice The SecurityCouncilToken is a basic token based on KromaSoulBoundERC721.
- */
+/// @custom:proxied
+/// @title SecurityCouncilToken
+/// @notice The SecurityCouncilToken is a basic token based on KromaSoulBoundERC721.
 contract SecurityCouncilToken is KromaSoulBoundERC721, ISemver {
-    /**
-     * @notice Semantic version.
-     * @custom:semver 1.0.1
-     */
+    /// @notice Semantic version.
+    /// @custom:semver 1.0.1
     string public constant version = "1.0.1";
 
-    /**
-     * @notice Initializer.
-     *
-     * @param _owner Owner of this token contract.
-     */
+    /// @notice Initializer.
+    /// @param _owner Owner of this token contract.
     function initialize(address _owner) public initializer {
         __KromaSoulBoundERC721_init("KromaSecurityCouncil", "KSC", _owner);
     }

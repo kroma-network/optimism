@@ -1,28 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-/**
- * @title Atan2
- * @notice A library for calculating the arctangent of a fraction y / x. Based on fixed-point
- *         math library, it provides 1E-12 precision with 40 fractional bits.
- *         Originally from https://github.com/NovakDistributed/macroverse.
- */
+/// @title Atan2
+/// @notice A library for calculating the arctangent of a fraction y / x. Based on fixed-point
+///         math library, it provides 1E-12 precision with 40 fractional bits.
+///         Originally from https://github.com/NovakDistributed/macroverse.
 library Atan2 {
-    /**
-     * @notice The value of pi/2 in radians, represented as a fixed-point number.
-     */
+    /// @notice The value of pi/2 in radians, represented as a fixed-point number.
     uint256 internal constant REAL_HALF_PI = 1727108826179;
 
-    /**
-     * @notice Calculate atan(y / x).
-     * @dev Uses the Chebyshev polynomial approach to approximate arctan(x) where x is [0, 1].
-     * @dev 0.999974x-0.332568x^3+0.193235x^5-0.115729x^7+0.0519505x^9-0.0114658x^11
-     *
-     * @param real_y The numerator of the fraction y / x.
-     * @param real_x The denominator of the fraction y / x.
-     *
-     * @return result The angle in radians of the fraction y / x.
-     */
+    /// @notice Calculate atan(y / x).
+    /// @dev Uses the Chebyshev polynomial approach to approximate arctan(x) where x is [0, 1].
+    /// @dev 0.999974x-0.332568x^3+0.193235x^5-0.115729x^7+0.0519505x^9-0.0114658x^11
+    /// @param real_y The numerator of the fraction y / x.
+    /// @param real_x The denominator of the fraction y / x.
+    /// @return result The angle in radians of the fraction y / x.
     function atan2(uint256 real_y, uint256 real_x) internal pure returns (uint256 result) {
         assembly {
             let frac

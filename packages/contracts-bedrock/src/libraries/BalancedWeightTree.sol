@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-/**
- * @title BalancedWeightTree
- * @notice A self-balancing tree (balancing the weights) holds the keys and their weights and the
- *         weight sum of each child. A random integer smaller than the weight sum is taken and the
- *         tree is traversed to find the matching key.
- *         See https://github.com/yasharpm/Solidity-Weighted-Random-List.
- */
+/// @title BalancedWeightTree
+/// @notice A self-balancing tree (balancing the weights) holds the keys and their weights and the
+///         weight sum of each child. A random integer smaller than the weight sum is taken and the
+///         tree is traversed to find the matching key.
+///         See https://github.com/yasharpm/Solidity-Weighted-Random-List.
 library BalancedWeightTree {
-    /**
-     * @notice Struct representing a node that constructs the tree.
-     *
-     * @custom:field addr        The address that owns the node.
-     * @custom:field parent      The index of parent node.
-     * @custom:field leftChild   The index of left child node.
-     * @custom:field rightChild  The index of right child node.
-     * @custom:field isLeftChild If the node is left child node of its parent node.
-     * @custom:field weight      The weight of the node.
-     * @custom:field weightSum   The weight sum of the node and its child nodes.
-     */
+    /// @notice Struct representing a node that constructs the tree.
+    /// @custom:field addr        The address that owns the node.
+    /// @custom:field parent      The index of parent node.
+    /// @custom:field leftChild   The index of left child node.
+    /// @custom:field rightChild  The index of right child node.
+    /// @custom:field isLeftChild If the node is left child node of its parent node.
+    /// @custom:field weight      The weight of the node.
+    /// @custom:field weightSum   The weight sum of the node and its child nodes.
     struct Node {
         address addr;
         uint32 parent;
@@ -30,16 +25,13 @@ library BalancedWeightTree {
         uint120 weightSum;
     }
 
-    /**
-     * @notice Struct representing a tree.
-     *
-     * @custom:field counter A counter used to assign a unique index to each node. The node index
-     *                       starts with 1 and counter only increments.
-     * @custom:field removed The cumulative number of removed nodes.
-     * @custom:field root    The index of root node.
-     * @custom:field nodes   A mapping of node index to node struct.
-     * @custom:field nodeMap A mapping of owner address to node index.
-     */
+    /// @notice Struct representing a tree.
+    /// @custom:field counter A counter used to assign a unique index to each node. The node index
+    ///                       starts with 1 and counter only increments.
+    /// @custom:field removed The cumulative number of removed nodes.
+    /// @custom:field root    The index of root node.
+    /// @custom:field nodes   A mapping of node index to node struct.
+    /// @custom:field nodeMap A mapping of owner address to node index.
     struct Tree {
         uint32 counter;
         uint32 removed;
@@ -48,13 +40,10 @@ library BalancedWeightTree {
         mapping(address => uint32) nodeMap;
     }
 
-    /**
-     * @notice Inserts new node with the specified address and weight inside the tree.
-     *
-     * @param _tree   The tree to insert the new node.
-     * @param _addr   The address that owns the new node.
-     * @param _weight The weight of the new node.
-     */
+    /// @notice Inserts new node with the specified address and weight inside the tree.
+    /// @param _tree   The tree to insert the new node.
+    /// @param _addr   The address that owns the new node.
+    /// @param _weight The weight of the new node.
     function insert(Tree storage _tree, address _addr, uint120 _weight) internal {
         require(_addr != address(0), "BalancedWeightTree: zero address not allowed");
         require(_tree.nodeMap[_addr] == 0, "BalancedWeightTree: node already existing");
@@ -113,16 +102,12 @@ library BalancedWeightTree {
         }
     }
 
-    /**
-     * @notice Updates the weight of the node with the specified address. Returns true if the weight
-     *         is updated, false if the node with specified address doesn't exist.
-     *
-     * @param _tree   The tree that includes the node to update.
-     * @param _addr   The address that owns the node to update.
-     * @param _weight The new weight to be assigned.
-     *
-     * @return If the weight is updated.
-     */
+    /// @notice Updates the weight of the node with the specified address. Returns true if the weight
+    ///         is updated, false if the node with specified address doesn't exist.
+    /// @param _tree   The tree that includes the node to update.
+    /// @param _addr   The address that owns the node to update.
+    /// @param _weight The new weight to be assigned.
+    /// @return If the weight is updated.
     function update(Tree storage _tree, address _addr, uint120 _weight) internal returns (bool) {
         uint32 index = _tree.nodeMap[_addr];
 
@@ -163,15 +148,11 @@ library BalancedWeightTree {
         return true;
     }
 
-    /**
-     * @notice Removes the node with specified address from the tree. Returns true is the node is
-     *         removed, false if it doesn't exist in the tree.
-     *
-     * @param _tree The tree that includes the node to remove.
-     * @param _addr The address that owns the node to remove.
-     *
-     * @return If the node is removed.
-     */
+    /// @notice Removes the node with specified address from the tree. Returns true is the node is
+    ///         removed, false if it doesn't exist in the tree.
+    /// @param _tree The tree that includes the node to remove.
+    /// @param _addr The address that owns the node to remove.
+    /// @return If the node is removed.
     function remove(Tree storage _tree, address _addr) internal returns (bool) {
         uint32 index = _tree.nodeMap[_addr];
 
@@ -199,16 +180,13 @@ library BalancedWeightTree {
         return true;
     }
 
-    /**
-     * @notice Performs a weighted selection among the stored nodes. Returns the address of the
-     *         selected node. If _weight is equal or greater than the weight sum of the tree, it
-     *         returns zero address.
-     *
-     * @param _tree   The tree that includes the nodes to select.
-     * @param _weight The random weight to be used for selection.
-     *
-     * @return The address of the selected node.
-     */
+    /// @notice Performs a weighted selection among the stored nodes. Returns the address of the
+    ///         selected node. If _weight is equal or greater than the weight sum of the tree, it
+    ///         returns zero address.
+    ///
+    /// @param _tree   The tree that includes the nodes to select.
+    /// @param _weight The random weight to be used for selection.
+    /// @return The address of the selected node.
     function select(Tree storage _tree, uint120 _weight) internal view returns (address) {
         uint32 index = _tree.root;
         while (true) {
@@ -239,14 +217,11 @@ library BalancedWeightTree {
         return address(0);
     }
 
-    /**
-     * @notice Promotes the node with higher weight to higher level of the tree. It is because to
-     *         reduce the average number of traverses required since these nodes are more likely to
-     *         be randomly selected.
-     *
-     * @param _tree  The tree that includes the node to promote.
-     * @param _index The initial index of the target node to promote.
-     */
+    /// @notice Promotes the node with higher weight to higher level of the tree. It is because to
+    ///         reduce the average number of traverses required since these nodes are more likely to
+    ///         be randomly selected.
+    /// @param _tree  The tree that includes the node to promote.
+    /// @param _index The initial index of the target node to promote.
     function _promote(Tree storage _tree, uint32 _index) private {
         Node storage node = _tree.nodes[_index];
         Node storage parentNode = _tree.nodes[node.parent];
@@ -274,14 +249,11 @@ library BalancedWeightTree {
         }
     }
 
-    /**
-     * @notice Demotes the node with lower weight to lower level of the tree. It is because to
-     *         reduce the average number of traverses required since these nodes are less likely to
-     *         be randomly selected.
-     *
-     * @param _tree  The tree that includes the node to demote.
-     * @param _index The initial index of the target node to demote.
-     */
+    /// @notice Demotes the node with lower weight to lower level of the tree. It is because to
+    ///         reduce the average number of traverses required since these nodes are less likely to
+    ///         be randomly selected.
+    /// @param _tree  The tree that includes the node to demote.
+    /// @param _index The initial index of the target node to demote.
     function _demote(Tree storage _tree, uint32 _index) private {
         while (true) {
             Node storage node = _tree.nodes[_index];
@@ -336,13 +308,10 @@ library BalancedWeightTree {
         }
     }
 
-    /**
-     * @notice When removing a node, pulls up the remaining nodes with higher weight to higher level
-     *         of the tree.
-     *
-     * @param _tree  The tree that includes the node to remove.
-     * @param _index The initial index of the target node to remove.
-     */
+    /// @notice When removing a node, pulls up the remaining nodes with higher weight to higher level
+    ///         of the tree.
+    /// @param _tree  The tree that includes the node to remove.
+    /// @param _index The initial index of the target node to remove.
     function _pullUp(Tree storage _tree, uint32 _index) private {
         while (true) {
             Node storage node = _tree.nodes[_index];

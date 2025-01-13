@@ -15,81 +15,54 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
-/**
- * @title AssetManager
- * @notice AssetManager is a contract that handles (un)delegations of KRO and KGH, and the
- *         distribution of rewards to the delegators and the validator.
- */
+/// custom:proxied
+/// @title AssetManager
+/// @notice AssetManager is a contract that handles (un)delegations of KRO and KGH, and the
+///         distribution of rewards to the delegators and the validator.
 contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
     using SafeERC20 for IERC20;
     using Uint128Math for uint128;
 
-    /**
-     * @notice The numerator of the tax.
-     */
+    /// @notice The numerator of the tax.
     uint128 public constant TAX_NUMERATOR = 20;
 
-    /**
-     * @notice The denominator of the tax.
-     */
+    /// @notice The denominator of the tax.
     uint128 public constant TAX_DENOMINATOR = 100;
 
-    /**
-     * @notice Decimals offset for the KRO shares.
-     */
+    /// @notice Decimals offset for the KRO shares.
     uint128 public constant DECIMAL_OFFSET = 10 ** 6;
 
-    /**
-     * @notice Address of the KRO token contract.
-     */
+    /// @notice Address of the KRO token contract.
     IERC20 public immutable ASSET_TOKEN;
 
-    /**
-     * @notice Address of the KGH token contract.
-     */
+    /// @notice Address of the KGH token contract.
     IERC721 public immutable KGH;
 
-    /**
-     * @notice The address of the SecurityCouncil contract. Can be updated via upgrade.
-     */
+    /// @notice The address of the SecurityCouncil contract. Can be updated via upgrade.
     address public immutable SECURITY_COUNCIL;
 
-    /**
-     * @notice The address of Validator Reward Vault. Can be updated via upgrade.
-     */
+    /// @notice The address of Validator Reward Vault. Can be updated via upgrade.
     address public immutable VALIDATOR_REWARD_VAULT;
 
-    /**
-     * @notice Address of ValidatorManager contract. Can be updated via upgrade.
-     */
+    /// @notice Address of ValidatorManager contract. Can be updated via upgrade.
     IValidatorManager public immutable VALIDATOR_MANAGER;
 
-    /**
-     * @notice Minimum delegation period. Can be updated via upgrade.
-     */
+    /// @notice Minimum delegation period. Can be updated via upgrade.
     uint128 public immutable MIN_DELEGATION_PERIOD;
 
-    /**
-     * @notice The amount to bond.
-     */
+    /// @notice The amount to bond.
     uint128 public immutable BOND_AMOUNT;
 
-    /**
-     * @notice A mapping of validator address to the vault.
-     */
+    /// @notice A mapping of validator address to the vault.
     mapping(address => Vault) internal _vaults;
 
-    /**
-     * @notice Modifier to check if the caller is the ValidatorManager contract.
-     */
+    /// @notice Modifier to check if the caller is the ValidatorManager contract.
     modifier onlyValidatorManager() {
         if (msg.sender != address(VALIDATOR_MANAGER)) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice Modifier to check if the validator is registered and not in jail.
-     */
+    /// @notice Modifier to check if the validator is registered and not in jail.
     modifier isRegistered(address validator) {
         if (
             VALIDATOR_MANAGER.getStatus(validator) < IValidatorManager.ValidatorStatus.REGISTERED
@@ -98,31 +71,24 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         _;
     }
 
-    /**
-     * @notice Modifier to check if the caller is the withdraw account of the validator.
-     */
+    /// @notice Modifier to check if the caller is the withdraw account of the validator.
     modifier onlyWithdrawAccount(address validator) {
         if (msg.sender != _vaults[validator].withdrawAccount) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice Semantic version.
-     * @custom:semver 1.0.0
-     */
+    /// @notice Semantic version.
+    /// @custom:semver 1.0.0
     string public constant version = "1.0.0";
 
-    /**
-     * @notice Constructs the AssetManager contract.
-     *
-     * @param _assetToken           Address of the KRO token.
-     * @param _kgh                  Address of the KGH token.
-     * @param _securityCouncil      Address of the SecurityCouncil contract.
-     * @param _validatorRewardVault Address of the Validator Reward Vault.
-     * @param _validatorManager     Address of the ValidatorManager contract.
-     * @param _minDelegationPeriod  Minimum delegation period.
-     * @param _bondAmount           Amount to bond.
-     */
+    /// @notice Constructs the AssetManager contract.
+    /// @param _assetToken           Address of the KRO token.
+    /// @param _kgh                  Address of the KGH token.
+    /// @param _securityCouncil      Address of the SecurityCouncil contract.
+    /// @param _validatorRewardVault Address of the Validator Reward Vault.
+    /// @param _validatorManager     Address of the ValidatorManager contract.
+    /// @param _minDelegationPeriod  Minimum delegation period.
+    /// @param _bondAmount           Amount to bond.
     constructor(
         IERC20 _assetToken,
         IERC721 _kgh,
@@ -141,65 +107,47 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         BOND_AMOUNT = _bondAmount;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function getKroTotalShareBalance(address validator, address delegator) external view returns (uint128) {
         return _vaults[validator].kroDelegators[delegator].shares;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function getKroAssets(address validator, address delegator) external view returns (uint128) {
         return _convertToKroAssets(validator, _vaults[validator].kroDelegators[delegator].shares);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function getKghNum(address validator, address delegator) external view returns (uint128) {
         return _vaults[validator].kghDelegators[delegator].kghNum;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function previewDelegate(address validator, uint128 assets) external view returns (uint128) {
         return _convertToKroShares(validator, assets);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function previewUndelegate(address validator, uint128 shares) external view returns (uint128) {
         return _convertToKroAssets(validator, shares);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function canUndelegateKroAt(address validator, address delegator) public view returns (uint128) {
         return _vaults[validator].kroDelegators[delegator].lastDelegatedAt + MIN_DELEGATION_PERIOD;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function canUndelegateKghAt(address validator, address delegator, uint256 tokenId) public view returns (uint128) {
         return _vaults[validator].kghDelegators[delegator].delegatedAt[tokenId] + MIN_DELEGATION_PERIOD;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function canWithdrawAt(address validator) public view returns (uint128) {
         return _vaults[validator].lastDepositedAt + MIN_DELEGATION_PERIOD;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function getKghReward(address validator, address delegator) external view returns (uint128) {
         Vault storage vault = _vaults[validator];
         KghDelegator storage kghDelegator = vault.kghDelegators[delegator];
@@ -210,68 +158,49 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return totalBoostedReward;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function getWithdrawAccount(address validator) external view returns (address) {
         return _vaults[validator].withdrawAccount;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function totalKroAssets(address validator) public view returns (uint128) {
         return _vaults[validator].asset.totalKro;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function totalKghNum(address validator) external view returns (uint128) {
         return _vaults[validator].asset.totalKgh;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function totalValidatorKro(address validator) external view returns (uint128) {
         return _vaults[validator].asset.validatorKro;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function totalValidatorKroBonded(address validator) external view returns (uint128) {
         return _vaults[validator].asset.validatorKroBonded;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function totalValidatorKroNotBonded(address validator) external view returns (uint128) {
         return _vaults[validator].asset.validatorKro - _vaults[validator].asset.validatorKroBonded;
     }
 
-    /**
-     * @notice Returns the reflective weight of given validator.
-     *
-     * @param validator Address of the validator.
-     *
-     * @return The reflective weight of given validator.
-     */
+    /// @notice Returns the reflective weight of given validator.
+    /// @param validator Address of the validator.
+    /// @return The reflective weight of given validator.
     function reflectiveWeight(address validator) external view returns (uint128) {
         return _vaults[validator].asset.totalKro + _vaults[validator].asset.validatorKro;
     }
 
-    /**
-     * @notice Deposit KRO to register as a validator. This function is only called by the
-     *         ValidatorManager contract.
-     *
-     * @param validator       Address of the validator.
-     * @param assets          The amount of KRO to deposit.
-     * @param withdrawAccount An account where assets can be withdrawn to. Only this account can
-     *                        withdraw the assets.
-     */
+    /// @notice Deposit KRO to register as a validator. This function is only called by the
+    ///         ValidatorManager contract.
+    /// @param validator       Address of the validator.
+    /// @param assets          The amount of KRO to deposit.
+    /// @param withdrawAccount An account where assets can be withdrawn to. Only this account can
+    ///                        withdraw the assets.
     function depositToRegister(
         address validator,
         uint128 assets,
@@ -287,9 +216,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit Deposited(validator, assets);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function deposit(uint128 assets) external {
         if (assets == 0) revert NotAllowedZeroInput();
         if (VALIDATOR_MANAGER.getStatus(msg.sender) == IValidatorManager.ValidatorStatus.NONE) {
@@ -302,9 +229,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         VALIDATOR_MANAGER.tryActivateValidator(msg.sender);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function withdraw(address validator, uint128 assets) external onlyWithdrawAccount(validator) {
         if (assets == 0) revert NotAllowedZeroInput();
         if (canWithdrawAt(validator) > block.timestamp) {
@@ -323,9 +248,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit Withdrawn(validator, assets);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function delegate(address validator, uint128 assets) external isRegistered(validator) returns (uint128) {
         if (assets == 0) revert NotAllowedZeroInput();
 
@@ -338,9 +261,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return shares;
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function delegateKgh(address validator, uint256 tokenId) external isRegistered(validator) {
         // claim boosted reward
         uint128 boostedReward = _claimBoostedReward(validator, msg.sender);
@@ -355,9 +276,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KghDelegated(validator, msg.sender, tokenId);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function delegateKghBatch(address validator, uint256[] calldata tokenIds) external isRegistered(validator) {
         if (tokenIds.length == 0) revert NotAllowedZeroInput();
 
@@ -383,9 +302,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KghBatchDelegated(validator, msg.sender, tokenIds);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function undelegate(address validator, uint128 assets) external {
         if (assets == 0) revert NotAllowedZeroInput();
 
@@ -406,9 +323,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KroUndelegated(validator, msg.sender, assets, shares);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function undelegateKgh(address validator, uint256 tokenId) external {
         KghDelegator storage kghDelegator = _vaults[validator].kghDelegators[msg.sender];
 
@@ -434,9 +349,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KghUndelegated(validator, msg.sender, tokenId, boostedReward);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function undelegateKghBatch(address validator, uint256[] calldata tokenIds) external {
         if (tokenIds.length == 0) revert NotAllowedZeroInput();
 
@@ -478,9 +391,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KghBatchUndelegated(validator, msg.sender, tokenIds, boostedReward);
     }
 
-    /**
-     * @inheritdoc IAssetManager
-     */
+    /// @inheritdoc IAssetManager
     function claimKghReward(address validator) external {
         uint128 boostedReward = _claimBoostedReward(validator, msg.sender);
         if (boostedReward == 0) revert InsufficientAsset();
@@ -490,12 +401,9 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit KghRewardClaimed(validator, msg.sender, boostedReward);
     }
 
-    /**
-     * @notice Bond KRO from validator KRO during output submission or challenge creation. This
-     *         function is only called by the ValidatorManager contract.
-     *
-     * @param validator Address of the validator.
-     */
+    /// @notice Bond KRO from validator KRO during output submission or challenge creation. This
+    ///         function is only called by the ValidatorManager contract.
+    /// @param validator Address of the validator.
     function bondValidatorKro(address validator) external onlyValidatorManager {
         Asset storage asset = _vaults[validator].asset;
         uint128 remainder = asset.validatorKro - asset.validatorKroBonded;
@@ -508,12 +416,9 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit ValidatorKroBonded(validator, BOND_AMOUNT, remainder - BOND_AMOUNT);
     }
 
-    /**
-     * @notice Unbond KRO from validator KRO during output finalization or challenge slashing. This
-     *         function is only called by the ValidatorManager contract.
-     *
-     * @param validator Address of the validator.
-     */
+    /// @notice Unbond KRO from validator KRO during output finalization or challenge slashing. This
+    ///         function is only called by the ValidatorManager contract.
+    /// @param validator Address of the validator.
     function unbondValidatorKro(address validator) external onlyValidatorManager {
         Asset storage asset = _vaults[validator].asset;
 
@@ -524,15 +429,12 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         emit ValidatorKroUnbonded(validator, BOND_AMOUNT, asset.validatorKro - asset.validatorKroBonded);
     }
 
-    /**
-     * @notice Update the vault of validator with the distributed reward. This function is only
-     *         called by the ValidatorManager contract.
-     *
-     * @param validator       Address of the validator.
-     * @param baseReward      The base reward to distribute.
-     * @param boostedReward   The boosted reward to distribute.
-     * @param validatorReward The validator reward to distribute.
-     */
+    /// @notice Update the vault of validator with the distributed reward. This function is only
+    ///         called by the ValidatorManager contract.
+    /// @param validator       Address of the validator.
+    /// @param baseReward      The base reward to distribute.
+    /// @param boostedReward   The boosted reward to distribute.
+    /// @param validatorReward The validator reward to distribute.
     function increaseBalanceWithReward(
         address validator,
         uint128 baseReward,
@@ -565,16 +467,12 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Update the vault of challenge winner with the challenge reward. This function is only
-     *         called by the ValidatorManager contract.
-     *
-     * @param winner          Address of the challenge winner.
-     * @param challengeReward The challenge reward to be added to the winner's asset after excluding
-     *                        tax.
-     *
-     * @return The challenge reward added to winner's asset.
-     */
+    /// @notice Update the vault of challenge winner with the challenge reward. This function is only
+    ///         called by the ValidatorManager contract.
+    /// @param winner          Address of the challenge winner.
+    /// @param challengeReward The challenge reward to be added to the winner's asset after excluding
+    ///                        tax.
+    /// @return The challenge reward added to winner's asset.
     function increaseBalanceWithChallenge(
         address winner,
         uint128 challengeReward
@@ -602,14 +500,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return challengeReward;
     }
 
-    /**
-     * @notice Update the vault of challenge loser with the challenge reward. This function is only
-     *         called by the ValidatorManager contract.
-     *
-     * @param loser Address of the challenge loser.
-     *
-     * @return The challenge reward slashed from loser's asset.
-     */
+    /// @notice Update the vault of challenge loser with the challenge reward. This function is only
+    ///         called by the ValidatorManager contract.
+    /// @param loser Address of the challenge loser.
+    /// @return The challenge reward slashed from loser's asset.
     function decreaseBalanceWithChallenge(address loser) external onlyValidatorManager returns (uint128) {
         Asset storage asset = _vaults[loser].asset;
 
@@ -621,14 +515,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return BOND_AMOUNT;
     }
 
-    /**
-     * @notice Revert the changes of decreaseBalanceWithChallenge. This function is only called by
-     *         the ValidatorManager contract.
-     *
-     * @param loser Address of the challenge original loser.
-     *
-     * @return The challenge reward refunded to loser's asset.
-     */
+    /// @notice Revert the changes of decreaseBalanceWithChallenge. This function is only called by
+    ///         the ValidatorManager contract.
+    /// @param loser Address of the challenge original loser.
+    /// @return The challenge reward refunded to loser's asset.
     function revertDecreaseBalanceWithChallenge(address loser) external onlyValidatorManager returns (uint128) {
         Asset storage asset = _vaults[loser].asset;
 
@@ -640,44 +530,31 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return BOND_AMOUNT;
     }
 
-    /**
-     * @notice Returns the total amount of KRO shares held by the vault.
-     *
-     * @param validator Address of the validator.
-     *
-     * @return The total amount of shares held by the validator vault.
-     */
+    /// @notice Returns the total amount of KRO shares held by the vault.
+    /// @param validator Address of the validator.
+    /// @return The total amount of shares held by the validator vault.
     function _totalKroShares(address validator) internal view returns (uint128) {
         return _vaults[validator].asset.totalKroShares;
     }
 
-    /**
-     * @notice Internal conversion function for KRO (from assets to shares).
-     *
-     * @param validator Address of the validator.
-     * @param assets    The amount of assets to convert to shares.
-     */
+    /// @notice Internal conversion function for KRO (from assets to shares).
+    /// @param validator Address of the validator.
+    /// @param assets    The amount of assets to convert to shares.
     function _convertToKroShares(address validator, uint128 assets) internal view returns (uint128) {
         return assets.mulDiv(_totalKroShares(validator) + DECIMAL_OFFSET, totalKroAssets(validator) + 1);
     }
 
-    /**
-     * @notice Internal conversion function for KRO (from shares to assets).
-     *
-     * @param validator Address of the validator.
-     * @param shares    The amount of shares to convert to assets.
-     */
+    /// @notice Internal conversion function for KRO (from shares to assets).
+    /// @param validator Address of the validator.
+    /// @param shares    The amount of shares to convert to assets.
     function _convertToKroAssets(address validator, uint128 shares) internal view returns (uint128) {
         return shares.mulDiv(totalKroAssets(validator) + 1, _totalKroShares(validator) + DECIMAL_OFFSET);
     }
 
-    /**
-     * @notice Internal function to deposit KRO by the validator.
-     *
-     * @param validator  Address of the validator.
-     * @param assets     The amount of KRO to deposit.
-     * @param updateTree Flag to update the validator tree.
-     */
+    /// @notice Internal function to deposit KRO by the validator.
+    /// @param validator  Address of the validator.
+    /// @param assets     The amount of KRO to deposit.
+    /// @param updateTree Flag to update the validator tree.
     function _deposit(address validator, uint128 assets, bool updateTree) internal {
         Vault storage vault = _vaults[validator];
         ASSET_TOKEN.safeTransferFrom(validator, address(this), assets);
@@ -692,12 +569,9 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to withdraw KRO by the validator.
-     *
-     * @param validator Address of the validator.
-     * @param assets    The amount of KRO to withdraw.
-     */
+    /// @notice Internal function to withdraw KRO by the validator.
+    /// @param validator Address of the validator.
+    /// @param assets    The amount of KRO to withdraw.
     function _withdraw(address validator, uint128 assets) internal {
         Asset storage asset = _vaults[validator].asset;
         if (assets > asset.validatorKro - asset.validatorKroBonded) revert InsufficientAsset();
@@ -707,14 +581,11 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to delegate KRO to the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param assets    The amount of KRO to delegate.
-     * @param shares    The amount of shares to delegate.
-     */
+    /// @notice Internal function to delegate KRO to the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param assets    The amount of KRO to delegate.
+    /// @param shares    The amount of shares to delegate.
     function _delegate(address validator, address delegator, uint128 assets, uint128 shares) internal {
         Vault storage vault = _vaults[validator];
 
@@ -726,13 +597,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to delegate KGH to the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param tokenId   Token Id of the KGH.
-     */
+    /// @notice Internal function to delegate KGH to the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param tokenId   Token Id of the KGH.
     function _delegateKgh(address validator, address delegator, uint256 tokenId) internal {
         Vault storage vault = _vaults[validator];
         KghDelegator storage kghDelegator = vault.kghDelegators[delegator];
@@ -745,13 +613,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to delegate KGHs to the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param kghCount  The number of KGHs to delegate.
-     */
+    /// @notice Internal function to delegate KGHs to the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param kghCount  The number of KGHs to delegate.
     function _delegateKghBatch(address validator, address delegator, uint128 kghCount) internal {
         Vault storage vault = _vaults[validator];
 
@@ -764,14 +629,11 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to undelegate KRO from the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param assets    The amount of KRO to undelegate.
-     * @param shares    The amount of shares to undelegate.
-     */
+    /// @notice Internal function to undelegate KRO from the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param assets    The amount of KRO to undelegate.
+    /// @param shares    The amount of shares to undelegate.
     function _undelegate(address validator, address delegator, uint128 assets, uint128 shares) internal {
         Vault storage vault = _vaults[validator];
 
@@ -782,13 +644,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to undelegate KGH from the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param tokenId   Token Id of the KGH.
-     */
+    /// @notice Internal function to undelegate KGH from the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param tokenId   Token Id of the KGH.
     function _undelegateKgh(address validator, address delegator, uint256 tokenId) internal {
         Vault storage vault = _vaults[validator];
         KghDelegator storage kghDelegator = vault.kghDelegators[delegator];
@@ -803,13 +662,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to undelegate KGHs from the validator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     * @param kghCount  The number of KGH token to undelegate.
-     */
+    /// @notice Internal function to undelegate KGHs from the validator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @param kghCount  The number of KGH token to undelegate.
     function _undelegateKghBatch(address validator, address delegator, uint128 kghCount) internal {
         Vault storage vault = _vaults[validator];
 
@@ -822,14 +678,10 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         }
     }
 
-    /**
-     * @notice Internal function to claim the boosted reward of the delegator.
-     *
-     * @param validator Address of the validator.
-     * @param delegator Address of the delegator.
-     *
-     * @return The amount of the claimed boosted reward.
-     */
+    /// @notice Internal function to claim the boosted reward of the delegator.
+    /// @param validator Address of the validator.
+    /// @param delegator Address of the delegator.
+    /// @return The amount of the claimed boosted reward.
     function _claimBoostedReward(address validator, address delegator) internal returns (uint128) {
         Vault storage vault = _vaults[validator];
         KghDelegator storage kghDelegator = vault.kghDelegators[delegator];
@@ -842,9 +694,7 @@ contract AssetManager is ISemver, IERC721Receiver, IAssetManager {
         return totalBoostedReward;
     }
 
-    /**
-     * @inheritdoc IERC721Receiver
-     */
+    /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address, /* operator */
         address, /* from */

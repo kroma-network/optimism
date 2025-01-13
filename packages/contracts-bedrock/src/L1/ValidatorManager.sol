@@ -19,172 +19,115 @@ import { Uint128Math } from "src/libraries/Uint128Math.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
-/**
- * @custom:proxied
- * @title ValidatorManager
- * @notice The ValidatorManager manages validator set and determines the next validator who can
- *         submit the checkpoint output to L2OutputOracle.
- */
+/// @custom:proxied
+/// @title ValidatorManager
+/// @notice The ValidatorManager manages validator set and determines the next validator who can
+///         submit the checkpoint output to L2OutputOracle.
 contract ValidatorManager is ISemver, IValidatorManager {
     using BalancedWeightTree for BalancedWeightTree.Tree;
     using Uint128Math for uint128;
     using Math for uint256;
 
-    /**
-     * @notice The denominator for the commission rate.
-     */
+    /// @notice The denominator for the commission rate.
     uint128 public constant COMMISSION_RATE_DENOM = 100;
 
-    /**
-     * @notice The numerator for the boosted reward.
-     */
+    /// @notice The numerator for the boosted reward.
     uint128 public constant BOOSTED_REWARD_NUMERATOR = 40;
 
-    /**
-     * @notice The denominator for the boosted reward.
-     */
+    /// @notice The denominator for the boosted reward.
     uint128 public constant BOOSTED_REWARD_DENOM = 100;
 
-    /**
-     * @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
-     */
+    /// @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
     L2OutputOracle public immutable L2_ORACLE;
 
-    /**
-     * @notice The address of AssetManager contract. Can be updated via upgrade.
-     */
+    /// @notice The address of AssetManager contract. Can be updated via upgrade.
     AssetManager public immutable ASSET_MANAGER;
 
-    /**
-     * @notice The address of the trusted validator.
-     */
+    /// @notice The address of the trusted validator.
     address public immutable TRUSTED_VALIDATOR;
 
-    /**
-     * @notice Minimum amount to register as a validator. It should be equal or more than
-     *         ASSET_MANAGER.BOND_AMOUNT.
-     */
+    /// @notice Minimum amount to register as a validator. It should be equal or more than
+    ///         ASSET_MANAGER.BOND_AMOUNT.
     uint128 public immutable MIN_REGISTER_AMOUNT;
 
-    /**
-     * @notice Minimum amount to activate a validator and add it to the validator tree.
-     *         Note that only the active validators can submit outputs.
-     */
+    /// @notice Minimum amount to activate a validator and add it to the validator tree.
+    ///         Note that only the active validators can submit outputs.
     uint128 public immutable MIN_ACTIVATE_AMOUNT;
 
-    /**
-     * @notice The delay to finalize the commission rate change of the validator (in seconds).
-     */
+    /// @notice The delay to finalize the commission rate change of the validator (in seconds).
     uint128 public immutable COMMISSION_CHANGE_DELAY_SECONDS;
 
-    /**
-     * @notice The duration of a submission round for one output (in seconds).
-     *         Note that there are two submission rounds for an output: PRIORITY ROUND and PUBLIC
-     *         ROUND.
-     */
+    /// @notice The duration of a submission round for one output (in seconds).
+    ///         Note that there are two submission rounds for an output: PRIORITY ROUND and PUBLIC
+    ///         ROUND.
     uint128 public immutable ROUND_DURATION_SECONDS;
 
-    /**
-     * @notice The minimum duration to get out of jail in output non-submissions penalty (in seconds).
-     */
+    /// @notice The minimum duration to get out of jail in output non-submissions penalty (in seconds).
     uint128 public immutable SOFT_JAIL_PERIOD_SECONDS;
 
-    /**
-     * @notice The maximum duration to get out of jail in slashing penalty (in seconds).
-     */
+    /// @notice The maximum duration to get out of jail in slashing penalty (in seconds).
     uint128 public immutable HARD_JAIL_PERIOD_SECONDS;
 
-    /**
-     * @notice Maximum allowed number of output non-submissions in priority round before the
-     *         validator goes to jail.
-     */
+    /// @notice Maximum allowed number of output non-submissions in priority round before the
+    ///         validator goes to jail.
     uint128 public immutable JAIL_THRESHOLD;
 
-    /**
-     * @notice The max number of outputs to be finalized at once when distributing rewards.
-     */
+    /// @notice The max number of outputs to be finalized at once when distributing rewards.
     uint128 public immutable MAX_OUTPUT_FINALIZATIONS;
 
-    /**
-     * @notice Amount of base reward for the validator.
-     */
+    /// @notice Amount of base reward for the validator.
     uint128 public immutable BASE_REWARD;
 
-    /**
-     * @notice The first output index after MPT transition, only allowed to be submitted by TRUSTED_VALIDATOR.
-     *         Challenging to this output is also restricted to prevent unintended challenges from
-     *         nodes that haven't upgraded.
-     */
+    /// @notice The first output index after MPT transition, only allowed to be submitted by TRUSTED_VALIDATOR.
+    ///         Challenging to this output is also restricted to prevent unintended challenges from
+    ///         nodes that haven't upgraded.
     uint256 public immutable MPT_FIRST_OUTPUT_INDEX;
 
-    /**
-     * @notice Address of the next validator with priority for submitting output.
-     */
+    /// @notice Address of the next validator with priority for submitting output.
     address internal _nextPriorityValidator;
 
-    /**
-     * @notice Weighted tree to store and calculate the probability to be selected as an output submitter.
-     */
+    /// @notice Weighted tree to store and calculate the probability to be selected as an output submitter.
     BalancedWeightTree.Tree internal _validatorTree;
 
-    /**
-     * @notice A mapping of the validator to the validator information.
-     */
+    /// @notice A mapping of the validator to the validator information.
     mapping(address => Validator) internal _validatorInfo;
 
-    /**
-     * @notice A mapping of the jailed validator to the jail expiration timestamp.
-     */
+    /// @notice A mapping of the jailed validator to the jail expiration timestamp.
     mapping(address => uint128) internal _jail;
 
-    /**
-     * @notice A mapping of output index challenged successfully to pending challenge rewards.
-     */
+    /// @notice A mapping of output index challenged successfully to pending challenge rewards.
     mapping(uint256 => uint128) internal _pendingChallengeReward;
 
-    /**
-     * @notice A modifier that only allows L2OutputOracle contract to call.
-     */
+    /// @notice A modifier that only allows L2OutputOracle contract to call.
     modifier onlyL2OutputOracle() {
         if (msg.sender != address(L2_ORACLE)) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice A modifier that only allows Colosseum contract to call.
-     */
+    /// @notice A modifier that only allows Colosseum contract to call.
     modifier onlyColosseum() {
         if (msg.sender != L2_ORACLE.COLOSSEUM()) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice A modifier that only allows AssetManager contract to call.
-     */
+    /// @notice A modifier that only allows AssetManager contract to call.
     modifier onlyAssetManager() {
         if (msg.sender != address(ASSET_MANAGER)) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice A modifier that only allows TrustedValidator to call.
-     */
+    /// @notice A modifier that only allows TrustedValidator to call.
     modifier onlyTrustedValidator() {
         if (msg.sender != TRUSTED_VALIDATOR) revert NotAllowedCaller();
         _;
     }
 
-    /**
-     * @notice Semantic version.
-     * @custom:semver 1.0.0
-     */
+    /// @notice Semantic version.
+    /// @custom:semver 1.0.0
     string public constant version = "1.0.0";
 
-    /**
-     * @notice Constructs the ValidatorManager contract.
-     *
-     * @param _constructorParams The constructor parameters.
-     */
+    /// @notice Constructs the ValidatorManager contract.
+    /// @param _constructorParams The constructor parameters.
     constructor(ConstructorParams memory _constructorParams) {
         if (_constructorParams._minRegisterAmount > _constructorParams._minActivateAmount) {
             revert InvalidConstructorParams();
@@ -206,9 +149,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         MPT_FIRST_OUTPUT_INDEX = _constructorParams._mptFirstOutputIndex;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function registerValidator(uint128 assets, uint8 commissionRate, address withdrawAccount) external {
         if (msg.sender.code.length > 0 || msg.sender != tx.origin) revert NotAllowedCaller();
         if (getStatus(msg.sender) != ValidatorStatus.NONE) revert ImproperValidatorStatus();
@@ -229,9 +170,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         emit ValidatorRegistered(msg.sender, ready, commissionRate, assets);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function activateValidator() external {
         if (getStatus(msg.sender) != ValidatorStatus.READY || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
@@ -240,18 +179,14 @@ contract ValidatorManager is ISemver, IValidatorManager {
         _activateValidator(msg.sender);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function tryActivateValidator(address validator) external onlyAssetManager {
         if (getStatus(validator) == ValidatorStatus.READY && !inJail(validator)) {
             _activateValidator(validator);
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function afterSubmitL2Output(uint256 outputIndex) external onlyL2OutputOracle {
         _distributeReward();
 
@@ -269,9 +204,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         _updatePriorityValidator();
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function initCommissionChange(uint8 newCommissionRate) external {
         if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
@@ -289,9 +222,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         emit ValidatorCommissionChangeInitiated(msg.sender, oldCommissionRate, newCommissionRate);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function finalizeCommissionChange() external {
         if (getStatus(msg.sender) < ValidatorStatus.REGISTERED || inJail(msg.sender)) {
             revert ImproperValidatorStatus();
@@ -312,9 +243,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         emit ValidatorCommissionChangeFinalized(msg.sender, oldCommissionRate, newCommissionRate);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function tryUnjail() external {
         if (!inJail(msg.sender)) revert ImproperValidatorStatus();
         if (_jail[msg.sender] > block.timestamp) revert NotElapsedJailPeriod();
@@ -329,23 +258,17 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function bondValidatorKro(address validator) external onlyColosseum {
         ASSET_MANAGER.bondValidatorKro(validator);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function unbondValidatorKro(address validator) external onlyColosseum {
         ASSET_MANAGER.unbondValidatorKro(validator);
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function slash(uint256 outputIndex, address winner, address loser) external onlyColosseum {
         uint128 challengeReward = ASSET_MANAGER.decreaseBalanceWithChallenge(loser);
 
@@ -367,9 +290,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function revertSlash(uint256 outputIndex, address loser) external onlyColosseum {
         uint128 challengeReward = ASSET_MANAGER.revertDecreaseBalanceWithChallenge(loser);
         unchecked {
@@ -397,9 +318,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function checkSubmissionEligibility(address validator) external view onlyL2OutputOracle {
         address _nextValidator = nextValidator();
         if (_nextValidator != KromaConstants.VALIDATOR_PUBLIC_ROUND_ADDRESS && validator != _nextValidator) {
@@ -409,53 +328,39 @@ contract ValidatorManager is ISemver, IValidatorManager {
         if (!isActive(validator)) revert ImproperValidatorStatus();
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function checkChallengeEligibility(uint256 outputIndex) external view onlyColosseum {
         if (MPT_FIRST_OUTPUT_INDEX == outputIndex) {
             revert MptFirstOutputRestricted();
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function getCommissionRate(address validator) external view returns (uint8) {
         return _validatorInfo[validator].commissionRate;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function getPendingCommissionRate(address validator) external view returns (uint8) {
         return _validatorInfo[validator].pendingCommissionRate;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function activatedValidatorCount() external view returns (uint32) {
         return _validatorTree.counter - _validatorTree.removed;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function getWeight(address validator) external view returns (uint120) {
         return _validatorTree.nodes[_validatorTree.nodeMap[validator]].weight;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function jailExpiresAt(address validator) external view returns (uint128) {
         return _jail[validator];
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function updateValidatorTree(address validator, bool tryRemove) public {
         ValidatorStatus status = getStatus(validator);
         if (tryRemove && (status == ValidatorStatus.EXITED || status == ValidatorStatus.INACTIVE)) {
@@ -465,9 +370,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function nextValidator() public view returns (address) {
         if (MPT_FIRST_OUTPUT_INDEX == L2_ORACLE.nextOutputIndex()) {
             return TRUSTED_VALIDATOR;
@@ -489,9 +392,7 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function getStatus(address validator) public view returns (ValidatorStatus) {
         if (!_validatorInfo[validator].isInitiated) {
             return ValidatorStatus.NONE;
@@ -516,59 +417,43 @@ contract ValidatorManager is ISemver, IValidatorManager {
         return ValidatorStatus.ACTIVE;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function inJail(address validator) public view returns (bool) {
         return _jail[validator] != 0;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function isActive(address validator) public view returns (bool) {
         if (getStatus(validator) == ValidatorStatus.ACTIVE) return true;
         return false;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function noSubmissionCount(address validator) public view returns (uint8) {
         return _validatorInfo[validator].noSubmissionCount;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function canFinalizeCommissionChangeAt(address validator) public view returns (uint128) {
         return _validatorInfo[validator].commissionChangeInitiatedAt + COMMISSION_CHANGE_DELAY_SECONDS;
     }
 
-    /**
-     * @inheritdoc IValidatorManager
-     */
+    /// @inheritdoc IValidatorManager
     function activatedValidatorTotalWeight() public view returns (uint120) {
         return _validatorTree.nodes[_validatorTree.root].weightSum;
     }
 
-    /**
-     * @notice Private function to activate a validator and adds the validator to validator tree.
-     *
-     * @param validator Address of the validator.
-     */
+    /// @notice Private function to activate a validator and adds the validator to validator tree.
+    /// @param validator Address of the validator.
     function _activateValidator(address validator) private {
         _validatorTree.insert(validator, uint120(ASSET_MANAGER.reflectiveWeight(validator)));
 
         emit ValidatorActivated(validator, block.timestamp);
     }
 
-    /**
-     * @notice Private function to add output submission rewards to the vaults of finalized output
-     *         submitters.
-     *
-     * @return Whether the reward distribution is done at least once or not.
-     */
+    /// @notice Private function to add output submission rewards to the vaults of finalized output
+    ///         submitters.
+    /// @return Whether the reward distribution is done at least once or not.
     function _distributeReward() private returns (bool) {
         uint256 outputIndex = L2_ORACLE.nextFinalizeOutputIndex();
         uint256 latestOutputIndex = L2_ORACLE.latestOutputIndex();
@@ -614,28 +499,20 @@ contract ValidatorManager is ISemver, IValidatorManager {
         return false;
     }
 
-    /**
-     * @notice Internal function to get the boosted reward with the number of KGH.
-     *
-     * @param validator Address of the validator.
-     *
-     * @return The boosted reward with the number of KGH.
-     */
+    /// @notice Internal function to get the boosted reward with the number of KGH.
+    /// @param validator Address of the validator.
+    /// @return The boosted reward with the number of KGH.
     function _getBoostedReward(address validator) internal view returns (uint128) {
         uint128 numKgh = ASSET_MANAGER.totalKghNum(validator);
         uint128 coefficient = BASE_REWARD.mulDiv(BOOSTED_REWARD_NUMERATOR, BOOSTED_REWARD_DENOM);
         return uint128(Atan2.atan2(numKgh, 100).mulDiv(coefficient, 1 << 40));
     }
 
-    /**
-     * @notice Internal function to calculate the reward of the validator when distributing reward.
-     *
-     * @param validator Address of the validator.
-     *
-     * @return The amount of base reward, excluding base reward for the validator.
-     * @return The amount of boosted reward.
-     * @return The amount of reward from commission and base reward for the validator.
-     */
+    /// @notice Internal function to calculate the reward of the validator when distributing reward.
+    /// @param validator Address of the validator.
+    /// @return The amount of base reward, excluding base reward for the validator.
+    /// @return The amount of boosted reward.
+    /// @return The amount of reward from commission and base reward for the validator.
     function _calculateReward(address validator) internal view returns (uint128, uint128, uint128) {
         if (validator == ASSET_MANAGER.SECURITY_COUNCIL()) {
             return (0, 0, BASE_REWARD);
@@ -662,11 +539,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
         return (baseReward, boostedReward, validatorReward);
     }
 
-    /**
-     * @notice Updates next priority validator address. Validators with more delegation tokens have
-     *         a higher probability of being selected. The random weight selection is based on the
-     *         last finalized output root.
-     */
+    /// @notice Updates next priority validator address. Validators with more delegation tokens have
+    ///         a higher probability of being selected. The random weight selection is based on the
+    ///         last finalized output root.
     function _updatePriorityValidator() private {
         uint120 weightSum = activatedValidatorTotalWeight();
         uint256 nextFinalizeOutputIndex = L2_ORACLE.nextFinalizeOutputIndex();
@@ -694,11 +569,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @notice Attempts to jail a validator who was selected as a priority validator for this
-     *         submission round but did not submit the output. The period to get out of jail is
-     *         SOFT_JAIL_PERIOD_SECONDS.
-     */
+    /// @notice Attempts to jail a validator who was selected as a priority validator for this
+    ///         submission round but did not submit the output. The period to get out of jail is
+    ///         SOFT_JAIL_PERIOD_SECONDS.
     function _tryJail() private {
         if (_nextPriorityValidator == address(0)) return;
 
@@ -711,12 +584,9 @@ contract ValidatorManager is ISemver, IValidatorManager {
         }
     }
 
-    /**
-     * @notice Send the given validator to the jail and remove from the validator tree.
-     *
-     * @param validator Address of the validator.
-     * @param isSoft    Whether the jail is soft or hard.
-     */
+    /// @notice Send the given validator to the jail and remove from the validator tree.
+    /// @param validator Address of the validator.
+    /// @param isSoft    Whether the jail is soft or hard.
     function _sendToJail(address validator, bool isSoft) private {
         uint128 jailSeconds = isSoft ? SOFT_JAIL_PERIOD_SECONDS : HARD_JAIL_PERIOD_SECONDS;
         uint128 expiresAt = _jail[validator].max(uint128(block.timestamp)) + jailSeconds;
@@ -727,11 +597,8 @@ contract ValidatorManager is ISemver, IValidatorManager {
         if (_validatorTree.remove(validator)) emit ValidatorStopped(validator, block.timestamp);
     }
 
-    /**
-     * @notice Attempts to reset non-submission count of a validator.
-     *
-     * @param validator Address of the validator.
-     */
+    /// @notice Attempts to reset non-submission count of a validator.
+    /// @param validator Address of the validator.
     function _resetNoSubmissionCount(address validator) private {
         if (noSubmissionCount(validator) > 0) {
             _validatorInfo[validator].noSubmissionCount = 0;

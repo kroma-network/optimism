@@ -20,141 +20,96 @@ import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 
-/**
- * @custom:proxied
- * @title KromaPortal
- * @notice The KromaPortal is a low-level contract responsible for passing messages between L1
- *         and L2. Messages sent directly to the KromaPortal have no form of replayability.
- *         Users are encouraged to use the L1CrossDomainMessenger for a higher-level interface.
- */
+/// @custom:proxied
+/// @title KromaPortal
+/// @notice The KromaPortal is a low-level contract responsible for passing messages between L1
+///         and L2. Messages sent directly to the KromaPortal have no form of replayability.
+///         Users are encouraged to use the L1CrossDomainMessenger for a higher-level interface.
 contract KromaPortal is Initializable, ResourceMetering, ISemver {
-    /**
-     * @notice Represents a proven withdrawal.
-     *
-     * @custom:field outputRoot    Root of the L2 output this was proven against.
-     * @custom:field timestamp     Timestamp at whcih the withdrawal was proven.
-     * @custom:field l2OutputIndex Index of the output this was proven against.
-     */
+    /// @notice Represents a proven withdrawal.
+    /// @custom:field outputRoot    Root of the L2 output this was proven against.
+    /// @custom:field timestamp     Timestamp at whcih the withdrawal was proven.
+    /// @custom:field l2OutputIndex Index of the output this was proven against.
     struct ProvenWithdrawal {
         bytes32 outputRoot;
         uint128 timestamp;
         uint128 l2OutputIndex;
     }
 
-    /**
-     * @notice Version of the deposit event.
-     */
+    /// @notice Version of the deposit event.
     uint256 internal constant DEPOSIT_VERSION = 0;
 
-    /**
-     * @notice The L2 gas limit set when eth is deposited using the receive() function.
-     */
+    /// @notice The L2 gas limit set when eth is deposited using the receive() function.
     uint64 internal constant RECEIVE_DEFAULT_GAS_LIMIT = 100_000;
 
-    /**
-     * @notice Address of the L2OutputOracle contract.
-     */
+    /// @notice Address of the L2OutputOracle contract.
     L2OutputOracle public immutable L2_ORACLE;
 
-    /**
-     * /**
-     * @notice Address of the SystemConfig contract.
-     */
+    /// @notice Address of the SystemConfig contract.
     SystemConfig public immutable SYSTEM_CONFIG;
 
-    /**
-     * @notice MultiSig wallet address that has the ability to pause and unpause withdrawals.
-     */
+    /// @notice MultiSig wallet address that has the ability to pause and unpause withdrawals.
     address public immutable GUARDIAN;
 
-    /**
-     * @notice Address of the L2 account which initiated a withdrawal in this transaction.
-     *         If the of this variable is the default L2 sender address, then we are NOT inside of
-     *         a call to finalizeWithdrawalTransaction.
-     */
+    /// @notice Address of the L2 account which initiated a withdrawal in this transaction.
+    ///         If the of this variable is the default L2 sender address, then we are NOT inside of
+    ///         a call to finalizeWithdrawalTransaction.
     address public l2Sender;
 
-    /**
-     * @notice A list of withdrawal hashes which have been successfully finalized.
-     */
+    /// @notice A list of withdrawal hashes which have been successfully finalized.
     mapping(bytes32 => bool) public finalizedWithdrawals;
 
-    /**
-     * @notice A mapping of withdrawal hashes to `ProvenWithdrawal` data.
-     */
+    /// @notice A mapping of withdrawal hashes to `ProvenWithdrawal` data.
     mapping(bytes32 => ProvenWithdrawal) public provenWithdrawals;
 
-    /**
-     * @notice Determines if cross domain messaging is paused. When set to true,
-     *         withdrawals are paused. This may be removed in the future.
-     */
+    /// @notice Determines if cross domain messaging is paused. When set to true,
+    ///         withdrawals are paused. This may be removed in the future.
     bool public paused;
 
-    /**
-     * @notice Emitted when a transaction is deposited from L1 to L2.
-     *         The parameters of this event are read by the rollup node and used to derive deposit
-     *         transactions on L2.
-     *
-     * @param from       Address that triggered the deposit transaction.
-     * @param to         Address that the deposit transaction is directed to.
-     * @param version    Version of this deposit transaction event.
-     * @param opaqueData ABI encoded deposit data to be parsed off-chain.
-     */
+    /// @notice Emitted when a transaction is deposited from L1 to L2.
+    ///         The parameters of this event are read by the rollup node and used to derive deposit
+    ///         transactions on L2.
+    ///
+    /// @param from       Address that triggered the deposit transaction.
+    /// @param to         Address that the deposit transaction is directed to.
+    /// @param version    Version of this deposit transaction event.
+    /// @param opaqueData ABI encoded deposit data to be parsed off-chain.
     event TransactionDeposited(address indexed from, address indexed to, uint256 indexed version, bytes opaqueData);
 
-    /**
-     * @notice Emitted when a withdrawal transaction is proven.
-     *
-     * @param withdrawalHash Hash of the withdrawal transaction.
-     * @param from           Address that triggered the withdrawal transaction.
-     * @param to             Address that the withdrawal transaction is directed to.
-     */
+    /// @notice Emitted when a withdrawal transaction is proven.
+    /// @param withdrawalHash Hash of the withdrawal transaction.
+    /// @param from           Address that triggered the withdrawal transaction.
+    /// @param to             Address that the withdrawal transaction is directed to.
     event WithdrawalProven(bytes32 indexed withdrawalHash, address indexed from, address indexed to);
 
-    /**
-     * @notice Emitted when a withdrawal transaction is finalized.
-     *
-     * @param withdrawalHash Hash of the withdrawal transaction.
-     * @param success        Whether the withdrawal transaction was successful.
-     */
+    /// @notice Emitted when a withdrawal transaction is finalized.
+    /// @param withdrawalHash Hash of the withdrawal transaction.
+    /// @param success        Whether the withdrawal transaction was successful.
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
 
-    /**
-     * @notice Emitted when the pause is triggered.
-     *
-     * @param account Address of the account triggering the pause.
-     */
+    /// @notice Emitted when the pause is triggered.
+    /// @param account Address of the account triggering the pause.
     event Paused(address account);
 
-    /**
-     * @notice Emitted when the pause is lifted.
-     *
-     * @param account Address of the account triggering the unpause.
-     */
+    /// @notice Emitted when the pause is lifted.
+    /// @param account Address of the account triggering the unpause.
     event Unpaused(address account);
 
-    /**
-     * @notice Reverts when paused.
-     */
+    /// @notice Reverts when paused.
     modifier whenNotPaused() {
         require(paused == false, "KromaPortal: paused");
         _;
     }
 
-    /**
-     * @notice Semantic version.
-     * @custom:semver 2.0.0
-     */
+    /// @notice Semantic version.
+    /// @custom:semver 2.0.0
     string public constant version = "2.0.0";
 
-    /**
-     * @notice Constructs the KromaPortal contract.
-     *
-     * @param _l2Oracle      Address of the L2OutputOracle contract.
-     * @param _guardian      MultiSig wallet address that can pause deposits and withdrawals.
-     * @param _paused        Sets the contract's pausability state.
-     * @param _config        Address of the SystemConfig contract.
-     */
+    /// @notice Constructs the KromaPortal contract.
+    /// @param _l2Oracle      Address of the L2OutputOracle contract.
+    /// @param _guardian      MultiSig wallet address that can pause deposits and withdrawals.
+    /// @param _paused        Sets the contract's pausability state.
+    /// @param _config        Address of the SystemConfig contract.
     constructor(L2OutputOracle _l2Oracle, address _guardian, bool _paused, SystemConfig _config) {
         L2_ORACLE = _l2Oracle;
         GUARDIAN = _guardian;
@@ -162,52 +117,40 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         initialize(_paused);
     }
 
-    /**
-     * @notice Initializer.
-     *
-     * @param _paused Sets the contract's pausability state.
-     */
+    /// @notice Initializer.
+    /// @param _paused Sets the contract's pausability state.
     function initialize(bool _paused) public initializer {
         l2Sender = Constants.DEFAULT_L2_SENDER;
         paused = _paused;
         __ResourceMetering_init();
     }
 
-    /**
-     * @notice Pause deposits and withdrawals.
-     */
+    /// @notice Pause deposits and withdrawals.
     function pause() external {
         require(msg.sender == GUARDIAN, "KromaPortal: only guardian can pause");
         paused = true;
         emit Paused(msg.sender);
     }
 
-    /**
-     * @notice Unpause deposits and withdrawals.
-     */
+    /// @notice Unpause deposits and withdrawals.
     function unpause() external {
         require(msg.sender == GUARDIAN, "KromaPortal: only guardian can unpause");
         paused = false;
         emit Unpaused(msg.sender);
     }
 
-    /**
-     * @notice Accepts value so that users can send ETH directly to this contract and have the
-     *         funds be deposited to their address on L2. This is intended as a convenience
-     *         function for EOAs. Contracts should call the depositTransaction() function directly
-     *         otherwise any deposited funds will be lost due to address aliasing.
-     */
+    /// @notice Accepts value so that users can send ETH directly to this contract and have the
+    ///         funds be deposited to their address on L2. This is intended as a convenience
+    ///         function for EOAs. Contracts should call the depositTransaction() function directly
+    ///         otherwise any deposited funds will be lost due to address aliasing.
     receive() external payable {
         depositTransaction(msg.sender, msg.value, RECEIVE_DEFAULT_GAS_LIMIT, false, bytes(""));
     }
 
-    /**
-     * @notice Getter for the resource config.
-     *         Used internally by the ResourceMetering contract.
-     *         The SystemConfig is the source of truth for the resource config.
-     *
-     * @return ResourceMetering ResourceConfig
-     */
+    /// @notice Getter for the resource config.
+    ///         Used internally by the ResourceMetering contract.
+    ///         The SystemConfig is the source of truth for the resource config.
+    /// @return ResourceMetering ResourceConfig
     function _resourceConfig() internal view override returns (ResourceMetering.ResourceConfig memory) {
         IResourceMetering.ResourceConfig memory config = SYSTEM_CONFIG.resourceConfig();
         return ResourceConfig({
@@ -220,14 +163,11 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         });
     }
 
-    /**
-     * @notice Proves a withdrawal transaction.
-     *
-     * @param _tx              Withdrawal transaction to finalize.
-     * @param _l2OutputIndex   L2 output index to prove against.
-     * @param _outputRootProof Inclusion proof of the L2ToL1MessagePasser contract's storage root.
-     * @param _withdrawalProof Inclusion proof of the withdrawal in L2ToL1MessagePasser contract.
-     */
+    /// @notice Proves a withdrawal transaction.
+    /// @param _tx              Withdrawal transaction to finalize.
+    /// @param _l2OutputIndex   L2 output index to prove against.
+    /// @param _outputRootProof Inclusion proof of the L2ToL1MessagePasser contract's storage root.
+    /// @param _withdrawalProof Inclusion proof of the withdrawal in L2ToL1MessagePasser contract.
     function proveWithdrawalTransaction(
         Types.WithdrawalTransaction memory _tx,
         uint256 _l2OutputIndex,
@@ -299,11 +239,8 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         emit WithdrawalProven(withdrawalHash, _tx.sender, _tx.target);
     }
 
-    /**
-     * @notice Finalizes a withdrawal transaction.
-     *
-     * @param _tx Withdrawal transaction to finalize.
-     */
+    /// @notice Finalizes a withdrawal transaction.
+    /// @param _tx Withdrawal transaction to finalize.
     function finalizeWithdrawalTransaction(Types.WithdrawalTransaction memory _tx) external whenNotPaused {
         // Make sure that the l2Sender has not yet been set. The l2Sender is set to a value other
         // than the default value when a withdrawal transaction is being finalized. This check is
@@ -387,18 +324,15 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         }
     }
 
-    /**
-     * @notice Accepts deposits of ETH and data, and emits a TransactionDeposited event for use in
-     *         deriving deposit transactions. Note that if a deposit is made by a contract, its
-     *         address will be aliased when retrieved using `tx.origin` or `msg.sender`. Consider
-     *         using the CrossDomainMessenger contracts for a simpler developer experience.
-     *
-     * @param _to         Target address on L2.
-     * @param _value      ETH value to send to the recipient.
-     * @param _gasLimit   Minimum L2 gas limit (can be greater than or equal to this value).
-     * @param _isCreation Whether or not the transaction is a contract creation.
-     * @param _data       Data to trigger the recipient with.
-     */
+    /// @notice Accepts deposits of ETH and data, and emits a TransactionDeposited event for use in
+    ///         deriving deposit transactions. Note that if a deposit is made by a contract, its
+    ///         address will be aliased when retrieved using `tx.origin` or `msg.sender`. Consider
+    ///         using the CrossDomainMessenger contracts for a simpler developer experience.
+    /// @param _to         Target address on L2.
+    /// @param _value      ETH value to send to the recipient.
+    /// @param _gasLimit   Minimum L2 gas limit (can be greater than or equal to this value).
+    /// @param _isCreation Whether or not the transaction is a contract creation.
+    /// @param _data       Data to trigger the recipient with.
     function depositTransaction(
         address _to,
         uint256 _value,
@@ -435,27 +369,19 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         emit TransactionDeposited(from, _to, DEPOSIT_VERSION, opaqueData);
     }
 
-    /**
-     * @notice Determine if a given output is finalized.
-     *         Reverts if the call to L2_ORACLE.getL2Output reverts.
-     *         Returns a boolean otherwise.
-     *
-     * @param _l2OutputIndex Index of the L2 output to check.
-     *
-     * @return Whether or not the output is finalized.
-     */
+    /// @notice Determine if a given output is finalized.
+    ///         Reverts if the call to L2_ORACLE.getL2Output reverts.
+    ///         Returns a boolean otherwise.
+    /// @param _l2OutputIndex Index of the L2 output to check.
+    /// @return Whether or not the output is finalized.
     function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool) {
         return _isFinalizationPeriodElapsed(L2_ORACLE.getL2Output(_l2OutputIndex).timestamp);
     }
 
-    /**
-     * @notice Determines whether the finalization period has elapsed with respect to
-     *         the provided block timestamp.
-     *
-     * @param _timestamp Timestamp to check.
-     *
-     * @return Whether or not the finalization period has elapsed.
-     */
+    /// @notice Determines whether the finalization period has elapsed with respect to
+    ///         the provided block timestamp.
+    /// @param _timestamp Timestamp to check.
+    /// @return Whether or not the finalization period has elapsed.
     function _isFinalizationPeriodElapsed(uint256 _timestamp) internal view returns (bool) {
         return block.timestamp > _timestamp + L2_ORACLE.FINALIZATION_PERIOD_SECONDS();
     }

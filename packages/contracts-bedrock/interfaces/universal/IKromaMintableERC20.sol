@@ -3,12 +3,10 @@ pragma solidity ^0.8.0;
 
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-/**
- * @title IKromaMintableERC20
- * @notice This interface is available on the KromaMintableERC20 contract. We declare it as a
- *         separate interface so that it can be used in custom implementations of
- *         KromaMintableERC20.
- */
+/// @title IKromaMintableERC20
+/// @notice This interface is available on the KromaMintableERC20 contract. We declare it as a
+///         separate interface so that it can be used in custom implementations of
+///         KromaMintableERC20.
 interface IKromaMintableERC20 {
     function REMOTE_TOKEN() external view returns (address);
 

@@ -11,30 +11,22 @@ import "@openzeppelin/contracts-upgradeable-v4.9.3/token/ERC721/extensions/ERC72
 import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/cryptography/EIP712Upgradeable.sol";
 
-/**
- * @title IERC5192
- * @notice Interface for contracts that are compatible with the ERC721 standard.
- */
+/// @title IERC5192
+/// @notice Interface for contracts that are compatible with the ERC721 standard.
 interface IERC5192 {
-    /**
-     * @notice Emitted when the locking status is changed to locked.
-     * @dev If a token is minted and the status is locked, this event should be emitted.
-     * @param tokenId The identifier for a token.
-     */
+    /// @notice Emitted when the locking status is changed to locked.
+    /// @dev If a token is minted and the status is locked, this event should be emitted.
+    /// @param tokenId The identifier for a token.
     event Locked(uint256 tokenId);
 
-    /**
-     * @notice Emitted when the locking status is changed to unlocked.
-     * @dev If a token is minted and the status is unlocked, this event should be emitted.
-     * @param tokenId The identifier for a token.
-     */
+    /// @notice Emitted when the locking status is changed to unlocked.
+    /// @dev If a token is minted and the status is unlocked, this event should be emitted.
+    /// @param tokenId The identifier for a token.
     event Unlocked(uint256 tokenId);
 
-    /**
-     * @notice Returns the locking status of an Soulbound Token
-     * @dev SBTs assigned to zero address are considered invalid, and queries about them do throw.
-     * @param tokenId The identifier for an SBT.
-     */
+    /// @notice Returns the locking status of an Soulbound Token
+    /// @dev SBTs assigned to zero address are considered invalid, and queries about them do throw.
+    /// @param tokenId The identifier for an SBT.
     function locked(uint256 tokenId) external view returns (bool);
 }
 
@@ -62,18 +54,14 @@ abstract contract KromaSoulBoundERC721 is
         _;
     }
 
-    /**
-     * @custom:oz-upgrades-unsafe-allow constructor
-     */
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    /**
-     * @param _name   ERC721 name.
-     * @param _symbol ERC721 symbol.
-     * @param _owner  Owner of token.
-     */
+    /// @param _name   ERC721 name.
+    /// @param _symbol ERC721 symbol.
+    /// @param _owner  Owner of token.
     function __KromaSoulBoundERC721_init(
         string memory _name,
         string memory _symbol,
