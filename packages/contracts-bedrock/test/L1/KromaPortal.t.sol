@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+// Testing
 import { stdError } from "forge-std/Test.sol";
+import { CommonTest } from "test/setup/CommonTest.sol";
+import { NextImpl } from "test/mocks/NextImpl.sol";
 
-import { KromaPortal } from "../L1/KromaPortal.sol";
-import { L2OutputOracle } from "../L1/L2OutputOracle.sol";
-import { ResourceMetering } from "../L1/ResourceMetering.sol";
-import { Hashing } from "../libraries/Hashing.sol";
-import { Types } from "../libraries/Types.sol";
-import { Proxy } from "../universal/Proxy.sol";
-import { AddressAliasHelper } from "../vendor/AddressAliasHelper.sol";
-import { Portal_Initializer, CommonTest, NextImpl } from "./CommonTest.t.sol";
+// Contracts
+import { KromaPortal } from "src/L1/KromaPortal.sol";
+import { L2OutputOracle } from "stc/L1/L2OutputOracle.sol";
+import { ResourceMetering } from "src/L1/ResourceMetering.sol";
+import { Proxy } from "src/universal/Proxy.sol";
+import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
+
+// Libraries
+import { Hashing } from "src/libraries/Hashing.sol";
+import { Types } from "src/libraries/Types.sol";
 
 contract KromaPortal_Test is Portal_Initializer {
     event Paused(address);

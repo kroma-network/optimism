@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+// Testing
+import { CommonTest } from "test/setup/CommonTest.sol";
+import { MockL2OutputOracle } from "test/L1/ValidatorManager.t.sol";
+
+// Contracts
+import { AssetManager } from "src/L1/AssetManager.sol";
+import { ValidatorManager } from "src/L1/ValidatorManager.sol";
+import { Proxy } from "src/universal/Proxy.sol";
+
+// Interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-
-import { AssetManager } from "../L1/AssetManager.sol";
-import { ValidatorManager } from "../L1/ValidatorManager.sol";
-import { IAssetManager } from "../L1/interfaces/IAssetManager.sol";
-import { IValidatorManager } from "../L1/interfaces/IValidatorManager.sol";
-import { Proxy } from "../universal/Proxy.sol";
-import { ValidatorSystemUpgrade_Initializer } from "./CommonTest.t.sol";
-import { MockL2OutputOracle } from "./ValidatorManager.t.sol";
+import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 contract MockAssetManager is AssetManager {
     constructor(

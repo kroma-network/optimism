@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+// Testing
+import { Bridge_Initializer } from "test/setup/CommonTest.sol";
 
-import {
-    IKromaMintableERC20
-} from "../universal/IKromaMintableERC20.sol";
-import { Bridge_Initializer } from "./CommonTest.t.sol";
+// Interfaces
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IKromaMintableERC20 } from "interfaces/universal/IKromaMintableERC20.sol";
 
 contract KromaMintableERC20_Test is Bridge_Initializer {
     event Mint(address indexed account, uint256 amount);

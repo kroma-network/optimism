@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+// Testing
 import { Test } from "forge-std/Test.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { BalancedWeightTree } from "../libraries/BalancedWeightTree.sol";
+// Libraries
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
 
 contract BalancedWeightTree_Test is Test {
     BalancedWeightTree.Tree internal tree;

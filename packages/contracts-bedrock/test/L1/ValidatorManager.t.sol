@@ -1,15 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Constants } from "../libraries/Constants.sol";
-import { Types } from "../libraries/Types.sol";
-import { Proxy } from "../universal/Proxy.sol";
-import { IAssetManager } from "../L1/interfaces/IAssetManager.sol";
-import { IValidatorManager } from "../L1/interfaces/IValidatorManager.sol";
-import { L2OutputOracle } from "../L1/L2OutputOracle.sol";
-import { ValidatorManager } from "../L1/ValidatorManager.sol";
-import { ValidatorPool } from "../L1/ValidatorPool.sol";
-import { ValidatorSystemUpgrade_Initializer } from "./CommonTest.t.sol";
+// Testing
+import { CommonTest } from "test/setup/CommonTest.sol";
+
+// Contracts
+import { Proxy } from "src/universal/Proxy.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { ValidatorManager } from "src/L1/ValidatorManager.sol";
+import { ValidatorPool } from "src/L1/ValidatorPool.sol";
+
+// Libraries
+import { KromaConstants } from "src/libraries/KromaConstants.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
+
+// Interfaces
+import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 contract MockL2OutputOracle is L2OutputOracle {
     constructor(
@@ -36,7 +43,7 @@ contract MockL2OutputOracle is L2OutputOracle {
 
     function addOutput(uint256 l2BlockNumber) external {
         l2Outputs.push(
-            Types.CheckpointOutput({
+            KromaTypes.CheckpointOutput({
                 submitter: msg.sender,
                 outputRoot: keccak256(abi.encode(l2BlockNumber)),
                 timestamp: uint128(block.timestamp),
@@ -531,7 +538,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
         // Warp to public round
         vm.warp(oracle.nextOutputMinL2Timestamp() + roundDuration + 1);
-        assertEq(valMgr.nextValidator(), Constants.VALIDATOR_PUBLIC_ROUND_ADDRESS);
+        assertEq(valMgr.nextValidator(), KromaConstants.VALIDATOR_PUBLIC_ROUND_ADDRESS);
         vm.startPrank(trusted);
         _submitL2OutputV2(true);
         vm.stopPrank();

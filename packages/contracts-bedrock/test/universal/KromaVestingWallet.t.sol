@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { GovernanceToken } from "../governance/GovernanceToken.sol";
-import { KromaVestingWallet } from "../universal/KromaVestingWallet.sol";
-import { Proxy } from "../universal/Proxy.sol";
-import { CommonTest } from "./CommonTest.t.sol";
+// Testing
+import { CommonTest } from "test/setup/CommonTest.sol";
+
+// Contracts
+import { KromaGovernanceToken } from "src/governance/KromaGovernanceToken.sol";
+import { KromaVestingWallet } from "src/universal/KromaVestingWallet.sol";
+import { Proxy } from "src/universal/Proxy.sol";
 
 contract KromaVestingWalletTest is CommonTest {
     uint64 immutable SECONDS_PER_3_MONTHS = 365 days / 4;

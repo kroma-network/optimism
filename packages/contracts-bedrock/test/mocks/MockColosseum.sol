@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Colosseum } from "contracts/L1/Colosseum.sol";
-import { L2OutputOracle } from "contracts/L1/L2OutputOracle.sol";
-import { ZKProofVerifier } from "contracts/L1/ZKProofVerifier.sol";
+// Contracts
+import { Colosseum } from "src/L1/Colosseum.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 contract MockColosseum is Colosseum {
     constructor(

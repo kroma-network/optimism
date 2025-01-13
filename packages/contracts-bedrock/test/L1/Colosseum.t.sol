@@ -1,21 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Types } from "../libraries/Types.sol";
-import { ISP1Verifier } from "../vendor/ISP1Verifier.sol";
-import { IValidatorManager } from "../L1/interfaces/IValidatorManager.sol";
-import { Colosseum } from "../L1/Colosseum.sol";
-import { L2OutputOracle } from "../L1/L2OutputOracle.sol";
-import { ValidatorPool } from "../L1/ValidatorPool.sol";
-import { ValidatorManager } from "../L1/ValidatorManager.sol";
-import { ZKProofVerifier } from "../L1/ZKProofVerifier.sol";
-import { ZKVerifier } from "../L1/ZKVerifier.sol";
-import { Proxy } from "../universal/Proxy.sol";
-import { MockColosseum } from "./mock/MockColosseum.sol";
-import { ZkEvmTestData } from "./testdata/ZkEvmTestData.sol";
-import { ZkVmTestData } from "./testdata/ZkVmTestData.sol";
-import { Colosseum_Initializer } from "./CommonTest.t.sol";
-import { MockL2OutputOracle, MockValidatorManager } from "./ValidatorManager.t.sol";
+// Testing
+import { MockColosseum } from "test/mock/MockColosseum.sol";
+import { ZkEvmTestData } from "test/testdata/ZkEvmTestData.sol";
+import { ZkVmTestData } from "test/testdata/ZkVmTestData.sol";
+import { CommonTest } from "test/setup/CommonTest.sol";
+import { MockL2OutputOracle, MockValidatorManager } from "test/L1/ValidatorManager.t.sol";
+
+// Contracts
+import { Colosseum } from "src/L1/Colosseum.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { ValidatorPool } from "src/L1/ValidatorPool.sol";
+import { ValidatorManager } from "src/L1/ValidatorManager.sol";
+import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
+import { ZKVerifier } from "src/L1/ZKVerifier.sol";
+import { ISP1Verifier } from "src/vendor/ISP1Verifier.sol";
+import { Proxy } from "src/universal/Proxy.sol";
+
+// Libraries
+import { Types } from "src/libraries/Types.sol";
+
+// Interfaces
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+
 
 contract MockZKProofVerifier is ZKProofVerifier {
     constructor(

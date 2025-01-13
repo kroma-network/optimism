@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import { Hashing } from "../../libraries/Hashing.sol";
-import { Types } from "../../libraries/Types.sol";
-import { RLPWriter } from "../../libraries/rlp/RLPWriter.sol";
-import { Colosseum } from "../../L1/Colosseum.sol";
+// Contracts
+import { Colosseum } from "src/L1/Colosseum.sol";
+
+// Libraries
+import { Hashing } from "src/libraries/Hashing.sol";
+import { Types } from "src/libraries/Types.sol";
+import { RLPWriter } from "src/libraries/rlp/RLPWriter.sol";
 
 library ZkEvmTestData {
     uint256 internal constant INVALID_BLOCK_NUMBER = 21;

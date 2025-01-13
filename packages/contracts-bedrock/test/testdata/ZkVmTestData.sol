@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Types } from "contracts/libraries/Types.sol";
+// Libraries
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 library ZkVmTestData {
     bytes32 internal constant ZKVM_PROGRAM_V_KEY =
@@ -14,7 +15,7 @@ library ZkVmTestData {
     bytes32 internal constant L1_HEAD =
         0xc5f36b4618de22a58113263406f398342a7624d832fda0ccd05ab61b0ceb5352;
 
-    function zkVmProof() internal pure returns (Types.ZkVmProof memory) {
+    function zkVmProof() internal pure returns (KromaTypes.ZkVmProof memory) {
         return
             Types.ZkVmProof({
                 zkVmProgramVKey: ZKVM_PROGRAM_V_KEY,

@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import { Colosseum } from "../L1/Colosseum.sol";
-import { Types } from "../libraries/Types.sol";
-import { SecurityCouncil_Initializer } from "./CommonTest.t.sol";
+// Testing
+import { CommonTest } from "test/setup/CommonTest.sol";
+
+// Contracts
+import { Colosseum } from "src/L1/Colosseum.sol";
+
+// Libraries
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 contract SecurityCouncilTest is SecurityCouncil_Initializer {
     /**
@@ -172,7 +177,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         securityCouncil.requestValidation(bytes32("dummy output root"), l2BlockNumber, txData);
 
         // check transaction not executed
-        Types.MultiSigTransaction memory t;
+        KromaTypes.MultiSigTransaction memory t;
         (t.target, t.executed, t.value, t.data) = securityCouncil.transactions(transactionId);
         assertEq(t.executed, false);
         vm.stopPrank();
@@ -206,7 +211,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         securityCouncil.requestDeletion(outputIndex, false);
 
         // check transaction not executed
-        Types.MultiSigTransaction memory t;
+        KromaTypes.MultiSigTransaction memory t;
         (t.target, t.executed, t.value, t.data) = securityCouncil.transactions(transactionId);
         assertEq(t.executed, false);
         vm.stopPrank();
