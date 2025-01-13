@@ -2,11 +2,11 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { Bridge_Initializer } from "test/setup/CommonTest.sol";
+import {Bridge_Initializer} from "test/setup/CommonTest.sol";
 
 // Interfaces
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IKromaMintableERC20 } from "interfaces/universal/IKromaMintableERC20.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IKromaMintableERC20} from "interfaces/universal/IKromaMintableERC20.sol";
 
 contract KromaMintableERC20_Test is Bridge_Initializer {
     event Mint(address indexed account, uint256 amount);
@@ -68,10 +68,8 @@ contract KromaMintableERC20_Test is Bridge_Initializer {
         assertEq(iface1, type(IERC165).interfaceId);
         assert(L2Token.supportsInterface(iface1));
 
-        bytes4 iface2 = L2Token.REMOTE_TOKEN.selector ^
-            L2Token.BRIDGE.selector ^
-            L2Token.mint.selector ^
-            L2Token.burn.selector;
+        bytes4 iface2 =
+            L2Token.REMOTE_TOKEN.selector ^ L2Token.BRIDGE.selector ^ L2Token.mint.selector ^ L2Token.burn.selector;
         assertEq(iface2, type(IKromaMintableERC20).interfaceId);
         assert(L2Token.supportsInterface(iface2));
     }

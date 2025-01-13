@@ -2,13 +2,13 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { CommonTest } from "test/setup/CommonTest.sol";
+import {CommonTest} from "test/setup/CommonTest.sol";
 
 // Contracts
-import { Colosseum } from "src/L1/Colosseum.sol";
+import {Colosseum} from "src/L1/Colosseum.sol";
 
 // Libraries
-import { KromaTypes } from "src/libraries/KromaTypes.sol";
+import {KromaTypes} from "src/libraries/KromaTypes.sol";
 
 contract SecurityCouncilTest is SecurityCouncil_Initializer {
     /**
@@ -18,11 +18,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
     event TransactionConfirmed(address indexed sender, uint256 indexed transactionId);
     event TransactionExecuted(address indexed sender, uint256 indexed transactionId);
     event ConfirmationRevoked(address indexed sender, uint256 indexed transactionId);
-    event ValidationRequested(
-        uint256 indexed transactionId,
-        bytes32 outputRoot,
-        uint256 l2BlockNumber
-    );
+    event ValidationRequested(uint256 indexed transactionId, bytes32 outputRoot, uint256 l2BlockNumber);
     event DeletionRequested(uint256 indexed transactionId, uint256 indexed outputIndex);
 
     uint256 blockNumber = 0;
@@ -90,7 +86,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         emit TransactionSubmitted(guardian1, transactionId);
         uint256 resTransactionId = securityCouncil.submitTransaction(txTarget, txValue, txData);
         assertEq(transactionId, resTransactionId);
-        (,bool executed,,) = securityCouncil.transactions(transactionId);
+        (, bool executed,,) = securityCouncil.transactions(transactionId);
         assertEq(executed, false);
         vm.stopPrank();
     }
@@ -202,10 +198,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         // request output deletion
         uint256 outputIndex = 1;
         vm.expectEmit(true, true, false, true);
-        bytes memory message = abi.encodeWithSelector(
-            Colosseum.forceDeleteOutput.selector,
-            outputIndex
-        );
+        bytes memory message = abi.encodeWithSelector(Colosseum.forceDeleteOutput.selector, outputIndex);
         uint256 transactionId = securityCouncil.generateTransactionId(securityCouncil.COLOSSEUM(), 0, message);
         emit DeletionRequested(transactionId, outputIndex);
         securityCouncil.requestDeletion(outputIndex, false);
@@ -234,10 +227,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         // request output deletion
         uint256 outputIndex = 1;
         vm.expectEmit(true, true, false, true);
-        bytes memory message = abi.encodeWithSelector(
-            Colosseum.forceDeleteOutput.selector,
-            outputIndex
-        );
+        bytes memory message = abi.encodeWithSelector(Colosseum.forceDeleteOutput.selector, outputIndex);
         uint256 transactionId = securityCouncil.generateTransactionId(securityCouncil.COLOSSEUM(), 0, message);
         emit DeletionRequested(transactionId, outputIndex);
         securityCouncil.requestDeletion(outputIndex, false);
@@ -253,10 +243,7 @@ contract SecurityCouncilTest is SecurityCouncil_Initializer {
         // request output deletion
         uint256 outputIndex = 1;
         vm.expectEmit(true, true, false, true);
-        bytes memory message = abi.encodeWithSelector(
-            Colosseum.forceDeleteOutput.selector,
-            outputIndex
-        );
+        bytes memory message = abi.encodeWithSelector(Colosseum.forceDeleteOutput.selector, outputIndex);
         uint256 transactionId = securityCouncil.generateTransactionId(securityCouncil.COLOSSEUM(), 0, message);
         emit DeletionRequested(transactionId, outputIndex);
         securityCouncil.requestDeletion(outputIndex, false);

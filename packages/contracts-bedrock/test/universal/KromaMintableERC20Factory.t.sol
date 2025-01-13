@@ -2,17 +2,13 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { Bridge_Initializer } from "test/setup/CommonTest.sol";
+import {Bridge_Initializer} from "test/setup/CommonTest.sol";
 
 // Libraries
-import { LibRLP } from "@solady-v0.0.245/src/utils/LibRLP.sol";
+import {LibRLP} from "@solady-v0.0.245/src/utils/LibRLP.sol";
 
 contract KromaMintableTokenFactory_Test is Bridge_Initializer {
-    event KromaMintableERC20Created(
-        address indexed localToken,
-        address indexed remoteToken,
-        address deployer
-    );
+    event KromaMintableERC20Created(address indexed localToken, address indexed remoteToken, address deployer);
 
     function setUp() public override {
         super.setUp();

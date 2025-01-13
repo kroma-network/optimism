@@ -2,20 +2,20 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { stdError } from "forge-std/Test.sol";
-import { CommonTest } from "test/setup/CommonTest.sol";
-import { NextImpl } from "test/mocks/NextImpl.sol";
+import {stdError} from "forge-std/Test.sol";
+import {CommonTest} from "test/setup/CommonTest.sol";
+import {NextImpl} from "test/mocks/NextImpl.sol";
 
 // Contracts
-import { KromaPortal } from "src/L1/KromaPortal.sol";
-import { L2OutputOracle } from "stc/L1/L2OutputOracle.sol";
-import { ResourceMetering } from "src/L1/ResourceMetering.sol";
-import { Proxy } from "src/universal/Proxy.sol";
-import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
+import {KromaPortal} from "src/L1/KromaPortal.sol";
+import {L2OutputOracle} from "src/L1/L2OutputOracle.sol";
+import {ResourceMetering} from "src/L1/ResourceMetering.sol";
+import {Proxy} from "src/universal/Proxy.sol";
+import {AddressAliasHelper} from "src/vendor/AddressAliasHelper.sol";
 
 // Libraries
-import { Hashing } from "src/libraries/Hashing.sol";
-import { Types } from "src/libraries/Types.sol";
+import {Hashing} from "src/libraries/Hashing.sol";
+import {Types} from "src/libraries/Types.sol";
 
 contract KromaPortal_Test is Portal_Initializer {
     event Paused(address);
@@ -103,7 +103,7 @@ contract KromaPortal_Test is Portal_Initializer {
         // give alice money and send as an eoa
         vm.deal(alice, 2 ** 64);
         vm.prank(alice, alice);
-        (bool s, ) = address(portal).call{ value: 100 }(hex"");
+        (bool s,) = address(portal).call{value: 100}(hex"");
 
         assert(s);
         assertEq(address(portal).balance, 100);
@@ -122,13 +122,7 @@ contract KromaPortal_Test is Portal_Initializer {
      */
     function test_depositTransaction_smallGasLimit_reverts() external {
         vm.expectRevert("KromaPortal: gas limit must cover instrinsic gas cost");
-        portal.depositTransaction({
-            _to: address(1),
-            _value: 0,
-            _gasLimit: 0,
-            _isCreation: false,
-            _data: hex""
-        });
+        portal.depositTransaction({_to: address(1), _value: 0, _gasLimit: 0, _isCreation: false, _data: hex""});
     }
 
     // Test: depositTransaction should emit the correct log when an EOA deposits a tx with 0 value
@@ -137,22 +131,10 @@ contract KromaPortal_Test is Portal_Initializer {
         vm.prank(address(this), address(this));
         vm.expectEmit(true, true, false, true);
         emitTransactionDeposited(
-            address(this),
-            NON_ZERO_ADDRESS,
-            ZERO_VALUE,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
+            address(this), NON_ZERO_ADDRESS, ZERO_VALUE, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA
         );
 
-        portal.depositTransaction(
-            NON_ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
-        );
+        portal.depositTransaction(NON_ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA);
     }
 
     // Test: depositTransaction should emit the correct log when a contract deposits a tx with 0 value
@@ -168,13 +150,7 @@ contract KromaPortal_Test is Portal_Initializer {
             NON_ZERO_DATA
         );
 
-        portal.depositTransaction(
-            NON_ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
-        );
+        portal.depositTransaction(NON_ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA);
     }
 
     // Test: depositTransaction should emit the correct log when an EOA deposits a contract creation with 0 value
@@ -184,13 +160,7 @@ contract KromaPortal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, false, true);
         emitTransactionDeposited(
-            address(this),
-            ZERO_ADDRESS,
-            ZERO_VALUE,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            true,
-            NON_ZERO_DATA
+            address(this), ZERO_ADDRESS, ZERO_VALUE, ZERO_VALUE, NON_ZERO_GASLIMIT, true, NON_ZERO_DATA
         );
 
         portal.depositTransaction(ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, true, NON_ZERO_DATA);
@@ -219,21 +189,11 @@ contract KromaPortal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, false, true);
         emitTransactionDeposited(
-            address(this),
-            NON_ZERO_ADDRESS,
-            NON_ZERO_VALUE,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
+            address(this), NON_ZERO_ADDRESS, NON_ZERO_VALUE, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA
         );
 
-        portal.depositTransaction{ value: NON_ZERO_VALUE }(
-            NON_ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
+        portal.depositTransaction{value: NON_ZERO_VALUE}(
+            NON_ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA
         );
         assertEq(address(portal).balance, NON_ZERO_VALUE);
     }
@@ -251,12 +211,8 @@ contract KromaPortal_Test is Portal_Initializer {
             NON_ZERO_DATA
         );
 
-        portal.depositTransaction{ value: NON_ZERO_VALUE }(
-            NON_ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            false,
-            NON_ZERO_DATA
+        portal.depositTransaction{value: NON_ZERO_VALUE}(
+            NON_ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, false, NON_ZERO_DATA
         );
     }
 
@@ -267,22 +223,10 @@ contract KromaPortal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, false, true);
         emitTransactionDeposited(
-            address(this),
-            ZERO_ADDRESS,
-            NON_ZERO_VALUE,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            true,
-            hex""
+            address(this), ZERO_ADDRESS, NON_ZERO_VALUE, ZERO_VALUE, NON_ZERO_GASLIMIT, true, hex""
         );
 
-        portal.depositTransaction{ value: NON_ZERO_VALUE }(
-            ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            true,
-            hex""
-        );
+        portal.depositTransaction{value: NON_ZERO_VALUE}(ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, true, hex"");
         assertEq(address(portal).balance, NON_ZERO_VALUE);
     }
 
@@ -299,12 +243,8 @@ contract KromaPortal_Test is Portal_Initializer {
             NON_ZERO_DATA
         );
 
-        portal.depositTransaction{ value: NON_ZERO_VALUE }(
-            ZERO_ADDRESS,
-            ZERO_VALUE,
-            NON_ZERO_GASLIMIT,
-            true,
-            NON_ZERO_DATA
+        portal.depositTransaction{value: NON_ZERO_VALUE}(
+            ZERO_ADDRESS, ZERO_VALUE, NON_ZERO_GASLIMIT, true, NON_ZERO_DATA
         );
         assertEq(address(portal).balance, NON_ZERO_VALUE);
     }
@@ -314,14 +254,7 @@ contract KromaPortal_Test is Portal_Initializer {
         vm.mockCall(
             address(portal.L2_ORACLE()),
             abi.encodeWithSelector(L2OutputOracle.getL2Output.selector),
-            abi.encode(
-                Types.CheckpointOutput(
-                    trusted,
-                    bytes32(uint256(1)),
-                    uint128(ts),
-                    uint128(startingBlockNumber)
-                )
-            )
+            abi.encode(Types.CheckpointOutput(trusted, bytes32(uint256(1)), uint128(ts), uint128(startingBlockNumber)))
         );
 
         // warp to the finalization period
@@ -385,8 +318,8 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             data: hex""
         });
         // Get withdrawal proof data we can use for testing.
-        (_stateRoot, _storageRoot, _outputRoot, _withdrawalHash, _withdrawalProof) = ffi
-            .getProveWithdrawalTransactionInputs(_defaultTx, true);
+        (_stateRoot, _storageRoot, _outputRoot, _withdrawalHash, _withdrawalProof) =
+            ffi.getProveWithdrawalTransactionInputs(_defaultTx, true);
 
         // Setup a dummy output root proof for reuse.
         _outputRootProof = Types.OutputRootProof({
@@ -408,11 +341,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         oracle.submitL2Output(_outputRoot, _submittedBlockNumber, 0, 0);
 
         // Warp beyond the finalization period for the block we've submitted.
-        vm.warp(
-            oracle.getL2Output(_submittedOutputIndex).timestamp +
-                oracle.FINALIZATION_PERIOD_SECONDS() +
-                1
-        );
+        vm.warp(oracle.getL2Output(_submittedOutputIndex).timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         // Fund the portal so that we can withdraw ETH.
         vm.deal(address(portal), 0xFFFFFFFF);
     }
@@ -448,12 +377,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
     function test_proveWithdrawalTransaction_onSelfCall_reverts() external {
         _defaultTx.target = address(portal);
         vm.expectRevert("KromaPortal: you cannot send messages to the portal contract");
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
     }
 
     // Test: proveWithdrawalTransaction reverts if the outputRootProof does not match the output root
@@ -461,12 +385,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // Modify the version to invalidate the output root proof.
         _outputRootProof.version = bytes32(uint256(1));
         vm.expectRevert("KromaPortal: invalid output root proof");
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
     }
 
     // Test: proveWithdrawalTransaction reverts if the passed transaction's withdrawalHash has
@@ -474,20 +393,10 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
     function test_proveWithdrawalTransaction_replayProve_reverts() external {
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         vm.expectRevert("KromaPortal: withdrawal hash has already been proven");
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
     }
 
     // Test: proveWithdrawalTransaction succeeds if the passed transaction's withdrawalHash has
@@ -495,12 +404,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
     function test_proveWithdrawalTransaction_replayProveChangedOutputRoot_succeeds() external {
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Compute the storage slot of the outputRoot corresponding to the `withdrawalHash`
         // inside of the `provenWithdrawal`s mapping.
@@ -522,31 +426,19 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // our proof with a changed outputRoot
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Ensure that the withdrawal was updated within the mapping
-        (, uint128 timestamp, ) = portal.provenWithdrawals(_withdrawalHash);
+        (, uint128 timestamp,) = portal.provenWithdrawals(_withdrawalHash);
         assertEq(timestamp, block.timestamp);
     }
 
     // Test: proveWithdrawalTransaction succeeds if the passed transaction's withdrawalHash has
     // already been proven AND the output root + output index + l2BlockNumber changes.
-    function test_proveWithdrawalTransaction_replayProveChangedOutputRootAndOutputIndex_succeeds()
-        external
-    {
+    function test_proveWithdrawalTransaction_replayProveChangedOutputRootAndOutputIndex_succeeds() external {
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Compute the storage slot of the outputRoot corresponding to the `withdrawalHash`
         // inside of the `provenWithdrawal`s mapping.
@@ -562,17 +454,12 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         vm.store(address(portal), slot, bytes32(0));
 
         // Fetch the checkpoint output at `_submittedOutputIndex` from the L2OutputOracle
-        Types.CheckpointOutput memory output = portal.L2_ORACLE().getL2Output(
-            _submittedOutputIndex
-        );
+        Types.CheckpointOutput memory output = portal.L2_ORACLE().getL2Output(_submittedOutputIndex);
 
         // Propose the same output root again, creating the same output at a different index + l2BlockNumber.
         vm.startPrank(trusted);
         portal.L2_ORACLE().submitL2Output(
-            output.outputRoot,
-            portal.L2_ORACLE().nextBlockNumber(),
-            blockhash(block.number),
-            block.number
+            output.outputRoot, portal.L2_ORACLE().nextBlockNumber(), blockhash(block.number), block.number
         );
         vm.stopPrank();
 
@@ -583,15 +470,10 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // our proof with a changed outputRoot + a different output index
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex + 1,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex + 1, _outputRootProof, _withdrawalProof);
 
         // Ensure that the withdrawal was updated within the mapping
-        (, uint128 timestamp, ) = portal.provenWithdrawals(_withdrawalHash);
+        (, uint128 timestamp,) = portal.provenWithdrawals(_withdrawalHash);
         assertEq(timestamp, block.timestamp);
     }
 
@@ -599,19 +481,14 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
     function test_proveWithdrawalTransaction_validWithdrawalProof_succeeds() external {
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
     }
 
     // Test: proveWithdrawalTransaction succeeds when nextBlockHash is not zero.
     function test_proveWithdrawalTransaction_nextBlockHashNotZero_succeeds() external {
         // Get modified proof inputs when isKromaMPT is false.
-        (_stateRoot, _storageRoot, _outputRoot, _withdrawalHash, _withdrawalProof) = ffi
-            .getProveWithdrawalTransactionInputs(_defaultTx, false);
+        (_stateRoot, _storageRoot, _outputRoot, _withdrawalHash, _withdrawalProof) =
+            ffi.getProveWithdrawalTransactionInputs(_defaultTx, false);
 
         // Create the output root proof with non zero nextBlockHash
         _outputRootProof = Types.OutputRootProof({
@@ -630,12 +507,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         );
 
         // Prove the withdrawal transaction
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
     }
 
     // Test: finalizeWithdrawalTransaction succeeds and emits the WithdrawalFinalized event.
@@ -644,12 +516,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         vm.expectEmit(true, true, false, true);
@@ -686,12 +553,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Mock a call where the resulting output root is anything but the original output root. In
         // this case we just use bytes32(uint256(1)).
@@ -715,21 +577,14 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // Prove our withdrawal
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Warp to after the finalization period
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
 
         // Mock a startingTimestamp change on the L2 Oracle
         vm.mockCall(
-            address(portal.L2_ORACLE()),
-            abi.encodeWithSignature("startingTimestamp()"),
-            abi.encode(block.timestamp + 1)
+            address(portal.L2_ORACLE()), abi.encodeWithSignature("startingTimestamp()"), abi.encode(block.timestamp + 1)
         );
 
         // Attempt to finalize the withdrawal
@@ -748,12 +603,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // Prove our withdrawal
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Warp to after the finalization period
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
@@ -765,10 +615,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             abi.encodeWithSelector(L2OutputOracle.getL2Output.selector),
             abi.encode(
                 Types.CheckpointOutput(
-                    trusted,
-                    bytes32(uint256(0)),
-                    uint128(block.timestamp),
-                    uint128(_submittedBlockNumber)
+                    trusted, bytes32(uint256(0)), uint128(block.timestamp), uint128(_submittedBlockNumber)
                 )
             )
         );
@@ -789,12 +636,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         // Prove our withdrawal
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         // Warp to after the finalization period
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
@@ -806,10 +648,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             abi.encodeWithSelector(L2OutputOracle.getL2Output.selector),
             abi.encode(
                 Types.CheckpointOutput(
-                    trusted,
-                    _outputRoot,
-                    uint128(block.timestamp + 1),
-                    uint128(_submittedBlockNumber)
+                    trusted, _outputRoot, uint128(block.timestamp + 1), uint128(_submittedBlockNumber)
                 )
             )
         );
@@ -830,12 +669,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
 
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         vm.expectEmit(true, true, true, true);
@@ -853,21 +687,11 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             address(portal.L2_ORACLE()),
             abi.encodeWithSelector(L2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.CheckpointOutput(
-                    trusted,
-                    _outputRoot,
-                    uint128(recentTimestamp),
-                    uint128(_submittedBlockNumber)
-                )
+                Types.CheckpointOutput(trusted, _outputRoot, uint128(recentTimestamp), uint128(_submittedBlockNumber))
             )
         );
 
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         vm.expectRevert("KromaPortal: proven withdrawal finalization period has not elapsed");
         portal.finalizeWithdrawalTransaction(_defaultTx);
@@ -877,12 +701,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
     function test_finalizeWithdrawalTransaction_onReplay_reverts() external {
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        portal.proveWithdrawalTransaction(
-            _defaultTx,
-            _submittedOutputIndex,
-            _outputRootProof,
-            _withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_defaultTx, _submittedOutputIndex, _outputRootProof, _withdrawalProof);
 
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         vm.expectEmit(true, true, true, true);
@@ -907,8 +726,8 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         });
 
         // Get updated proof inputs.
-        (bytes32 stateRoot, bytes32 storageRoot, , , bytes[] memory withdrawalProof) = ffi
-            .getProveWithdrawalTransactionInputs(insufficientGasTx, true);
+        (bytes32 stateRoot, bytes32 storageRoot,,, bytes[] memory withdrawalProof) =
+            ffi.getProveWithdrawalTransactionInputs(insufficientGasTx, true);
         Types.OutputRootProof memory outputRootProof = Types.OutputRootProof({
             version: bytes32(uint256(0)),
             stateRoot: stateRoot,
@@ -930,16 +749,11 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             )
         );
 
-        portal.proveWithdrawalTransaction(
-            insufficientGasTx,
-            _submittedOutputIndex,
-            outputRootProof,
-            withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(insufficientGasTx, _submittedOutputIndex, outputRootProof, withdrawalProof);
 
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         vm.expectRevert("SafeCall: Not enough gas");
-        portal.finalizeWithdrawalTransaction{ gas: gasLimit }(insufficientGasTx);
+        portal.finalizeWithdrawalTransaction{gas: gasLimit}(insufficientGasTx);
     }
 
     // Test: finalizeWithdrawalTransaction reverts if a sub-call attempts to finalize another
@@ -975,23 +789,13 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             address(portal.L2_ORACLE()),
             abi.encodeWithSelector(L2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.CheckpointOutput(
-                    trusted,
-                    outputRoot,
-                    uint128(finalizedTimestamp),
-                    uint128(_submittedBlockNumber)
-                )
+                Types.CheckpointOutput(trusted, outputRoot, uint128(finalizedTimestamp), uint128(_submittedBlockNumber))
             )
         );
 
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(withdrawalHash, alice, address(this));
-        portal.proveWithdrawalTransaction(
-            _testTx,
-            _submittedBlockNumber,
-            outputRootProof,
-            withdrawalProof
-        );
+        portal.proveWithdrawalTransaction(_testTx, _submittedBlockNumber, outputRootProof, withdrawalProof);
 
         vm.warp(block.timestamp + oracle.FINALIZATION_PERIOD_SECONDS() + 1);
         vm.expectCall(address(this), _testTx.data);
@@ -1011,10 +815,10 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
         bytes memory _data
     ) external {
         vm.assume(
-            _target != address(portal) && // Cannot call the kroma portal or a contract
-                _target.code.length == 0 && // No accounts with code
-                _target != CONSOLE && // The console has no code but behaves like a contract
-                uint160(_target) > 9 // No precompiles (or zero address)
+            _target != address(portal) // Cannot call the kroma portal or a contract
+                && _target.code.length == 0 // No accounts with code
+                && _target != CONSOLE // The console has no code but behaves like a contract
+                && uint160(_target) > 9 // No precompiles (or zero address)
         );
 
         // Total ETH supply is currently about 120M ETH.
@@ -1068,7 +872,7 @@ contract KromaPortal_FinalizeWithdrawal_Test is Portal_Initializer {
             proof,
             withdrawalProof
         );
-        (bytes32 _root, , ) = portal.provenWithdrawals(withdrawalHash);
+        (bytes32 _root,,) = portal.provenWithdrawals(withdrawalHash);
         assertTrue(_root != bytes32(0));
 
         // Warp past the finalization period
@@ -1118,10 +922,7 @@ contract KromaPortalUpgradeable_Test is Portal_Initializer {
 
         NextImpl nextImpl = new NextImpl();
         vm.startPrank(multisig);
-        proxy.upgradeToAndCall(
-            address(nextImpl),
-            abi.encodeWithSelector(NextImpl.initialize.selector)
-        );
+        proxy.upgradeToAndCall(address(nextImpl), abi.encodeWithSelector(NextImpl.initialize.selector));
         assertEq(proxy.implementation(), address(nextImpl));
 
         // Verify that the NextImpl contract initialized its values according as expected
@@ -1170,10 +971,7 @@ contract KromaPortalResourceFuzz_Test is Portal_Initializer {
         vm.assume(_baseFeeMaxChangeDenominator > 1);
         vm.assume(uint256(_maxResourceLimit) + uint256(_systemTxMaxGas) <= gasLimit);
         vm.assume(_elasticityMultiplier > 0);
-        vm.assume(
-            ((_maxResourceLimit / _elasticityMultiplier) * _elasticityMultiplier) ==
-                _maxResourceLimit
-        );
+        vm.assume(((_maxResourceLimit / _elasticityMultiplier) * _elasticityMultiplier) == _maxResourceLimit);
         _prevBoughtGas = uint64(bound(_prevBoughtGas, 0, _maxResourceLimit - _gasLimit));
         _blockDiff = uint8(bound(_blockDiff, 0, 3));
 
@@ -1187,9 +985,7 @@ contract KromaPortalResourceFuzz_Test is Portal_Initializer {
             maximumBaseFee: _maximumBaseFee
         });
         vm.mockCall(
-            address(systemConfig),
-            abi.encodeWithSelector(systemConfig.resourceConfig.selector),
-            abi.encode(rcfg)
+            address(systemConfig), abi.encodeWithSelector(systemConfig.resourceConfig.selector), abi.encode(rcfg)
         );
 
         // Set the resource params
@@ -1206,7 +1002,7 @@ contract KromaPortalResourceFuzz_Test is Portal_Initializer {
         assertEq(prevBlockNum, _prevBlockNum);
 
         // Do a deposit, should not revert
-        portal.depositTransaction{ gas: MAX_GAS_LIMIT }({
+        portal.depositTransaction{gas: MAX_GAS_LIMIT}({
             _to: address(0x20),
             _value: 0x40,
             _gasLimit: _gasLimit,

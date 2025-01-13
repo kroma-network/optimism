@@ -2,11 +2,11 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 // Libraries
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {BalancedWeightTree} from "src/libraries/BalancedWeightTree.sol";
 
 contract BalancedWeightTree_Test is Test {
     BalancedWeightTree.Tree internal tree;
@@ -19,9 +19,7 @@ contract BalancedWeightTree_Test is Test {
     }
 
     function rand(uint256 _mixer, uint256 _range) private view returns (uint256) {
-        uint256 seed = uint256(
-            keccak256(abi.encodePacked(block.difficulty, block.timestamp, _mixer))
-        );
+        uint256 seed = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp, _mixer)));
         return seed % _range;
     }
 
@@ -64,10 +62,7 @@ contract BalancedWeightTree_Test is Test {
     }
 
     function testFuzz_select_succeeds(uint120 _weight) external {
-        address selected = BalancedWeightTree.select(
-            tree,
-            _weight % tree.nodes[tree.root].weightSum
-        );
+        address selected = BalancedWeightTree.select(tree, _weight % tree.nodes[tree.root].weightSum);
 
         assertTrue(selected != address(0));
     }

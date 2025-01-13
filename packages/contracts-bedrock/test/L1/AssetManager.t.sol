@@ -2,19 +2,19 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { CommonTest } from "test/setup/CommonTest.sol";
-import { MockL2OutputOracle } from "test/L1/ValidatorManager.t.sol";
+import {CommonTest} from "test/setup/CommonTest.sol";
+import {MockL2OutputOracle} from "test/L1/ValidatorManager.t.sol";
 
 // Contracts
-import { AssetManager } from "src/L1/AssetManager.sol";
-import { ValidatorManager } from "src/L1/ValidatorManager.sol";
-import { Proxy } from "src/universal/Proxy.sol";
+import {AssetManager} from "src/L1/AssetManager.sol";
+import {ValidatorManager} from "src/L1/ValidatorManager.sol";
+import {Proxy} from "src/universal/Proxy.sol";
 
 // Interfaces
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IAssetManager} from "interfaces/L1/IAssetManager.sol";
+import {IValidatorManager} from "interfaces/L1/IValidatorManager.sol";
 
 contract MockAssetManager is AssetManager {
     constructor(
@@ -83,13 +83,7 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
         mockOracle = MockL2OutputOracle(address(oracle));
 
         MockAssetManager assetManagerImpl = new MockAssetManager(
-            IERC20(assetToken),
-            IERC721(kgh),
-            guardian,
-            validatorRewardVault,
-            valMgr,
-            minDelegationPeriod,
-            bondAmount
+            IERC20(assetToken), IERC721(kgh), guardian, validatorRewardVault, valMgr, minDelegationPeriod, bondAmount
         );
         vm.prank(multisig);
         Proxy(payable(address(assetMgr))).upgradeTo(address(assetManagerImpl));
@@ -372,10 +366,7 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
         assertEq(assetToken.balanceOf(delegator), beforeBalance - bondAmount);
         assertEq(assetMgr.totalKroAssets(validator), bondAmount);
         assertEq(assetMgr.getKroTotalShareBalance(validator, delegator), shares);
-        assertEq(
-            assetMgr.canUndelegateKroAt(validator, delegator),
-            block.timestamp + minDelegationPeriod
-        );
+        assertEq(assetMgr.canUndelegateKroAt(validator, delegator), block.timestamp + minDelegationPeriod);
         assertEq(valMgr.getWeight(validator), beforeWeight + bondAmount);
     }
 
@@ -421,10 +412,7 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
         assertEq(kgh.ownerOf(tokenId), address(assetMgr));
         assertEq(assetMgr.totalKghNum(validator), 1);
         assertEq(assetMgr.getKghNum(validator, delegator), 1);
-        assertEq(
-            assetMgr.canUndelegateKghAt(validator, delegator, tokenId),
-            block.timestamp + minDelegationPeriod
-        );
+        assertEq(assetMgr.canUndelegateKghAt(validator, delegator, tokenId), block.timestamp + minDelegationPeriod);
     }
 
     function test_delegateKgh_claimBoostedReward_succeeds() external {
@@ -479,10 +467,7 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
         assertEq(assetMgr.getKghNum(validator, delegator), kghCount);
         for (uint256 i = 1; i < kghCount + 1; i++) {
             assertEq(kgh.ownerOf(i), address(assetMgr));
-            assertEq(
-                assetMgr.canUndelegateKghAt(validator, delegator, i),
-                block.timestamp + minDelegationPeriod
-            );
+            assertEq(assetMgr.canUndelegateKghAt(validator, delegator, i), block.timestamp + minDelegationPeriod);
         }
     }
 
@@ -545,10 +530,7 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
         uint128 delegatorKro = _undelegate(delegator);
 
         assertEq(assetMgr.totalKroAssets(validator), bondAmount + baseReward - delegatorKro);
-        assertEq(
-            valMgr.getWeight(validator),
-            minActivateAmount + bondAmount + baseReward - delegatorKro
-        );
+        assertEq(valMgr.getWeight(validator), minActivateAmount + bondAmount + baseReward - delegatorKro);
         assertEq(assetToken.balanceOf(delegator), beforeBalance + delegatorKro);
     }
 
@@ -565,14 +547,8 @@ contract AssetManagerTest is ValidatorSystemUpgrade_Initializer {
 
         uint128 delegatorKro = _undelegate(delegator);
 
-        assertEq(
-            assetMgr.totalKroAssets(validator),
-            bondAmount * 2 + baseReward * 2 - delegatorKro
-        );
-        assertEq(
-            valMgr.getWeight(validator),
-            minActivateAmount + bondAmount * 2 + baseReward * 2 - delegatorKro
-        );
+        assertEq(assetMgr.totalKroAssets(validator), bondAmount * 2 + baseReward * 2 - delegatorKro);
+        assertEq(valMgr.getWeight(validator), minActivateAmount + bondAmount * 2 + baseReward * 2 - delegatorKro);
         assertEq(assetToken.balanceOf(delegator), beforeBalance + delegatorKro);
     }
 

@@ -2,21 +2,21 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { CommonTest } from "test/setup/CommonTest.sol";
+import {CommonTest} from "test/setup/CommonTest.sol";
 
 // Contracts
-import { Proxy } from "src/universal/Proxy.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { ValidatorManager } from "src/L1/ValidatorManager.sol";
-import { ValidatorPool } from "src/L1/ValidatorPool.sol";
+import {Proxy} from "src/universal/Proxy.sol";
+import {L2OutputOracle} from "src/L1/L2OutputOracle.sol";
+import {ValidatorManager} from "src/L1/ValidatorManager.sol";
+import {ValidatorPool} from "src/L1/ValidatorPool.sol";
 
 // Libraries
-import { KromaConstants } from "src/libraries/KromaConstants.sol";
-import { KromaTypes } from "src/libraries/KromaTypes.sol";
+import {KromaConstants} from "src/libraries/KromaConstants.sol";
+import {KromaTypes} from "src/libraries/KromaTypes.sol";
 
 // Interfaces
-import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+import {IAssetManager} from "interfaces/L1/IAssetManager.sol";
+import {IValidatorManager} from "interfaces/L1/IValidatorManager.sol";
 
 contract MockL2OutputOracle is L2OutputOracle {
     constructor(
@@ -86,27 +86,18 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
     MockL2OutputOracle mockOracle;
     MockValidatorManager mockValMgr;
 
-    event ValidatorRegistered(
-        address indexed validator,
-        bool activated,
-        uint8 commissionRate,
-        uint128 assets
-    );
+    event ValidatorRegistered(address indexed validator, bool activated, uint8 commissionRate, uint128 assets);
 
     event ValidatorActivated(address indexed validator, uint256 activatedAt);
 
     event ValidatorStopped(address indexed validator, uint256 stopsAt);
 
     event ValidatorCommissionChangeInitiated(
-        address indexed validator,
-        uint8 oldCommissionRate,
-        uint8 newCommissionRate
+        address indexed validator, uint8 oldCommissionRate, uint8 newCommissionRate
     );
 
     event ValidatorCommissionChangeFinalized(
-        address indexed validator,
-        uint8 oldCommissionRate,
-        uint8 newCommissionRate
+        address indexed validator, uint8 oldCommissionRate, uint8 newCommissionRate
     );
 
     event ValidatorJailed(address indexed validator, uint128 expiresAt);
@@ -125,11 +116,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
     event SlashReverted(uint256 indexed outputIndex, address indexed loser, uint128 amount);
 
-    function _setUpKghDelegation(
-        address validator,
-        uint256 startingTokenId,
-        uint128 kghCounts
-    ) private {
+    function _setUpKghDelegation(address validator, uint256 startingTokenId, uint128 kghCounts) private {
         uint256[] memory tokenIds = new uint256[](kghCounts);
         for (uint256 i = startingTokenId; i < startingTokenId + kghCounts; i++) {
             kgh.mint(validator, i);
@@ -173,7 +160,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
         // Submit until terminateOutputIndex and set next output index to be finalized after it
         vm.prank(trusted);
-        pool.deposit{ value: trusted.balance }();
+        pool.deposit{value: trusted.balance}();
         for (uint256 i = oracle.nextOutputIndex(); i <= terminateOutputIndex; i++) {
             _submitL2OutputV1();
         }
@@ -406,9 +393,8 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
         uint128 expectedBaseReward = ((baseReward * 90) / 100) / 2; // delegator base reward
         uint128 boostedReward = mockValMgr.getBoostedReward(trusted);
         uint128 expectedBoostedReward = (boostedReward * 90) / 100;
-        uint128 expectedValidatorReward = (((baseReward + boostedReward) * 10) / 100) + // commission
-            ((baseReward * 90) / 100) /
-            2;
+        uint128 expectedValidatorReward = (((baseReward + boostedReward) * 10) / 100) // commission
+            + ((baseReward * 90) / 100) / 2;
 
         assertEq(assetMgr.totalKroAssets(trusted), delegateAsset + expectedBaseReward);
         assertEq(assetMgr.getKghReward(trusted, trusted), expectedBoostedReward);
@@ -419,8 +405,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
         // Check validator tree updated with rewards
         assertEq(
-            valMgr.getWeight(trusted),
-            minActivateAmount + delegateAsset + expectedBaseReward + expectedValidatorReward
+            valMgr.getWeight(trusted), minActivateAmount + delegateAsset + expectedBaseReward + expectedValidatorReward
         );
     }
 
@@ -574,8 +559,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
         assertEq(valMgr.getPendingCommissionRate(asserter), newCommissionRate);
         assertEq(
-            valMgr.canFinalizeCommissionChangeAt(asserter),
-            block.timestamp + valMgr.COMMISSION_CHANGE_DELAY_SECONDS()
+            valMgr.canFinalizeCommissionChangeAt(asserter), block.timestamp + valMgr.COMMISSION_CHANGE_DELAY_SECONDS()
         );
     }
 
@@ -630,10 +614,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 
         assertEq(valMgr.getCommissionRate(asserter), newCommissionRate);
         assertEq(valMgr.getPendingCommissionRate(asserter), 0);
-        assertEq(
-            valMgr.canFinalizeCommissionChangeAt(asserter),
-            valMgr.COMMISSION_CHANGE_DELAY_SECONDS()
-        );
+        assertEq(valMgr.canFinalizeCommissionChangeAt(asserter), valMgr.COMMISSION_CHANGE_DELAY_SECONDS());
     }
 
     function test_finalizeCommissionChange_exited_reverts() external {
@@ -816,8 +797,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
         assertEq(assetMgr.totalValidatorKroBonded(asserter), 0);
 
         // Security council balance of asset token increased by tax
-        uint128 taxAmount = (slashingAmount * assetMgr.TAX_NUMERATOR()) /
-            assetMgr.TAX_DENOMINATOR();
+        uint128 taxAmount = (slashingAmount * assetMgr.TAX_NUMERATOR()) / assetMgr.TAX_DENOMINATOR();
         assertEq(assetToken.balanceOf(assetMgr.SECURITY_COUNCIL()), taxAmount);
 
         // Challenger asset increased by output reward and challenge reward
@@ -825,10 +805,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
         uint128 boostedReward = mockValMgr.getBoostedReward(challenger);
         uint128 challengeReward = slashingAmount - taxAmount;
         uint128 challengerKro = assetMgr.totalValidatorKro(challenger);
-        assertEq(
-            challengerKro,
-            minActivateAmount + baseReward + (boostedReward / 10) + challengeReward
-        );
+        assertEq(challengerKro, minActivateAmount + baseReward + (boostedReward / 10) + challengeReward);
     }
 
     function test_slash_alreadyInJail_succeeds() external {
@@ -1050,6 +1027,7 @@ contract ValidatorManagerTest is ValidatorSystemUpgrade_Initializer {
 contract ValidatorManager_MptTransition_Test is ValidatorSystemUpgrade_Initializer {
     MockL2OutputOracle mockOracle;
     MockValidatorManager mockValMgr;
+
     function setUp() public override {
         super.setUp();
 
@@ -1079,7 +1057,7 @@ contract ValidatorManager_MptTransition_Test is ValidatorSystemUpgrade_Initializ
 
         // Submit until terminateOutputIndex and set next output index to be finalized after it
         vm.prank(trusted);
-        pool.deposit{ value: trusted.balance }();
+        pool.deposit{value: trusted.balance}();
         for (uint256 i = oracle.nextOutputIndex(); i <= terminateOutputIndex; i++) {
             _submitL2OutputV1();
         }

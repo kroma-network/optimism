@@ -2,25 +2,19 @@
 pragma solidity ^0.8.15;
 
 // Contracts
-import { Colosseum } from "src/L1/Colosseum.sol";
+import {Colosseum} from "src/L1/Colosseum.sol";
 
 // Libraries
-import { Hashing } from "src/libraries/Hashing.sol";
-import { Types } from "src/libraries/Types.sol";
-import { RLPWriter } from "src/libraries/rlp/RLPWriter.sol";
+import {Hashing} from "src/libraries/Hashing.sol";
+import {Types} from "src/libraries/Types.sol";
+import {RLPWriter} from "src/libraries/rlp/RLPWriter.sol";
 
 library ZkEvmTestData {
     uint256 internal constant INVALID_BLOCK_NUMBER = 21;
-    bytes32 internal constant PREV_OUTPUT_ROOT =
-        0xa6b4cc150f0c24daf8b5803491addbe102a388cf1ccec74fbe103a2deb5004e6;
-    bytes32 internal constant TARGET_OUTPUT_ROOT =
-        0x1ce4527b414c9e5d9edd26e488665f5f0f28c8e75dc622328c66776c93901e87;
+    bytes32 internal constant PREV_OUTPUT_ROOT = 0xa6b4cc150f0c24daf8b5803491addbe102a388cf1ccec74fbe103a2deb5004e6;
+    bytes32 internal constant TARGET_OUTPUT_ROOT = 0x1ce4527b414c9e5d9edd26e488665f5f0f28c8e75dc622328c66776c93901e87;
 
-    function outputRootProof()
-        internal
-        pure
-        returns (Types.OutputRootProof memory, Types.OutputRootProof memory)
-    {
+    function outputRootProof() internal pure returns (Types.OutputRootProof memory, Types.OutputRootProof memory) {
         Types.OutputRootProof memory src = Types.OutputRootProof({
             version: bytes32(uint256(0)),
             stateRoot: 0x263975548df46f3ffc739f602b503f32b4c522026c8c93204929ddd5b65ad202,
@@ -44,45 +38,37 @@ library ZkEvmTestData {
         bytes32[] memory txHashes = new bytes32[](1);
         txHashes[0] = 0x17deafc4c886b90706f3191fa8ecd152f34ce4fbc36ca35e6de899eb0fc7d86d;
 
-        return
-            Types.PublicInput({
-                blockHash: 0x4ecf76378ef03e3a417ac169cb052a879424345c59765aca05fe1fb6259375a9,
-                parentHash: 0x3392758b5bca8b8319df6180c145ca28152f1b6a3af977bc48ec67d2259dbcd2,
-                timestamp: 0x66471e21,
-                number: 0x15,
-                gasLimit: 0x1c9c380,
-                baseFee: 0x1,
-                transactionsRoot: 0xb01bdd77e9685c8341733f345113daa34c25a63a37cb76b81de492b36b0cc806,
-                stateRoot: 0x0475b3d38492c9e58190616eaad4ab033942aa55747d49c5a614b9e751998d5e,
-                withdrawalsRoot: 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421,
-                txHashes: txHashes,
-                blobGasUsed: 0x0,
-                excessBlobGas: 0x0,
-                parentBeaconRoot: 0x3eeb016384502029f0dc9cc6188d4e5ca8b6547f755b7cfa3749d7512f98c41b
-            });
+        return Types.PublicInput({
+            blockHash: 0x4ecf76378ef03e3a417ac169cb052a879424345c59765aca05fe1fb6259375a9,
+            parentHash: 0x3392758b5bca8b8319df6180c145ca28152f1b6a3af977bc48ec67d2259dbcd2,
+            timestamp: 0x66471e21,
+            number: 0x15,
+            gasLimit: 0x1c9c380,
+            baseFee: 0x1,
+            transactionsRoot: 0xb01bdd77e9685c8341733f345113daa34c25a63a37cb76b81de492b36b0cc806,
+            stateRoot: 0x0475b3d38492c9e58190616eaad4ab033942aa55747d49c5a614b9e751998d5e,
+            withdrawalsRoot: 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421,
+            txHashes: txHashes,
+            blobGasUsed: 0x0,
+            excessBlobGas: 0x0,
+            parentBeaconRoot: 0x3eeb016384502029f0dc9cc6188d4e5ca8b6547f755b7cfa3749d7512f98c41b
+        });
     }
 
     function blockHeaderRLP() internal pure returns (Types.BlockHeaderRLP memory) {
-        return
-            Types.BlockHeaderRLP({
-                uncleHash: RLPWriter.writeBytes(
-                    hex"1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
-                ),
-                coinbase: RLPWriter.writeAddress(address(0)),
-                receiptsRoot: RLPWriter.writeBytes(
-                    hex"886c02379eee108cab1ada4055c4f82b048b7e3bbce0d82bf532c95409d8ad81"
-                ),
-                logsBloom: RLPWriter.writeBytes(
-                    hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-                ),
-                difficulty: RLPWriter.writeUint(0),
-                gasUsed: RLPWriter.writeUint(0xc9f4),
-                extraData: RLPWriter.writeBytes(hex""),
-                mixHash: RLPWriter.writeBytes(
-                    hex"8bb2786563ea29f638e4e9758d9886e8a1af5b4f7688f4ee6622a6b53df87742"
-                ),
-                nonce: RLPWriter.writeBytes(hex"0000000000000000")
-            });
+        return Types.BlockHeaderRLP({
+            uncleHash: RLPWriter.writeBytes(hex"1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"),
+            coinbase: RLPWriter.writeAddress(address(0)),
+            receiptsRoot: RLPWriter.writeBytes(hex"886c02379eee108cab1ada4055c4f82b048b7e3bbce0d82bf532c95409d8ad81"),
+            logsBloom: RLPWriter.writeBytes(
+                hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            ),
+            difficulty: RLPWriter.writeUint(0),
+            gasUsed: RLPWriter.writeUint(0xc9f4),
+            extraData: RLPWriter.writeBytes(hex""),
+            mixHash: RLPWriter.writeBytes(hex"8bb2786563ea29f638e4e9758d9886e8a1af5b4f7688f4ee6622a6b53df87742"),
+            nonce: RLPWriter.writeBytes(hex"0000000000000000")
+        });
     }
 
     struct ProofPair {
@@ -263,45 +249,31 @@ library ZkEvmTestData {
         });
         bytes[] memory proof = new bytes[](13);
 
-        proof[
-            0
-        ] = hex"0027e039ebdf0f9e7c8a1481ebf7448aae44afec16b045969976d37555b364f6132d6654101a6881a48a968d5a257cc8dc8d980c0cc55d58e47833222a24b2230a";
-        proof[
-            1
-        ] = hex"002023945e0a0e2290059ca87427aa00e3d515d2e9144d8d3e69ee13b7c75615482cf819ee96fa5bf76e6ce7712caf6673df7fc3af269cfe193bed443eeb89527a";
-        proof[
-            2
-        ] = hex"0021d5edc847df9d20356a576c7a4b4b1bb992b427aa4e01412eb08864416db55b1c7c9c38ad18cc007a6e522b638fdf6010aef11727fcb7cdcbfb5edb96e3a74a";
-        proof[
-            3
-        ] = hex"0020140f1c792e0ff14d98ca78ed1c085501566b9917cc0792285ed265e6f8cd5b1e99968ab013de794c675a5f614b8a642294aa47612f1bb6173910a5cd7f0b16";
-        proof[
-            4
-        ] = hex"002b11bc4ac76ee779a652e7e93a9871fa88e780285d41c6ed2f1646ec8658b7450c158053a97ff3e327cfae62631e5878accd83e5803f044c90803d4579ae21ba";
-        proof[
-            5
-        ] = hex"00244f31e0a770ed9dbdf583a0e0dbe036f5f9476c3cc761e18b2a475a96bcc10814c463c1a53d595a21f22f3c5cafe495329c68087ab2601468f8fa7e11d88bf7";
-        proof[
-            6
-        ] = hex"0008f993e0df87a04e71f72a3a237c909e2381eacf176b279925d333ee7b1e36ed03c30671a87c81a313a035fdbe052cc592ae0a604bcf87a5cf163d5a43104574";
-        proof[
-            7
-        ] = hex"00202aa398b4bd976d7c165b2c7bfa6e4b695f18ff78e4cb544dbb0fbab8c6537e15c1089ff56ee758ec382a55a21b76c08ebf64d6a78d7e6ff442793536607510";
-        proof[
-            8
-        ] = hex"0000000000000000000000000000000000000000000000000000000000000000002e957b48192277673a8dde0549358d09d3f9ad6e8db14e08f4fed46f96021a74";
-        proof[
-            9
-        ] = hex"002325a334c56feef28306cece9e3867165ee117aab1c831fe04db286a1b4ff2c80000000000000000000000000000000000000000000000000000000000000000";
-        proof[
-            10
-        ] = hex"00218476186a36a2ddf003ef59459478f44e0cea1ac32870dafca118331259b05f23618448c7fab9e44d30c44be6777aa390c25ad138fde11d22bdefd05f43838b";
-        proof[
-            11
-        ] = hex"012de4ca10cb48fa7ae483633127295fecab2f03da9355f4ca12ca0c820096f9c304040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001f958654ab06a152993e7a0ae7b6dbb0d4b19265cc9337b8789fe1353bd9dc3524f53397bd92b66fda812b6e1191a00b60fc8e304033518006cbeedcab7f2127204200000000000000000000000000000000000003000000000000000000000000";
-        proof[
-            12
-        ] = hex"5448495320495320534f4d45204d4147494320425954455320464f5220534d54206d3172525867503278704449";
+        proof[0] =
+            hex"0027e039ebdf0f9e7c8a1481ebf7448aae44afec16b045969976d37555b364f6132d6654101a6881a48a968d5a257cc8dc8d980c0cc55d58e47833222a24b2230a";
+        proof[1] =
+            hex"002023945e0a0e2290059ca87427aa00e3d515d2e9144d8d3e69ee13b7c75615482cf819ee96fa5bf76e6ce7712caf6673df7fc3af269cfe193bed443eeb89527a";
+        proof[2] =
+            hex"0021d5edc847df9d20356a576c7a4b4b1bb992b427aa4e01412eb08864416db55b1c7c9c38ad18cc007a6e522b638fdf6010aef11727fcb7cdcbfb5edb96e3a74a";
+        proof[3] =
+            hex"0020140f1c792e0ff14d98ca78ed1c085501566b9917cc0792285ed265e6f8cd5b1e99968ab013de794c675a5f614b8a642294aa47612f1bb6173910a5cd7f0b16";
+        proof[4] =
+            hex"002b11bc4ac76ee779a652e7e93a9871fa88e780285d41c6ed2f1646ec8658b7450c158053a97ff3e327cfae62631e5878accd83e5803f044c90803d4579ae21ba";
+        proof[5] =
+            hex"00244f31e0a770ed9dbdf583a0e0dbe036f5f9476c3cc761e18b2a475a96bcc10814c463c1a53d595a21f22f3c5cafe495329c68087ab2601468f8fa7e11d88bf7";
+        proof[6] =
+            hex"0008f993e0df87a04e71f72a3a237c909e2381eacf176b279925d333ee7b1e36ed03c30671a87c81a313a035fdbe052cc592ae0a604bcf87a5cf163d5a43104574";
+        proof[7] =
+            hex"00202aa398b4bd976d7c165b2c7bfa6e4b695f18ff78e4cb544dbb0fbab8c6537e15c1089ff56ee758ec382a55a21b76c08ebf64d6a78d7e6ff442793536607510";
+        proof[8] =
+            hex"0000000000000000000000000000000000000000000000000000000000000000002e957b48192277673a8dde0549358d09d3f9ad6e8db14e08f4fed46f96021a74";
+        proof[9] =
+            hex"002325a334c56feef28306cece9e3867165ee117aab1c831fe04db286a1b4ff2c80000000000000000000000000000000000000000000000000000000000000000";
+        proof[10] =
+            hex"00218476186a36a2ddf003ef59459478f44e0cea1ac32870dafca118331259b05f23618448c7fab9e44d30c44be6777aa390c25ad138fde11d22bdefd05f43838b";
+        proof[11] =
+            hex"012de4ca10cb48fa7ae483633127295fecab2f03da9355f4ca12ca0c820096f9c304040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001f958654ab06a152993e7a0ae7b6dbb0d4b19265cc9337b8789fe1353bd9dc3524f53397bd92b66fda812b6e1191a00b60fc8e304033518006cbeedcab7f2127204200000000000000000000000000000000000003000000000000000000000000";
+        proof[12] = hex"5448495320495320534f4d45204d4147494320425954455320464f5220534d54206d3172525867503278704449";
 
         return (account, proof);
     }

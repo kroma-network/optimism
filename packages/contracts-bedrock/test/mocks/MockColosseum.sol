@@ -2,9 +2,9 @@
 pragma solidity 0.8.15;
 
 // Contracts
-import { Colosseum } from "src/L1/Colosseum.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
+import {Colosseum} from "src/L1/Colosseum.sol";
+import {L2OutputOracle} from "src/L1/L2OutputOracle.sol";
+import {ZKProofVerifier} from "src/L1/ZKProofVerifier.sol";
 
 contract MockColosseum is Colosseum {
     constructor(
@@ -29,10 +29,7 @@ contract MockColosseum is Colosseum {
         )
     {}
 
-    function isAbleToBisect(
-        uint256 _outputIndex,
-        address _challenger
-    ) external view returns (bool) {
+    function isAbleToBisect(uint256 _outputIndex, address _challenger) external view returns (bool) {
         return _isAbleToBisect(challenges[_outputIndex][_challenger]);
     }
 

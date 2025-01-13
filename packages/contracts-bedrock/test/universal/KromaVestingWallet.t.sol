@@ -2,12 +2,12 @@
 pragma solidity 0.8.15;
 
 // Testing
-import { CommonTest } from "test/setup/CommonTest.sol";
+import {CommonTest} from "test/setup/CommonTest.sol";
 
 // Contracts
-import { KromaGovernanceToken } from "src/governance/KromaGovernanceToken.sol";
-import { KromaVestingWallet } from "src/universal/KromaVestingWallet.sol";
-import { Proxy } from "src/universal/Proxy.sol";
+import {GovernanceToken} from "src/governance/KromaGovernanceToken.sol";
+import {KromaVestingWallet} from "src/universal/KromaVestingWallet.sol";
+import {Proxy} from "src/universal/Proxy.sol";
 
 contract KromaVestingWalletTest is CommonTest {
     uint64 immutable SECONDS_PER_3_MONTHS = 365 days / 4;
@@ -41,17 +41,13 @@ contract KromaVestingWalletTest is CommonTest {
         KromaVestingWallet vestingWalletImpl = new KromaVestingWallet(cliffDivider, vestingCycle);
         vm.prank(multisig);
         toProxy(address(vestingWallet)).upgradeToAndCall(
-            address(vestingWalletImpl),
-            abi.encodeCall(vestingWallet.initialize, (beneficiary, startTime, durationSec))
+            address(vestingWalletImpl), abi.encodeCall(vestingWallet.initialize, (beneficiary, startTime, durationSec))
         );
 
         token = GovernanceToken(address(new Proxy(multisig)));
         GovernanceToken tokenImpl = new GovernanceToken(ZERO_ADDRESS, ZERO_ADDRESS);
         vm.prank(multisig);
-        toProxy(address(token)).upgradeToAndCall(
-            address(tokenImpl),
-            abi.encodeCall(token.initialize, tokenOwner)
-        );
+        toProxy(address(token)).upgradeToAndCall(address(tokenImpl), abi.encodeCall(token.initialize, tokenOwner));
         vm.prank(tokenOwner);
         token.acceptOwnership();
 
