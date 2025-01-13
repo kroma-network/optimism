@@ -123,8 +123,8 @@ contract ValidatorManager is ISemver, IValidatorManager {
     }
 
     /// @notice Semantic version.
-    /// @custom:semver 1.0.0
-    string public constant version = "1.0.0";
+    /// @custom:semver 1.1.0
+    string public constant version = "1.1.0";
 
     /// @notice Constructs the ValidatorManager contract.
     /// @param _constructorParams The constructor parameters.

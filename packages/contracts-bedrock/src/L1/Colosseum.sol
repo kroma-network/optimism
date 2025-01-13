@@ -194,8 +194,8 @@ contract Colosseum is Initializable, ISemver {
     error CannotCancelChallenge();
 
     /// @notice Semantic version.
-    /// @custom:semver 2.0.0
-    string public constant version = "2.0.0";
+    /// @custom:semver 2.1.0
+    string public constant version = "2.1.0";
 
     /// @notice Constructs the Colosseum contract.
     /// @param _l2Oracle              Address of the L2OutputOracle contract.

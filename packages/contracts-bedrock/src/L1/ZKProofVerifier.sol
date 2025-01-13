@@ -33,8 +33,8 @@ contract ZKProofVerifier is ISemver {
     error DstOutputMatched();
 
     /// @notice Semantic version.
-    /// @custom:semver 1.0.0
-    string public constant version = "1.0.0";
+    /// @custom:semver 1.1.0
+    string public constant version = "1.1.0";
 
     /// @notice Constructs the ZKProofVerifier contract.
     /// @param _sp1Verifier Address of the SP1VerifierGateway contract.

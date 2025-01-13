@@ -65,8 +65,8 @@ contract L2OutputOracle is Initializable, ISemver {
     event OutputReplaced(uint256 indexed outputIndex, address indexed newSubmitter, bytes32 newOutputRoot);
 
     /// @notice Semantic version.
-    /// @custom:semver 1.1.0
-    string public constant version = "1.1.0";
+    /// @custom:semver 1.2.0
+    string public constant version = "1.2.0";
 
     /// @notice Constructs the L2OutputOracle contract.
     /// @param _validatorManager          The address of the ValidatorManager contract.
