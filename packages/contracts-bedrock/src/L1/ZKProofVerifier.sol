@@ -25,7 +25,6 @@ contract ZKProofVerifier is ISemver {
     /// @notice Reverts when the public input is invalid.
     error InvalidPublicInput();
 
-
     /// @notice Reverts when the source output root is mismatched.
     error SrcOutputMismatched();
 
@@ -39,10 +38,7 @@ contract ZKProofVerifier is ISemver {
     /// @notice Constructs the ZKProofVerifier contract.
     /// @param _sp1Verifier Address of the SP1VerifierGateway contract.
     /// @param _zkVmProgramVKey The verification key for the zkVM program.
-    constructor(
-        ISP1Verifier _sp1Verifier,
-        bytes32 _zkVmProgramVKey
-    ) {
+    constructor(ISP1Verifier _sp1Verifier, bytes32 _zkVmProgramVKey) {
         SP1_VERIFIER = _sp1Verifier;
         ZKVM_PROGRAM_V_KEY = _zkVmProgramVKey;
     }

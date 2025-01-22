@@ -363,7 +363,13 @@ contract Colosseum is Initializable, ISemver {
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _pos         Position of the last valid segment.
     /// @param _zkVmProof   The public input and proof using zkVM.
-    function proveFaultWithZkVm(uint256 _outputIndex, uint256 _pos, KromaTypes.ZkVmProof calldata _zkVmProof) external {
+    function proveFaultWithZkVm(
+        uint256 _outputIndex,
+        uint256 _pos,
+        KromaTypes.ZkVmProof calldata _zkVmProof
+    )
+        external
+    {
         _proveFault(_outputIndex, _pos, _zkVmProof);
     }
 
@@ -692,7 +698,8 @@ contract Colosseum is Initializable, ISemver {
         return _challengeStatus(challenges[_outputIndex][_challenger]);
     }
 
-    /// @notice Determines whether current timestamp is in challenge creation period corresponding to the given L2 output
+    /// @notice Determines whether current timestamp is in challenge creation period corresponding to the given L2
+    /// output
     /// index.
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @return Whether current timestamp is in challenge creation period.

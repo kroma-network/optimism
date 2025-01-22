@@ -7,7 +7,8 @@ import { PlonkVerifier } from "./PlonkVerifier.sol";
 /// @title SP1 Verifier
 /// @author Succinct Labs
 /// @notice This contracts implements a solidity verifier for SP1.
-///         See https://github.com/succinctlabs/sp1-contracts/blob/1c4acaeab86789995ae5c6baced66f81e4a57f4d/contracts/src/v3.0.0/SP1VerifierPlonk.sol
+///         See
+/// https://github.com/succinctlabs/sp1-contracts/blob/1c4acaeab86789995ae5c6baced66f81e4a57f4d/contracts/src/v3.0.0/SP1VerifierPlonk.sol
 contract SP1Verifier is PlonkVerifier, ISP1VerifierWithHash {
     /// @notice Thrown when the verifier selector from this proof does not match the one in this
     /// verifier. This indicates that this proof was sent to the wrong verifier.
@@ -37,11 +38,7 @@ contract SP1Verifier is PlonkVerifier, ISP1VerifierWithHash {
     /// @param programVKey The verification key for the RISC-V program.
     /// @param publicValues The public values encoded as bytes.
     /// @param proofBytes The proof of the program execution the SP1 zkVM encoded as bytes.
-    function verifyProof(
-        bytes32 programVKey,
-        bytes calldata publicValues,
-        bytes calldata proofBytes
-    ) external view {
+    function verifyProof(bytes32 programVKey, bytes calldata publicValues, bytes calldata proofBytes) external view {
         bytes4 receivedSelector = bytes4(proofBytes[:4]);
         bytes4 expectedSelector = bytes4(VERIFIER_HASH());
         if (receivedSelector != expectedSelector) {
