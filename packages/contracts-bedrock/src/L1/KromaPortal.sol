@@ -15,10 +15,13 @@ import { SafeCall } from "src/libraries/SafeCall.sol";
 import { Types } from "src/libraries/Types.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
+import { Predeploys } from "src/libraries/Predeploys.sol";
+import { Unauthorized } from "src/libraries/PortalErrors.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
+import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
 /// @custom:proxied
 /// @title KromaPortal
@@ -41,6 +44,9 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice The L2 gas limit set when eth is deposited using the receive() function.
     uint64 internal constant RECEIVE_DEFAULT_GAS_LIMIT = 100_000;
+
+    /// @notice The L2 gas limit for system deposit transactions that are initiated from L1.
+    uint32 internal constant SYSTEM_DEPOSIT_GAS_LIMIT = 200_000;
 
     /// @notice Address of the L2OutputOracle contract.
     L2OutputOracle public immutable L2_ORACLE;
@@ -384,5 +390,30 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @return Whether or not the finalization period has elapsed.
     function _isFinalizationPeriodElapsed(uint256 _timestamp) internal view returns (bool) {
         return block.timestamp > _timestamp + L2_ORACLE.FINALIZATION_PERIOD_SECONDS();
+    }
+
+     /// @notice Sets the gas paying token for the L2 system. This token is used as the
+    ///         L2 native asset. Only the SystemConfig contract can call this function.
+    function setGasPayingToken(address _token, uint8 _decimals, bytes32 _name, bytes32 _symbol) external {
+        if (msg.sender != address(SYSTEM_CONFIG)) revert Unauthorized();
+
+        // Set L2 deposit gas as used without paying burning gas. Ensures that deposits cannot use too much L2 gas.
+        // This value must be large enough to cover the cost of calling `L1Block.setGasPayingToken`.
+        useGas(SYSTEM_DEPOSIT_GAS_LIMIT);
+
+        // Emit the special deposit transaction directly that sets the gas paying
+        // token in the L1Block predeploy contract.
+        emit TransactionDeposited(
+            Constants.DEPOSITOR_ACCOUNT,
+            Predeploys.L1_BLOCK_ATTRIBUTES,
+            DEPOSIT_VERSION,
+            abi.encodePacked(
+                uint256(0), // mint
+                uint256(0), // value
+                uint64(SYSTEM_DEPOSIT_GAS_LIMIT), // gasLimit
+                false, // isCreation,
+                abi.encodeCall(IL1Block.setGasPayingToken, (_token, _decimals, _name, _symbol))
+            )
+        );
     }
 }

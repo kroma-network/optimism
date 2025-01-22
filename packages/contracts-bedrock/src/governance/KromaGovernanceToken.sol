@@ -8,15 +8,15 @@ import { KromaMintableERC20 } from "src/universal/KromaMintableERC20.sol";
 
 /**
  * @custom:proxied
- * @title GovernanceToken
+ * @title KromaGovernanceToken
  * @notice The KRO token used in governance, supporting voting and delegation. Implements
  *         EIP 2612 allowing signed approvals. `mint` function is only allowed to the owner or
  *         `Bridge`, and the total supply amount is minted at once (TGE). `Bridge` has the
  *         permission to `mint` and `burn`, for the purpose of bridging KRO to the remote chain.
  */
-contract GovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradeable {
+contract KromaGovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradeable {
     /**
-     * @notice Constructs the GovernanceToken contract.
+     * @notice Constructs the KromaGovernanceToken contract.
      *
      * @param _bridge      Address of the StandardBridge contract on this network.
      * @param _remoteToken Address of the corresponding token on the remote chain.
@@ -24,7 +24,10 @@ contract GovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradea
     constructor(
         address _bridge,
         address _remoteToken
-    ) KromaMintableERC20(_bridge, _remoteToken, "", "") ERC20Permit("Kroma") {
+    )
+        KromaMintableERC20(_bridge, _remoteToken, "", "")
+        ERC20Permit("Kroma")
+    {
         _disableInitializers();
     }
 
@@ -45,10 +48,7 @@ contract GovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradea
      * @param _amount Amount of tokens to mint.
      */
     function mint(address _to, uint256 _amount) external override {
-        require(
-            msg.sender == BRIDGE || msg.sender == owner(),
-            "GovernanceToken: only bridge or owner can mint"
-        );
+        require(msg.sender == BRIDGE || msg.sender == owner(), "GovernanceToken: only bridge or owner can mint");
 
         _mint(_to, _amount);
     }
@@ -81,11 +81,7 @@ contract GovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradea
      * @param to     The account receiving tokens.
      * @param amount The amount of tokens being transferred.
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override(ERC20, ERC20Votes) {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Votes) {
         super._afterTokenTransfer(from, to, amount);
     }
 
@@ -121,12 +117,7 @@ contract GovernanceToken is KromaMintableERC20, ERC20Votes, Ownable2StepUpgradea
     /**
      * @notice Override function.
      */
-    function _msgData()
-        internal
-        view
-        override(Context, ContextUpgradeable)
-        returns (bytes calldata)
-    {
+    function _msgData() internal view override(Context, ContextUpgradeable) returns (bytes calldata) {
         return super._msgData();
     }
 }

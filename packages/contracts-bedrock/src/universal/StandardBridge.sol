@@ -13,6 +13,7 @@ import { Constants } from "src/libraries/Constants.sol";
 
 // Interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IKromaMintableERC20 } from "interfaces/universal/IKromaMintableERC20.sol";
 import { IOptimismMintableERC20 } from "interfaces/universal/IOptimismMintableERC20.sol";
 import { ILegacyMintableERC20 } from "interfaces/legacy/ILegacyMintableERC20.sol";
 import { ICrossDomainMessenger } from "interfaces/universal/ICrossDomainMessenger.sol";
@@ -28,6 +29,7 @@ abstract contract StandardBridge is Initializable {
     /// @notice The L2 gas limit set when eth is depoisited using the receive() function.
     uint32 internal constant RECEIVE_DEFAULT_GAS_LIMIT = 200_000;
 
+    /* [Kroma: START]
     /// @custom:legacy
     /// @custom:spacer messenger
     /// @notice Spacer for backwards compatibility.
@@ -37,6 +39,7 @@ abstract contract StandardBridge is Initializable {
     /// @custom:spacer l2TokenBridge
     /// @notice Spacer for backwards compatibility.
     address private spacer_1_0_20;
+    [Kroma: END] */
 
     /// @notice Mapping that stores deposits for a given pair of local and remote tokens.
     mapping(address => mapping(address => uint256)) public deposits;
@@ -402,7 +405,8 @@ abstract contract StandardBridge is Initializable {
     /// @return True if the token is an OptimismMintableERC20.
     function _isOptimismMintableERC20(address _token) internal view returns (bool) {
         return ERC165Checker.supportsInterface(_token, type(ILegacyMintableERC20).interfaceId)
-            || ERC165Checker.supportsInterface(_token, type(IOptimismMintableERC20).interfaceId);
+            || ERC165Checker.supportsInterface(_token, type(IOptimismMintableERC20).interfaceId)
+            || ERC165Checker.supportsInterface(_token, type(IKromaMintableERC20).interfaceId);
     }
 
     /// @notice Checks if the "other token" is the correct pair token for the OptimismMintableERC20.
@@ -414,8 +418,10 @@ abstract contract StandardBridge is Initializable {
     function _isCorrectTokenPair(address _mintableToken, address _otherToken) internal view returns (bool) {
         if (ERC165Checker.supportsInterface(_mintableToken, type(ILegacyMintableERC20).interfaceId)) {
             return _otherToken == ILegacyMintableERC20(_mintableToken).l1Token();
-        } else {
+        } else if (ERC165Checker.supportsInterface(_mintableToken, type(IOptimismMintableERC20).interfaceId)) {
             return _otherToken == IOptimismMintableERC20(_mintableToken).remoteToken();
+        } else {
+            return _otherToken == IKromaMintableERC20(_mintableToken).REMOTE_TOKEN();
         }
     }
 

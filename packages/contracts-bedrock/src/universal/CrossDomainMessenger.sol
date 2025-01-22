@@ -77,6 +77,26 @@ contract CrossDomainMessengerLegacySpacer1 {
     mapping(bytes32 => bool) private spacer_202_0_32;
 }
 
+contract KromaCrossDomainMessengerLegacySpacer {
+    /// @custom:legacy
+    /// @custom:spacer ContextUpgradable's __gap
+    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
+    ///         ContextUpgradable.
+    uint256[50] private spacer_1_0_1600;
+
+    /// @custom:legacy
+    /// @custom:spacer PausableUpgradable's _paused
+    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
+    ///         PausableUpgradable.
+    bool private spacer_51_0_1;
+
+    /// @custom:legacy
+    /// @custom:spacer PausableUpgradable's __gap
+    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
+    ///         PausableUpgradable.
+    uint256[49] private spacer_52_0_1568;
+}
+
 /// @custom:upgradeable
 /// @title CrossDomainMessenger
 /// @notice CrossDomainMessenger is a base contract that provides the core logic for the L1 and L2
@@ -86,9 +106,8 @@ contract CrossDomainMessengerLegacySpacer1 {
 ///         chains and does not support one-to-many interactions.
 ///         Any changes to this contract MUST result in a semver bump for contracts that inherit it.
 abstract contract CrossDomainMessenger is
-    CrossDomainMessengerLegacySpacer0,
     Initializable,
-    CrossDomainMessengerLegacySpacer1
+    KromaCrossDomainMessengerLegacySpacer
 {
     /// @notice Current message version identifier.
     uint16 public constant MESSAGE_VERSION = 1;

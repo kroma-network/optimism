@@ -124,6 +124,10 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
     ///         Set as internal with a getter so that the struct is returned instead of a tuple.
     IResourceMetering.ResourceConfig internal _resourceConfig;
 
+    /// @custom:spacer validatorRewardScalar
+    /// @notice Spacer for backwards compatibility.
+    uint256 public spacer_106_0_32;
+
     /// @notice The EIP-1559 base fee max change denominator.
     uint32 public eip1559Denominator;
 
