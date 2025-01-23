@@ -9,10 +9,8 @@ import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Atan2 } from "src/libraries/Atan2.sol";
 import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
-import { Constants } from "src/libraries/Constants.sol";
 import { KromaConstants } from "src/libraries/KromaConstants.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
-import { Types } from "src/libraries/Types.sol";
 import { Uint128Math } from "src/libraries/Uint128Math.sol";
 
 // Interfaces

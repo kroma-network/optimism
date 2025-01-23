@@ -9,7 +9,6 @@ import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 // Libraries
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
-import { Types } from "src/libraries/Types.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
@@ -541,7 +540,7 @@ contract Colosseum is Initializable, ISemver {
         bytes32 dstSegment;
         if (!_isAbleToBisect(challenge)) dstSegment = challenge.segments[_pos + 1];
 
-        // Verify ZK proof according to the given proof type.
+        // Verify ZK proof.
         bytes32 publicInputHash =
             ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
         if (verifiedPublicInputs[publicInputHash]) revert AlreadyVerifiedPublicInput();
@@ -578,8 +577,7 @@ contract Colosseum is Initializable, ISemver {
     }
 
     /// @notice Cancels the challenge if the output root to be challenged has already been deleted.
-    ///         If the output root has been deleted, delete the challenge. Note that before validator
-    ///         system upgrade, also refund the challenger's pending bond in validator pool.
+    ///         If the output root has been deleted, delete the challenge.
     ///         Reverts when challenger is timed out or called by non-challenger.
     ///
     /// @param _outputIndex Index of the L2 checkpoint output.

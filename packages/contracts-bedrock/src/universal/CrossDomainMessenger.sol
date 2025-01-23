@@ -105,10 +105,7 @@ contract KromaCrossDomainMessengerLegacySpacer {
 ///         chain it's deployed on. Currently only designed for message passing between two paired
 ///         chains and does not support one-to-many interactions.
 ///         Any changes to this contract MUST result in a semver bump for contracts that inherit it.
-abstract contract CrossDomainMessenger is
-    Initializable,
-    KromaCrossDomainMessengerLegacySpacer
-{
+abstract contract CrossDomainMessenger is Initializable, KromaCrossDomainMessengerLegacySpacer {
     /// @notice Current message version identifier.
     uint16 public constant MESSAGE_VERSION = 1;
 

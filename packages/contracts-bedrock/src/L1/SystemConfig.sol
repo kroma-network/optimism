@@ -12,7 +12,7 @@ import { GasPayingToken, IGasToken } from "src/libraries/GasPayingToken.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
-import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
+import { IKromaPortal } from "interfaces/L1/IKromaPortal.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 
 /// @custom:proxied true
@@ -333,7 +333,7 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
 
             // Set the gas paying token in storage and in the OptimismPortal.
             GasPayingToken.set({ _token: _token, _decimals: GAS_PAYING_TOKEN_DECIMALS, _name: name, _symbol: symbol });
-            IOptimismPortal(payable(optimismPortal())).setGasPayingToken({
+            IKromaPortal(payable(optimismPortal())).setGasPayingToken({
                 _token: _token,
                 _decimals: GAS_PAYING_TOKEN_DECIMALS,
                 _name: name,

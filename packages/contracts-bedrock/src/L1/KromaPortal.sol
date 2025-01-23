@@ -392,7 +392,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         return block.timestamp > _timestamp + L2_ORACLE.FINALIZATION_PERIOD_SECONDS();
     }
 
-     /// @notice Sets the gas paying token for the L2 system. This token is used as the
+    /// @notice Sets the gas paying token for the L2 system. This token is used as the
     ///         L2 native asset. Only the SystemConfig contract can call this function.
     function setGasPayingToken(address _token, uint8 _decimals, bytes32 _name, bytes32 _symbol) external {
         if (msg.sender != address(SYSTEM_CONFIG)) revert Unauthorized();

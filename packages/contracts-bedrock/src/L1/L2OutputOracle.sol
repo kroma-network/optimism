@@ -8,7 +8,6 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 import { Constants } from "src/libraries/Constants.sol";
 import { KromaConstants } from "src/libraries/KromaConstants.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
-import { Types } from "src/libraries/Types.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
@@ -154,8 +153,6 @@ contract L2OutputOracle is Initializable, ISemver {
         external
         payable
     {
-        uint256 outputIndex = nextOutputIndex();
-
         VALIDATOR_MANAGER.checkSubmissionEligibility(msg.sender);
 
         require(
@@ -187,14 +184,14 @@ contract L2OutputOracle is Initializable, ISemver {
             })
         );
 
+        uint256 outputIndex = nextOutputIndex();
+
         emit OutputSubmitted(_outputRoot, outputIndex, _l2BlockNumber, block.timestamp);
 
         VALIDATOR_MANAGER.afterSubmitL2Output(outputIndex);
     }
 
-    /// @notice Updates the next output index to be finalized. This function may only be called by
-    ///         the validator pool contract before terminated, after that by the validator manager
-    ///         contract.
+    /// @notice Updates the next output index to be finalized.
     /// @param _outputIndex Index of the next output to be finalized.
     function setNextFinalizeOutputIndex(uint256 _outputIndex) external {
         require(
