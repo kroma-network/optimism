@@ -15,7 +15,7 @@ import { ICrossDomainMessenger } from "interfaces/universal/ICrossDomainMessenge
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /// @custom:proxied true
-/// @custom:predeploy 0x4200000000000000000000000000000000000014
+/// @custom:predeploy 0x420000000000000000000000000000000000000A
 /// @title L2ERC721Bridge
 /// @notice The L2 ERC721 bridge is a contract which works together with the L1 ERC721 bridge to
 ///         make it possible to transfer ERC721 tokens from Ethereum to Optimism. This contract

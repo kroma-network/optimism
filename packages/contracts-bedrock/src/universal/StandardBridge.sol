@@ -59,9 +59,9 @@ abstract contract StandardBridge {
     bool private _initializing;
 
     /// @notice Reserve extra slots (to a total of 50) in the storage layout for future upgrades.
-    ///         A gap size of 45 was chosen here, so that the first slot used in a child contract
+    ///         A gap size of 47 was chosen here, so that the first slot used in a child contract
     ///         would be a multiple of 50.
-    uint256[45] private __gap;
+    uint256[47] private __gap;
 
     /// @notice Triggered when the contract has been initialized, from OpenZeppelin's Initializable.sol.
     /// @custom:oz

@@ -48,7 +48,7 @@ interface IColosseum {
     event ChallengeCanceled(uint256 indexed outputIndex, address indexed challenger, uint256 timestamp);
     event ChallengerTimedOut(uint256 indexed outputIndex, address indexed challenger, uint256 timestamp);
 
-    function L2_OUTPUT_ORACLE() external view returns (L2OutputOracle);
+    function L2_ORACLE() external view returns (L2OutputOracle);
     function ZK_PROOF_VERIFIER() external view returns (ZKProofVerifier);
     function CREATION_PERIOD_SECONDS() external view returns (uint256);
     function BISECTION_TIMEOUT() external view returns (uint256);
@@ -58,10 +58,18 @@ interface IColosseum {
     function version() external view returns (string memory);
 
     function segmentsLengths(uint256) external view returns (uint256);
-    function challenges(uint256) external view returns (KromaTypes.Challenge memory);
+    function challenges(
+        uint256,
+        address
+    )
+        external
+        view
+        returns (uint8 turn, uint64 timeoutAt, address asserter, address challenger, uint256 segSize, uint256 segStart);
     function verifiedPublicInputs(bytes32) external view returns (bool);
-    function deletedOutputs(uint256) external view returns (bool);
-
+    function deletedOutputs(uint256)
+        external
+        view
+        returns (address submitter, bytes32 outputRoot, uint128 timestamp, uint128 l2BlockNumber);
     function createChallenge(
         uint256 _outputIndex,
         bytes32 _l1BlockHash,
@@ -76,6 +84,7 @@ interface IColosseum {
         KromaTypes.ZkVmProof calldata _zkVmProof
     )
         external;
+    function challengerTimeout(uint256 _outputIndex, address _challenger) external;
     function cancelChallenge(uint256 _outputIndex) external;
     function dismissChallenge(
         uint256 _outputIndex,

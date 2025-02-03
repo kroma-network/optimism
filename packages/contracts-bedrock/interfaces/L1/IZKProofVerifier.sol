@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 
-/// @notice This interface corresponds to the Custom Gas Token version of the SystemConfig contract.
 interface IZKProofVerifier {
     error InvalidZkVmVKey();
     error InvalidPublicInput();

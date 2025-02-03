@@ -83,7 +83,6 @@ interface IL2OutputOracle {
     function setNextFinalizeOutputIndex(uint256 _outputIndex) external;
 
     function computeL2Timestamp(uint256 _l2BlockNumber) external view returns (uint256);
-    function deleteL2Outputs(uint256 _l2OutputIndex) external;
     function finalizationPeriodSeconds() external view returns (uint256);
     function getL2Output(uint256 _l2OutputIndex) external view returns (KromaTypes.CheckpointOutput memory);
     function getL2OutputAfter(uint256 _l2BlockNumber) external view returns (KromaTypes.CheckpointOutput memory);
@@ -99,7 +98,7 @@ interface IL2OutputOracle {
     function nextOutputMinL2Timestamp() external view returns (uint256);
     function startingBlockNumber() external view returns (uint256);
     function startingTimestamp() external view returns (uint256);
-    function nextFinalizedOutputIndex() external view returns (uint256);
+    function nextFinalizeOutputIndex() external view returns (uint256);
     function version() external view returns (string memory);
 
     function __constructor__() external;

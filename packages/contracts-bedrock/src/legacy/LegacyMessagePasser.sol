@@ -6,7 +6,7 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /// @custom:legacy true
 /// @custom:proxied true
-/// @custom:predeploy 0x4200000000000000000000000000000000000000
+/// @custom:predeploy 0x42000000000000000000000000000000000000fF
 /// @title LegacyMessagePasser
 /// @notice The LegacyMessagePasser was the low-level mechanism used to send messages from L2 to L1
 ///         before the Bedrock upgrade. It is now deprecated in favor of the new MessagePasser.

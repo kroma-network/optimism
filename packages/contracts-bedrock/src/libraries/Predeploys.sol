@@ -12,7 +12,7 @@ library Predeploys {
     /// @notice Address of the LegacyMessagePasser predeploy. Deprecate. Use the updated
     ///         L2ToL1MessagePasser contract instead.
     ///         Address has fixed to an useless address, to avoid conflict with Kroma ProxyAdmin contract.
-    address internal constant LEGACY_MESSAGE_PASSER = 0x4300000000000000000000000000000000000000;
+    address internal constant LEGACY_MESSAGE_PASSER = 0x42000000000000000000000000000000000000fF;
 
     /// @custom:legacy
     /// @notice Address of the L1MessageSender predeploy. Deprecated. Use L2CrossDomainMessenger
