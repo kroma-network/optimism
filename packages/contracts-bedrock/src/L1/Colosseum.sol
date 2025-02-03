@@ -259,7 +259,6 @@ contract Colosseum is Initializable, ISemver {
     {
         if (_outputIndex == 0) revert NotAllowedGenesisOutput();
 
-        L2_ORACLE.VALIDATOR_MANAGER().checkChallengeEligibility(_outputIndex);
         // Only the validators whose status is active can create challenge.
         if (!L2_ORACLE.VALIDATOR_MANAGER().isActive(msg.sender)) {
             revert ImproperValidatorStatus();
