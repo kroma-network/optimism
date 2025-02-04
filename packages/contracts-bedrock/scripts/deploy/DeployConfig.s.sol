@@ -91,6 +91,37 @@ contract DeployConfig is Script {
 
     bool public useInterop;
 
+    // [Kroma: START]
+    address public validatorManagerTrustedValidator;
+    uint128 public validatorManagerMinRegisterAmount;
+    uint128 public validatorManagerMinActivateAmount;
+    uint128 public validatorManagerCommissionChangeDelaySeconds;
+    uint128 public validatorManagerRoundDurationSeconds;
+    uint128 public validatorManagerSoftJailPeriodSeconds;
+    uint128 public validatorManagerHardJailPeriodSeconds;
+    uint128 public validatorManagerJailThreshold;
+    uint128 public validatorManagerMaxFinalizations;
+    uint128 public validatorManagerBaseReward;
+    address public assetManagerKgh;
+    address public assetManagerVault;
+    uint128 public assetManagerMinDelegationPeriod;
+    uint128 public assetManagerBondAmount;
+    address[] public securityCouncilOwners;
+    uint256 public governorVotingDelayBlocks;
+    uint256 public governorVotingPeriodBlocks;
+    uint256 public governorProposalThreshold;
+    uint256 public governorVotesQuorumFractionPercent;
+    uint256 public timeLockMinDelaySeconds;
+    uint256 public l2GovernorVotingPeriodBlocks;
+    uint256 public l2TimeLockMinDelaySeconds;
+    uint256 public colosseumCreationPeriodSeconds;
+    uint256 public colosseumBisectionTimeout;
+    uint256 public colosseumProvingTimeout;
+    uint256[] public colosseumSegmentsLengths;
+    address public zkProofVerifierSP1Verifier;
+    bytes32 public zkProofVerifierVKey;
+    // [Kroma: END]
+
     function read(string memory _path) public {
         console.log("DeployConfig: reading file %s", _path);
         try vm.readFile(_path) returns (string memory data_) {
@@ -176,6 +207,38 @@ contract DeployConfig is Script {
         customGasTokenAddress = _readOr(_json, "$.customGasTokenAddress", address(0));
 
         useInterop = _readOr(_json, "$.useInterop", false);
+
+        // [Kroma: START]
+        validatorManagerTrustedValidator = stdJson.readAddress(_json, "$.validatorManagerTrustedValidator");
+        validatorManagerMinRegisterAmount = uint128(stdJson.readUint(_json, "$.validatorManagerMinRegisterAmount"));
+        validatorManagerMinActivateAmount = uint128(stdJson.readUint(_json, "$.validatorManagerMinActivateAmount"));
+        validatorManagerCommissionChangeDelaySeconds =
+            uint128(stdJson.readUint(_json, "$.validatorManagerCommissionChangeDelaySeconds"));
+        validatorManagerRoundDurationSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerRoundDurationSeconds"));
+        validatorManagerSoftJailPeriodSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerSoftJailPeriodSeconds"));
+        validatorManagerHardJailPeriodSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerHardJailPeriodSeconds"));
+        validatorManagerJailThreshold = uint128(stdJson.readUint(_json, "$.validatorManagerJailThreshold"));
+        validatorManagerMaxFinalizations = uint128(stdJson.readUint(_json, "$.validatorManagerMaxFinalizations"));
+        validatorManagerBaseReward = uint128(stdJson.readUint(_json, "$.validatorManagerBaseReward"));
+        assetManagerKgh = stdJson.readAddress(_json, "$.assetManagerKgh");
+        assetManagerVault = stdJson.readAddress(_json, "$.assetManagerVault");
+        assetManagerMinDelegationPeriod = uint128(stdJson.readUint(_json, "$.assetManagerMinDelegationPeriod"));
+        assetManagerBondAmount = uint128(stdJson.readUint(_json, "$.assetManagerBondAmount"));
+        securityCouncilOwners = stdJson.readAddressArray(_json, "$.securityCouncilOwners");
+        governorVotingDelayBlocks = stdJson.readUint(_json, "$.governorVotingDelayBlocks");
+        governorVotingPeriodBlocks = stdJson.readUint(_json, "$.governorVotingPeriodBlocks");
+        governorProposalThreshold = stdJson.readUint(_json, "$.governorProposalThreshold");
+        governorVotesQuorumFractionPercent = stdJson.readUint(_json, "$.governorVotesQuorumFractionPercent");
+        timeLockMinDelaySeconds = stdJson.readUint(_json, "$.timeLockMinDelaySeconds");
+        l2GovernorVotingPeriodBlocks = stdJson.readUint(_json, "$.l2GovernorVotingPeriodBlocks");
+        l2TimeLockMinDelaySeconds = stdJson.readUint(_json, "$.l2TimeLockMinDelaySeconds");
+        colosseumCreationPeriodSeconds = stdJson.readUint(_json, "$.colosseumCreationPeriodSeconds");
+        colosseumBisectionTimeout = stdJson.readUint(_json, "$.colosseumBisectionTimeout");
+        colosseumProvingTimeout = stdJson.readUint(_json, "$.colosseumProvingTimeout");
+        colosseumSegmentsLengths = stdJson.readUintArray(_json, "$.colosseumSegmentsLengths");
+        zkProofVerifierSP1Verifier = stdJson.readAddress(_json, "$.zkProofVerifierSP1Verifier");
+        zkProofVerifierVKey = stdJson.readBytes32(_json, "$.zkProofVerifierVKey");
+        // [Kroma: END]
     }
 
     function fork() public view returns (Fork fork_) {
