@@ -81,18 +81,15 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
     function set(bytes4 _sel, uint256 _value) public {
         require(_value != 0, "KromaDeployImplementationsInput: cannot set zero value");
 
-        // forgefmt: disable-start
         if (_sel == this.creationPeriodSeconds.selector) _creationPeriodSeconds = _value;
         else if (_sel == this.bisectionTimeout.selector) _bisectionTimeout = _value;
         else if (_sel == this.provingTimeout.selector) _provingTimeout = _value;
         else revert("KromaDeployImplementationsInput: unknown selector");
-        // forgefmt: disable-end
     }
 
     function set(bytes4 _sel, uint128 _value) public {
         require(_value != 0, "KromaDeployImplementationsInput: cannot set zero value");
 
-        // forgefmt: disable-start
         if (_sel == this.minRegisterAmount.selector) _minRegisterAmount = _value;
         else if (_sel == this.minActivateAmount.selector) _minActivateAmount = _value;
         else if (_sel == this.commissionChangeDelaySeconds.selector) _commissionChangeDelaySeconds = _value;
@@ -104,13 +101,11 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
         else if (_sel == this.baseReward.selector) _baseReward = _value;
         else if (_sel == this.minDelegationPeriod.selector) _minDelegationPeriod = _value;
         else if (_sel == this.bondAmount.selector) _bondAmount = _value;
-        // forgefmt: disable-end
     }
 
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "KromaDeployImplementationsInput: cannot set zero address");
 
-        // forgefmt: disable-start
         if (_sel == this.assetToken.selector) _assetToken = IERC20(_addr);
         else if (_sel == this.kgh.selector) _kgh = IERC721(_addr);
         else if (_sel == this.securityCouncil.selector) _securityCouncil = _addr;
@@ -125,7 +120,6 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
         else if (_sel == this.trustedValidator.selector) _trustedValidator = _addr;
         else if (_sel == this.sp1Verifier.selector) _sp1Verifier = ISP1Verifier(_addr);
         else revert("KromaDeployImplementationsInput: unknown selector");
-        // forgefmt: disable-start
     }
 
     function set(bytes4 _sel, uint256[] memory _values) public {
@@ -317,19 +311,29 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "DeployImplementationsOutput: cannot set zero address");
 
-        // forgefmt: disable-start
-        if (_sel == this.assetManagerImpl.selector) _assetManagerImpl = IAssetManager(_addr);
-        else if (_sel == this.colosseumImpl.selector) _colosseumImpl = IColosseum(_addr);
-        else if (_sel == this.kromaPortalImpl.selector) _kromaPortalImpl = IKromaPortal(payable(_addr));
-        else if (_sel == this.l2OutputOracleImpl.selector) _l2OutputOracleImpl = IL2OutputOracle(_addr);
-        else if (_sel == this.securityCouncilImpl.selector) _securityCouncilImpl = ISecurityCouncil(_addr);
-        else if (_sel == this.securityCouncilTokenImpl.selector) _securityCouncilTokenImpl = ISecurityCouncilToken(_addr);
-        else if (_sel == this.timeLockImpl.selector) _timeLockImpl = ITimeLock(_addr);
-        else if (_sel == this.upgradeGovernorImpl.selector) _upgradeGovernorImpl = IUpgradeGovernor(_addr);
-        else if (_sel == this.validatorManagerImpl.selector) _validatorManagerImpl = IValidatorManager(_addr);
-        else if (_sel == this.zkProofVerifierImpl.selector) _zkProofVerifierImpl = IZKProofVerifier(_addr);
-        else revert("DeployImplementationsOutput: unknown selector");
-        // forgefmt: disable-end
+        if (_sel == this.assetManagerImpl.selector) {
+            _assetManagerImpl = IAssetManager(_addr);
+        } else if (_sel == this.colosseumImpl.selector) {
+            _colosseumImpl = IColosseum(_addr);
+        } else if (_sel == this.kromaPortalImpl.selector) {
+            _kromaPortalImpl = IKromaPortal(payable(_addr));
+        } else if (_sel == this.l2OutputOracleImpl.selector) {
+            _l2OutputOracleImpl = IL2OutputOracle(_addr);
+        } else if (_sel == this.securityCouncilImpl.selector) {
+            _securityCouncilImpl = ISecurityCouncil(_addr);
+        } else if (_sel == this.securityCouncilTokenImpl.selector) {
+            _securityCouncilTokenImpl = ISecurityCouncilToken(_addr);
+        } else if (_sel == this.timeLockImpl.selector) {
+            _timeLockImpl = ITimeLock(_addr);
+        } else if (_sel == this.upgradeGovernorImpl.selector) {
+            _upgradeGovernorImpl = IUpgradeGovernor(_addr);
+        } else if (_sel == this.validatorManagerImpl.selector) {
+            _validatorManagerImpl = IValidatorManager(_addr);
+        } else if (_sel == this.zkProofVerifierImpl.selector) {
+            _zkProofVerifierImpl = IZKProofVerifier(_addr);
+        } else {
+            revert("DeployImplementationsOutput: unknown selector");
+        }
     }
 
     function checkOutput(KromaDeployImplementationsInput _dii) public view {
@@ -455,7 +459,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         ISecurityCouncil securityCouncil = securityCouncilImpl();
 
         require(securityCouncil.COLOSSEUM() == address(_dii.colosseum()), "SC-10");
-        require(address(securityCouncil.GOVERNOR()) == address(_dii.governor()) , "SC-20");
+        require(address(securityCouncil.GOVERNOR()) == address(_dii.governor()), "SC-20");
     }
 
     function assertValidSecurityCouncilToken(KromaDeployImplementationsInput) public view {
@@ -511,81 +515,270 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
 }
 
 contract DeployImplementations is Script {
+    /// @notice Dummy selector for the virtual constructor function.
+    bytes4 internal constant DUMMY_CONSTRUCTOR_SELECTOR = 0xffffffff;
     // -------- Core Deployment Methods --------
 
     function run(KromaDeployImplementationsInput _dii, KromaDeployImplementationsOutput _dio) public {
         // Deploy the implementations.
-
-
-        // Deploy the OP Contracts Manager with the new implementations set.
+        deployAssetManagerImpl(_dii, _dio);
+        deployColosseumImpl(_dii, _dio);
+        deployKromaPortalImpl(_dii, _dio);
+        deploySecurityCouncilImpl(_dii, _dio);
+        deploySecurityCouncilTokenImpl(_dii, _dio);
+        deployTimeLockImpl(_dii, _dio);
+        deployUpgradeGovernorImpl(_dii, _dio);
+        deployValidatorManagerImpl(_dii, _dio);
 
         _dio.checkOutput(_dii);
     }
 
     // -------- Deployment Steps --------
+    // TODO: find a better way than abi.encodeWithSelector, since it does not provide any type checks unlike
+    // abi.encodeCall.
+    function deployAssetManagerImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IAssetManager impl = IAssetManager(
+            DeployUtils.create1({
+                _name: "AssetManager",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.assetToken(),
+                        _dii.kgh(),
+                        _dii.securityCouncil(),
+                        _dii.vault(),
+                        _dii.validatorManager(),
+                        _dii.minDelegationPeriod(),
+                        _dii.bondAmount()
+                    )
+                )
+            })
+        );
 
+        vm.label(address(impl), "AssetManagerImpl");
+        _dio.set(_dio.assetManagerImpl.selector, address(impl));
+    }
+
+    function deployColosseumImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IColosseum impl = IColosseum(
+            DeployUtils.create1({
+                _name: "Colosseum",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.l2OutputOracle(),
+                        _dii.zkProofVerifier(),
+                        _dii.creationPeriodSeconds(),
+                        _dii.bisectionTimeout(),
+                        _dii.provingTimeout(),
+                        _dii.segmentsLengths(),
+                        _dii.securityCouncil()
+                    )
+                )
+            })
+        );
+
+        vm.label(address(impl), "ColosseumImpl");
+        _dio.set(_dio.colosseumImpl.selector, address(impl));
+    }
+
+    function deployKromaPortalImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IKromaPortal impl = IKromaPortal(
+            DeployUtils.create1({
+                _name: "KromaPortal",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.l2OutputOracle(),
+                        _dii.securityCouncil(),
+                        _dii.paused(),
+                        _dii.systemConfig()
+                    )
+                )
+            })
+        );
+
+        vm.label(address(impl), "KromaPortalImpl");
+        _dio.set(_dio.kromaPortalImpl.selector, address(impl));
+    }
+
+    function deploySecurityCouncilImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ISecurityCouncil impl = ISecurityCouncil(
+            DeployUtils.create1({
+                _name: "SecurityCouncil",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.colosseum(), _dii.governor())
+                )
+            })
+        );
+
+        vm.label(address(impl), "SecurityCouncilImpl");
+        _dio.set(_dio.securityCouncilImpl.selector, address(impl));
+    }
+
+    function deploySecurityCouncilTokenImpl(
+        KromaDeployImplementationsInput,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ISecurityCouncilToken impl = ISecurityCouncilToken(
+            DeployUtils.create1({
+                _name: "SecurityCouncilToken",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "SecurityCouncilTokenImpl");
+        _dio.set(_dio.securityCouncilTokenImpl.selector, address(impl));
+    }
+
+    function deployTimeLockImpl(
+        KromaDeployImplementationsInput,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ITimeLock impl = ITimeLock(
+            DeployUtils.create1({
+                _name: "TimeLock",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "TimeLockImpl");
+        _dio.set(_dio.timeLockImpl.selector, address(impl));
+    }
+
+    function deployUpgradeGovernorImpl(
+        KromaDeployImplementationsInput,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IUpgradeGovernor impl = IUpgradeGovernor(
+            DeployUtils.create1({
+                _name: "UpgradeGovernor",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "UpgradeGovernorImpl");
+        _dio.set(_dio.upgradeGovernorImpl.selector, address(impl));
+    }
+
+    function deployValidatorManagerImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IValidatorManager impl = IValidatorManager(
+            DeployUtils.create1({
+                _name: "ValidatorManager",
+                _args: encodeValMgrConstructorParams(_dii) // To avoid stack too deep error.
+             })
+        );
+
+        vm.label(address(impl), "ValidatorManagerImpl");
+        _dio.set(_dio.validatorManagerImpl.selector, address(impl));
+    }
+
+    function deployZKProofVerifierImpl(
+        KromaDeployImplementationsInput _dii,
+        KromaDeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IZKProofVerifier impl = IZKProofVerifier(
+            DeployUtils.create1({
+                _name: "ZKProofVerifier",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.sp1Verifier(), _dii.vKey())
+                )
+            })
+        );
+
+        vm.label(address(impl), "ZKProofVerifierImpl");
+        _dio.set(_dio.zkProofVerifierImpl.selector, address(impl));
+    }
 
     // -------- Utilities --------
+    function encodeValMgrConstructorParams(KromaDeployImplementationsInput _dii) public view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            DUMMY_CONSTRUCTOR_SELECTOR,
+            _dii.l2OutputOracle(),
+            _dii.assetManager(),
+            _dii.trustedValidator(),
+            _dii.commissionChangeDelaySeconds(),
+            _dii.roundDurationSeconds(),
+            _dii.softJailPeriodSeconds(),
+            _dii.hardJailPeriodSeconds(),
+            _dii.jailThreshold(),
+            _dii.maxFinalizations(),
+            _dii.baseReward(),
+            _dii.minRegisterAmount(),
+            _dii.minActivateAmount()
+        );
+    }
 
-    function etchIOContracts() public returns (KromaDeployImplementationsInput dii_, KromaDeployImplementationsOutput dio_) {
+    function etchIOContracts()
+        public
+        returns (KromaDeployImplementationsInput dii_, KromaDeployImplementationsOutput dio_)
+    {
         (dii_, dio_) = getIOContracts();
         vm.etch(address(dii_), type(KromaDeployImplementationsInput).runtimeCode);
         vm.etch(address(dio_), type(KromaDeployImplementationsOutput).runtimeCode);
     }
 
-    function getIOContracts() public view returns (KromaDeployImplementationsInput dii_, KromaDeployImplementationsOutput dio_) {
-        dii_ = KromaDeployImplementationsInput(DeployUtils.toIOAddress(msg.sender, "optimism.KromaDeployImplementationsInput"));
-        dio_ = KromaDeployImplementationsOutput(DeployUtils.toIOAddress(msg.sender, "optimism.KromaDeployImplementationsOutput"));
-    }
-
-    function deployBytecode(bytes memory _bytecode, bytes32 _salt) public returns (address newContract_) {
-        assembly ("memory-safe") {
-            newContract_ := create2(0, add(_bytecode, 0x20), mload(_bytecode), _salt)
-        }
-        require(newContract_ != address(0), "KromaDeployImplementationsOutput: create2 failed");
-    }
-
-    function deployBigBytecode(
-        bytes memory _bytecode,
-        bytes32 _salt
-    )
+    function getIOContracts()
         public
-        returns (address newContract1_, address newContract2_)
+        view
+        returns (KromaDeployImplementationsInput dii_, KromaDeployImplementationsOutput dio_)
     {
-        // Preamble needs 3 bytes.
-        uint256 maxInitCodeSize = 24576 - 3;
-        require(_bytecode.length > maxInitCodeSize, "KromaDeployImplementationsOutput: Use deployBytecode instead");
-
-        bytes memory part1Slice = Bytes.slice(_bytecode, 0, maxInitCodeSize);
-        bytes memory part1 = Blueprint.blueprintDeployerBytecode(part1Slice);
-        bytes memory part2Slice = Bytes.slice(_bytecode, maxInitCodeSize, _bytecode.length - maxInitCodeSize);
-        bytes memory part2 = Blueprint.blueprintDeployerBytecode(part2Slice);
-
-        newContract1_ = deployBytecode(part1, _salt);
-        newContract2_ = deployBytecode(part2, _salt);
-    }
-
-    // Zero address is returned if the address is not found in '_standardVersionsToml'.
-    function getReleaseAddress(
-        string memory _version,
-        string memory _contractName,
-        string memory _standardVersionsToml
-    )
-        internal
-        pure
-        returns (address addr_)
-    {
-        string memory baseKey = string.concat('.releases["', _version, '"].', _contractName);
-        string memory implAddressKey = string.concat(baseKey, ".implementation_address");
-        string memory addressKey = string.concat(baseKey, ".address");
-        try vm.parseTomlAddress(_standardVersionsToml, implAddressKey) returns (address parsedAddr_) {
-            addr_ = parsedAddr_;
-        } catch {
-            try vm.parseTomlAddress(_standardVersionsToml, addressKey) returns (address parsedAddr_) {
-                addr_ = parsedAddr_;
-            } catch {
-                addr_ = address(0);
-            }
-        }
+        dii_ = KromaDeployImplementationsInput(
+            DeployUtils.toIOAddress(msg.sender, "optimism.KromaDeployImplementationsInput")
+        );
+        dio_ = KromaDeployImplementationsOutput(
+            DeployUtils.toIOAddress(msg.sender, "optimism.KromaDeployImplementationsOutput")
+        );
     }
 }
