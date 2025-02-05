@@ -7,6 +7,19 @@ import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 /// @title IValidatorManager
 /// @notice Interface for ValidatorManager contract.
 interface IValidatorManager {
+    function L2_ORACLE() external view returns (L2OutputOracle);
+    function ASSET_MANAGER() external view returns (AssetManager);
+    function TRUSTED_VALIDATOR() external view returns (address);
+    function MIN_REGISTER_AMOUNT() external view returns (uint128);
+    function MIN_ACTIVATE_AMOUNT() external view returns (uint128);
+    function COMMISSION_CHANGE_DELAY_SECONDS() external view returns (uint128);
+    function ROUND_DURATION_SECONDS() external view returns (uint128);
+    function SOFT_JAIL_PERIOD_SECONDS() external view returns (uint128);
+    function HARD_JAIL_PERIOD_SECONDS() external view returns (uint128);
+    function JAIL_THRESHOLD() external view returns (uint128);
+    function MAX_OUTPUT_FINALIZATIONS() external view returns (uint128);
+    function BASE_REWARD() external view returns (uint128);
+
     enum ValidatorStatus {
         NONE,
         EXITED,
@@ -97,4 +110,7 @@ interface IValidatorManager {
     function getWeight(address validator) external view returns (uint120);
     function activatedValidatorCount() external view returns (uint32);
     function activatedValidatorTotalWeight() external view returns (uint120);
+
+    function version() external view returns (string memory);
+    function __constructor__(ConstructorParams calldata params) external;
 }

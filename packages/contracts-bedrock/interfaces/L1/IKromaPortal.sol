@@ -2,8 +2,16 @@
 pragma solidity ^0.8.0;
 
 import { Types } from "src/libraries/Types.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { SystemConfig } from "src/L1/SystemConfig.sol";
 
 interface IKromaPortal {
+    struct ProvenWithdrawal {
+        bytes32 outputRoot;
+        uint128 timestamp;
+        uint128 l2OutputIndex;
+    }
+
     event TransactionDeposited(address indexed from, address indexed to, uint256 indexed version, bytes opaqueData);
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
     event WithdrawalProven(bytes32 indexed withdrawalHash, address indexed from, address indexed to);
@@ -12,6 +20,12 @@ interface IKromaPortal {
 
     receive() external payable;
 
+    function DEPOSIT_VERISION() external view returns (uint256);
+    function RECEIVE_DEFAULT_GAS_LIMIT() external view returns (uint64);
+    function SYSTEM_DEPOSIT_GAS_LIMIT() external view returns (uint32);
+    function L2_ORACLE() external view returns (L2OutputOracle);
+    function SYSTEM_CONFIG() external view returns (SystemConfig);
+    function GUARDIAN() external view returns (address);
     function depositTransaction(
         address _to,
         uint256 _value,
@@ -42,4 +56,12 @@ interface IKromaPortal {
     function setGasPayingToken(address _token, uint8 _decimals, bytes32 _name, bytes32 _symbol) external;
     function pause() external;
     function unpause() external;
+
+    function __constructor__(
+        L2OutputOracle _l2Oracle,
+        address _guardian,
+        bool _paused,
+        SystemConfig _config
+    )
+        external;
 }

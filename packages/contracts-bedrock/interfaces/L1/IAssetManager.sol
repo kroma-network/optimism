@@ -1,9 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+
 /// @title IAssetManager
 /// @notice Interface for AssetManager contract.
 interface IAssetManager {
+    function TAX_NUMERATOR() external view returns (uint128);
+    function TAX_DENOMINATOR() external view returns (uint128);
+    function DECIMAL_OFFSET() external view returns (uint128);
+    function ASSET_TOKEN() external view returns (IERC20);
+    function KGH() external view returns (IERC721);
+    function SECURITY_COUNCIL() external view returns (address);
+    function VALIDATOR_REWARD_VAULT() external view returns (address);
+    function MIN_DELEGATION_PERIOD() external view returns (uint128);
+    function BOND_AMOUNT() external view returns (uint128);
+
     struct Asset {
         uint128 validatorKro;
         uint128 validatorKroBonded;
@@ -84,4 +98,16 @@ interface IAssetManager {
     function undelegateKgh(address validator, uint256 tokenId) external;
     function undelegateKghBatch(address validator, uint256[] calldata tokenIds) external;
     function claimKghReward(address validator) external;
+
+    function version() external view returns (string memory);
+    function __constructor__(
+        IERC20 _assetToken,
+        IERC721 _kgh,
+        address _securityCouncil,
+        address _validatorRewardVault,
+        IValidatorManager _validatorManager,
+        uint128 _minDelegationPeriod,
+        uint128 _bondAmount
+    )
+        external;
 }

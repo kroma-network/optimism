@@ -104,4 +104,16 @@ interface IColosseum {
         returns (KromaTypes.Challenge memory);
     function getStatus(uint256 _outputIndex, address _challenger) external view returns (ChallengeStatus);
     function isInCreationPeriod(uint256 _outputIndex) external view returns (bool);
+
+    function __constructor__(
+        L2OutputOracle _l2Oracle,
+        ZKProofVerifier _zkProofVerifier,
+        uint256 _submissionInterval,
+        uint256 _creationPeriodSeconds,
+        uint256 _bisectionTimeout,
+        uint256 _provingTimeout,
+        uint256[] memory _segmentsLengths,
+        address _securityCouncil
+    )
+        external;
 }
