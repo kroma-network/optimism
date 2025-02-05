@@ -22,4 +22,6 @@ interface IZKProofVerifier {
         external
         view
         returns (bytes32 publicInputHash_);
+
+    function __constructor__(ISP1Verifier _sp1Verifier, bytes32 _zkVmProgramVKey) external;
 }
