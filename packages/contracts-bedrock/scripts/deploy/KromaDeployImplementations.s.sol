@@ -514,7 +514,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     }
 }
 
-contract DeployImplementations is Script {
+contract KromaDeployImplementations is Script {
     /// @notice Dummy selector for the virtual constructor function.
     bytes4 internal constant DUMMY_CONSTRUCTOR_SELECTOR = 0xffffffff;
     // -------- Core Deployment Methods --------
