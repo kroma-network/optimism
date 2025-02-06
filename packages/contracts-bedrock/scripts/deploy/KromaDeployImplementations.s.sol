@@ -48,6 +48,7 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
     /// @notice Deploy configs for Colosseum.
     L2OutputOracle internal _l2OutputOracle;
     ZKProofVerifier internal _zkProofVerifier;
+    uint256 internal _submissionInterval;
     uint256 internal _creationPeriodSeconds;
     uint256 internal _bisectionTimeout;
     uint256 internal _provingTimeout;
@@ -82,25 +83,21 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
         require(_value != 0, "KromaDeployImplementationsInput: cannot set zero value");
 
         if (_sel == this.creationPeriodSeconds.selector) _creationPeriodSeconds = _value;
+        else if (_sel == this.submissionInterval.selector) _submissionInterval = _value;
         else if (_sel == this.bisectionTimeout.selector) _bisectionTimeout = _value;
         else if (_sel == this.provingTimeout.selector) _provingTimeout = _value;
+        else if (_sel == this.minRegisterAmount.selector) _minRegisterAmount = uint128(_value);
+        else if (_sel == this.minActivateAmount.selector) _minActivateAmount = uint128(_value);
+        else if (_sel == this.commissionChangeDelaySeconds.selector) _commissionChangeDelaySeconds = uint128(_value);
+        else if (_sel == this.roundDurationSeconds.selector) _roundDurationSeconds = uint128(_value);
+        else if (_sel == this.softJailPeriodSeconds.selector) _softJailPeriodSeconds = uint128(_value);
+        else if (_sel == this.hardJailPeriodSeconds.selector) _hardJailPeriodSeconds = uint128(_value);
+        else if (_sel == this.jailThreshold.selector) _jailThreshold = uint128(_value);
+        else if (_sel == this.maxFinalizations.selector) _maxFinalizations = uint128(_value);
+        else if (_sel == this.baseReward.selector) _baseReward = uint128(_value);
+        else if (_sel == this.minDelegationPeriod.selector) _minDelegationPeriod = uint128(_value);
+        else if (_sel == this.bondAmount.selector) _bondAmount = uint128(_value);
         else revert("KromaDeployImplementationsInput: unknown selector");
-    }
-
-    function set(bytes4 _sel, uint128 _value) public {
-        require(_value != 0, "KromaDeployImplementationsInput: cannot set zero value");
-
-        if (_sel == this.minRegisterAmount.selector) _minRegisterAmount = _value;
-        else if (_sel == this.minActivateAmount.selector) _minActivateAmount = _value;
-        else if (_sel == this.commissionChangeDelaySeconds.selector) _commissionChangeDelaySeconds = _value;
-        else if (_sel == this.roundDurationSeconds.selector) _roundDurationSeconds = _value;
-        else if (_sel == this.softJailPeriodSeconds.selector) _softJailPeriodSeconds = _value;
-        else if (_sel == this.hardJailPeriodSeconds.selector) _hardJailPeriodSeconds = _value;
-        else if (_sel == this.jailThreshold.selector) _jailThreshold = _value;
-        else if (_sel == this.maxFinalizations.selector) _maxFinalizations = _value;
-        else if (_sel == this.baseReward.selector) _baseReward = _value;
-        else if (_sel == this.minDelegationPeriod.selector) _minDelegationPeriod = _value;
-        else if (_sel == this.bondAmount.selector) _bondAmount = _value;
     }
 
     function set(bytes4 _sel, address _addr) public {
@@ -143,6 +140,11 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
     function salt() public view returns (bytes32) {
         // TODO check if implementations are deployed based on code+salt and skip deploy if so.
         return _salt;
+    }
+
+    function submissionInterval() public view returns (uint256) {
+        require(_submissionInterval != 0, "KromaDeployImplementationsInput: not set");
+        return _submissionInterval;
     }
 
     function creationPeriodSeconds() public view returns (uint256) {
@@ -436,7 +438,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
 
         require(address(colosseum.L2_ORACLE()) == address(_dii.l2OutputOracle()), "COLOSSEUM-10");
         require(address(colosseum.ZK_PROOF_VERIFIER()) == address(_dii.zkProofVerifier()), "COLOSSEUM-20");
-        require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == _dii.creationPeriodSeconds(), "COLOSSEUM-30");
+        require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == _dii.submissionInterval(), "COLOSSEUM-30");
         require(colosseum.CREATION_PERIOD_SECONDS() == _dii.creationPeriodSeconds(), "COLOSSEUM-40");
         require(colosseum.BISECTION_TIMEOUT() == _dii.bisectionTimeout(), "COLOSSEUM-50");
         require(colosseum.PROVING_TIMEOUT() == _dii.provingTimeout(), "COLOSSEUM-60");
@@ -582,6 +584,7 @@ contract KromaDeployImplementations is Script {
                         DUMMY_CONSTRUCTOR_SELECTOR,
                         _dii.l2OutputOracle(),
                         _dii.zkProofVerifier(),
+                        _dii.submissionInterval(),
                         _dii.creationPeriodSeconds(),
                         _dii.bisectionTimeout(),
                         _dii.provingTimeout(),
