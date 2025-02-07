@@ -517,8 +517,6 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
 }
 
 contract KromaDeployImplementations is Script {
-    /// @notice Dummy selector for the virtual constructor function.
-    bytes4 internal constant DUMMY_CONSTRUCTOR_SELECTOR = 0xffffffff;
     // -------- Core Deployment Methods --------
 
     function run(KromaDeployImplementationsInput _dii, KromaDeployImplementationsOutput _dio) public {
@@ -536,8 +534,7 @@ contract KromaDeployImplementations is Script {
     }
 
     // -------- Deployment Steps --------
-    // TODO: find a better way than abi.encodeWithSelector, since it does not provide any type checks unlike
-    // abi.encodeCall.
+
     function deployAssetManagerImpl(
         KromaDeployImplementationsInput _dii,
         KromaDeployImplementationsOutput _dio
@@ -550,15 +547,17 @@ contract KromaDeployImplementations is Script {
             DeployUtils.create1({
                 _name: "AssetManager",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(
-                        DUMMY_CONSTRUCTOR_SELECTOR,
-                        _dii.assetToken(),
-                        _dii.kgh(),
-                        _dii.securityCouncil(),
-                        _dii.vault(),
-                        _dii.validatorManager(),
-                        _dii.minDelegationPeriod(),
-                        _dii.bondAmount()
+                    abi.encodeCall(
+                        IAssetManager.__constructor__,
+                        (
+                            _dii.assetToken(),
+                            _dii.kgh(),
+                            _dii.securityCouncil(),
+                            _dii.vault(),
+                            _dii.validatorManager(),
+                            _dii.minDelegationPeriod(),
+                            _dii.bondAmount()
+                        )
                     )
                 )
             })
@@ -580,16 +579,18 @@ contract KromaDeployImplementations is Script {
             DeployUtils.create1({
                 _name: "Colosseum",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(
-                        DUMMY_CONSTRUCTOR_SELECTOR,
-                        _dii.l2OutputOracle(),
-                        _dii.zkProofVerifier(),
-                        _dii.submissionInterval(),
-                        _dii.creationPeriodSeconds(),
-                        _dii.bisectionTimeout(),
-                        _dii.provingTimeout(),
-                        _dii.segmentsLengths(),
-                        _dii.securityCouncil()
+                    abi.encodeCall(
+                        IColosseum.__constructor__,
+                        (
+                            _dii.l2OutputOracle(),
+                            _dii.zkProofVerifier(),
+                            _dii.submissionInterval(),
+                            _dii.creationPeriodSeconds(),
+                            _dii.bisectionTimeout(),
+                            _dii.provingTimeout(),
+                            _dii.segmentsLengths(),
+                            _dii.securityCouncil()
+                        )
                     )
                 )
             })
@@ -611,12 +612,9 @@ contract KromaDeployImplementations is Script {
             DeployUtils.create1({
                 _name: "KromaPortal",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(
-                        DUMMY_CONSTRUCTOR_SELECTOR,
-                        _dii.l2OutputOracle(),
-                        _dii.securityCouncil(),
-                        _dii.paused(),
-                        _dii.systemConfig()
+                    abi.encodeCall(
+                        IKromaPortal.__constructor__,
+                        (_dii.l2OutputOracle(), _dii.securityCouncil(), _dii.paused(), _dii.systemConfig())
                     )
                 )
             })
@@ -638,7 +636,7 @@ contract KromaDeployImplementations is Script {
             DeployUtils.create1({
                 _name: "SecurityCouncil",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.colosseum(), _dii.governor())
+                    abi.encodeCall(ISecurityCouncil.__constructor__, (_dii.colosseum(), payable(_dii.governor())))
                 )
             })
         );
@@ -658,7 +656,7 @@ contract KromaDeployImplementations is Script {
         ISecurityCouncilToken impl = ISecurityCouncilToken(
             DeployUtils.create1({
                 _name: "SecurityCouncilToken",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(abi.encodeCall(ISecurityCouncilToken.__constructor__, ()))
             })
         );
 
@@ -677,7 +675,7 @@ contract KromaDeployImplementations is Script {
         ITimeLock impl = ITimeLock(
             DeployUtils.create1({
                 _name: "TimeLock",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(abi.encodeCall(ITimeLock.__constructor__, ()))
             })
         );
 
@@ -696,7 +694,7 @@ contract KromaDeployImplementations is Script {
         IUpgradeGovernor impl = IUpgradeGovernor(
             DeployUtils.create1({
                 _name: "UpgradeGovernor",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(abi.encodeCall(IUpgradeGovernor.__constructor__, ()))
             })
         );
 
@@ -735,7 +733,7 @@ contract KromaDeployImplementations is Script {
             DeployUtils.create1({
                 _name: "ZKProofVerifier",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.sp1Verifier(), _dii.vKey())
+                    abi.encodeCall(IZKProofVerifier.__constructor__, (_dii.sp1Verifier(), _dii.vKey()))
                 )
             })
         );
@@ -746,21 +744,21 @@ contract KromaDeployImplementations is Script {
 
     // -------- Utilities --------
     function encodeValMgrConstructorParams(KromaDeployImplementationsInput _dii) public view returns (bytes memory) {
-        return abi.encodeWithSelector(
-            DUMMY_CONSTRUCTOR_SELECTOR,
-            _dii.l2OutputOracle(),
-            _dii.assetManager(),
-            _dii.trustedValidator(),
-            _dii.commissionChangeDelaySeconds(),
-            _dii.roundDurationSeconds(),
-            _dii.softJailPeriodSeconds(),
-            _dii.hardJailPeriodSeconds(),
-            _dii.jailThreshold(),
-            _dii.maxFinalizations(),
-            _dii.baseReward(),
-            _dii.minRegisterAmount(),
-            _dii.minActivateAmount()
-        );
+        IValidatorManager.ConstructorParams memory _params = IValidatorManager.ConstructorParams({
+            _l2Oracle: _dii.l2OutputOracle(),
+            _assetManager: _dii.assetManager(),
+            _trustedValidator: _dii.trustedValidator(),
+            _commissionChangeDelaySeconds: _dii.commissionChangeDelaySeconds(),
+            _roundDurationSeconds: _dii.roundDurationSeconds(),
+            _softJailPeriodSeconds: _dii.softJailPeriodSeconds(),
+            _hardJailPeriodSeconds: _dii.hardJailPeriodSeconds(),
+            _jailThreshold: _dii.jailThreshold(),
+            _maxOutputFinalizations: _dii.maxFinalizations(),
+            _baseReward: _dii.baseReward(),
+            _minRegisterAmount: _dii.minRegisterAmount(),
+            _minActivateAmount: _dii.minActivateAmount()
+        });
+        return abi.encodeCall(IValidatorManager.__constructor__, (_params));
     }
 
     function etchIOContracts()
