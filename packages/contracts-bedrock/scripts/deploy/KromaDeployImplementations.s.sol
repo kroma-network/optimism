@@ -427,8 +427,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         require(address(assetManager.KGH()) == address(_dii.kgh()), "ASSETMGR-20");
         require(address(assetManager.SECURITY_COUNCIL()) == address(_dii.securityCouncil()), "ASSETMGR-30");
         require(address(assetManager.VALIDATOR_REWARD_VAULT()) == address(_dii.vault()), "ASSETMGR-40");
-        // TODO: There is a problem around cyclic dependencies, leaving this out for now.
-        // require(address(assetManager.VALIDATOR_MANAGER()) == address(_dii.validatorManager()), "ASSETMGR-50");
+        require(address(assetManager.VALIDATOR_MANAGER()) == address(_dii.validatorManager()), "ASSETMGR-50");
         require(assetManager.MIN_DELEGATION_PERIOD() == _dii.minDelegationPeriod(), "ASSETMGR-60");
         require(assetManager.BOND_AMOUNT() == _dii.bondAmount(), "ASSETMGR-70");
     }

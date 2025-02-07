@@ -15,6 +15,7 @@ interface IAssetManager {
     function KGH() external view returns (IERC721);
     function SECURITY_COUNCIL() external view returns (address);
     function VALIDATOR_REWARD_VAULT() external view returns (address);
+    function VALIDATOR_MANAGER() external view returns (IValidatorManager);
     function MIN_DELEGATION_PERIOD() external view returns (uint128);
     function BOND_AMOUNT() external view returns (uint128);
 
