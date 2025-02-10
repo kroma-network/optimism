@@ -3,12 +3,6 @@ pragma solidity 0.8.15;
 
 import { Script } from "forge-std/Script.sol";
 
-import { LibString } from "@solady/utils/LibString.sol";
-
-import { Constants } from "src/libraries/Constants.sol";
-import { Predeploys } from "src/libraries/Predeploys.sol";
-import { Bytes } from "src/libraries/Bytes.sol";
-
 import { AssetManager } from "src/L1/AssetManager.sol";
 import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { SystemConfig } from "src/L1/SystemConfig.sol";
@@ -26,8 +20,6 @@ import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
 import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
 import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
-
-import { Blueprint } from "src/libraries/Blueprint.sol";
 
 import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
 import { Solarray } from "scripts/libraries/Solarray.sol";
@@ -311,7 +303,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     IZKProofVerifier internal _zkProofVerifierImpl;
 
     function set(bytes4 _sel, address _addr) public {
-        require(_addr != address(0), "DeployImplementationsOutput: cannot set zero address");
+        require(_addr != address(0), "KromaDeployImplementationsOutput: cannot set zero address");
 
         if (_sel == this.assetManagerImpl.selector) {
             _assetManagerImpl = IAssetManager(_addr);
@@ -334,7 +326,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         } else if (_sel == this.zkProofVerifierImpl.selector) {
             _zkProofVerifierImpl = IZKProofVerifier(_addr);
         } else {
-            revert("DeployImplementationsOutput: unknown selector");
+            revert("KromaDeployImplementationsOutput: unknown selector");
         }
     }
 
@@ -358,52 +350,52 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     }
 
     function assetManagerImpl() public view returns (IAssetManager) {
-        require(address(_assetManagerImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_assetManagerImpl));
         return _assetManagerImpl;
     }
 
     function colosseumImpl() public view returns (IColosseum) {
-        require(address(_colosseumImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_colosseumImpl));
         return _colosseumImpl;
     }
 
     function kromaPortalImpl() public view returns (IKromaPortal) {
-        require(address(_kromaPortalImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_kromaPortalImpl));
         return _kromaPortalImpl;
     }
 
     function l2OutputOracleImpl() public view returns (IL2OutputOracle) {
-        require(address(_l2OutputOracleImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_l2OutputOracleImpl));
         return _l2OutputOracleImpl;
     }
 
     function securityCouncilImpl() public view returns (ISecurityCouncil) {
-        require(address(_securityCouncilImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_securityCouncilImpl));
         return _securityCouncilImpl;
     }
 
     function securityCouncilTokenImpl() public view returns (ISecurityCouncilToken) {
-        require(address(_securityCouncilTokenImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_securityCouncilTokenImpl));
         return _securityCouncilTokenImpl;
     }
 
     function timeLockImpl() public view returns (ITimeLock) {
-        require(address(_timeLockImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_timeLockImpl));
         return _timeLockImpl;
     }
 
     function upgradeGovernorImpl() public view returns (IUpgradeGovernor) {
-        require(address(_upgradeGovernorImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_upgradeGovernorImpl));
         return _upgradeGovernorImpl;
     }
 
     function validatorManagerImpl() public view returns (IValidatorManager) {
-        require(address(_validatorManagerImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_validatorManagerImpl));
         return _validatorManagerImpl;
     }
 
     function zkProofVerifierImpl() public view returns (IZKProofVerifier) {
-        require(address(_zkProofVerifierImpl) != address(0), "DeployImplementationsOutput: not set");
+        DeployUtils.assertValidContractAddress(address(_zkProofVerifierImpl));
         return _zkProofVerifierImpl;
     }
 
@@ -435,6 +427,8 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     function assertValidColosseum(KromaDeployImplementationsInput _dii) public view {
         IColosseum colosseum = colosseumImpl();
 
+        DeployUtils.assertInitialized({ _contractAddress: address(colosseum), _slot: 0, _offset: 0 });
+
         require(address(colosseum.L2_ORACLE()) == address(_dii.l2OutputOracle()), "COLOSSEUM-10");
         require(address(colosseum.ZK_PROOF_VERIFIER()) == address(_dii.zkProofVerifier()), "COLOSSEUM-20");
         require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == _dii.submissionInterval(), "COLOSSEUM-30");
@@ -448,16 +442,20 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     }
 
     function assertValidKromaPortal(KromaDeployImplementationsInput _dii) public view {
-        IKromaPortal kromaPortal = kromaPortalImpl();
+        IKromaPortal portal = kromaPortalImpl();
 
-        require(address(kromaPortal.L2_ORACLE()) == address(_dii.l2OutputOracle()), "KP-10");
-        require(address(kromaPortal.GUARDIAN()) == address(_dii.securityCouncil()), "KP-20");
-        require(kromaPortal.paused() == _dii.paused(), "KP-30");
-        require(address(kromaPortal.SYSTEM_CONFIG()) == address(_dii.systemConfig()), "KP-40");
+        DeployUtils.assertInitialized({ _contractAddress: address(portal), _slot: 0, _offset: 0 });
+
+        require(address(portal.L2_ORACLE()) == address(_dii.l2OutputOracle()), "KP-10");
+        require(address(portal.GUARDIAN()) == address(_dii.securityCouncil()), "KP-20");
+        require(portal.paused() == _dii.paused(), "KP-30");
+        require(address(portal.SYSTEM_CONFIG()) == address(_dii.systemConfig()), "KP-40");
     }
 
     function assertValidSecurityCouncil(KromaDeployImplementationsInput _dii) public view {
         ISecurityCouncil securityCouncil = securityCouncilImpl();
+
+        DeployUtils.assertInitialized({ _contractAddress: address(securityCouncil), _slot: 0, _offset: 0 });
 
         require(securityCouncil.COLOSSEUM() == address(_dii.colosseum()), "SC-10");
         require(address(securityCouncil.GOVERNOR()) == address(_dii.governor()), "SC-20");
@@ -473,6 +471,8 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
 
     function assertValidTimeLock(KromaDeployImplementationsInput) public view {
         ITimeLock timeLock = timeLockImpl();
+
+        DeployUtils.assertInitialized({ _contractAddress: address(timeLock), _slot: 0, _offset: 0 });
 
         require(timeLock.getMinDelay() == 0, "TL-10");
     }
@@ -533,6 +533,8 @@ contract KromaDeployImplementations is Script {
     }
 
     // -------- Deployment Steps --------
+
+    // --- Core Contracts ---
 
     function deployAssetManagerImpl(
         KromaDeployImplementationsInput _dii,
@@ -742,6 +744,7 @@ contract KromaDeployImplementations is Script {
     }
 
     // -------- Utilities --------
+
     function encodeValMgrConstructorParams(KromaDeployImplementationsInput _dii) public view returns (bytes memory) {
         IValidatorManager.ConstructorParams memory _params = IValidatorManager.ConstructorParams({
             _l2Oracle: _dii.l2OutputOracle(),
