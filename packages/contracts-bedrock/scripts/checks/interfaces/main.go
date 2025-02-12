@@ -23,6 +23,14 @@ var excludeContracts = []string{
 	"ERC777TokensRecipient", "Guard", "IProxy", "Vm", "VmSafe", "IMulticall3",
 	"IERC721TokenReceiver", "IProxyCreationCallback", "IBeacon",
 
+	// [Kroma: START]
+	// External dependencies
+	"IERC5267", "IEIP712", "IVotesUpgradeable", "IAccessControlUpgradeable",
+	"IERC5192", "IERC721EnumerableUpgradeable",
+	// TODO: Temp. Remove the following line once the interface is fixed
+	"IL2OutputOracle", "IL1CrossDomainMessenger", "IProxyAdmin",
+	// [Kroma: END]
+
 	// EAS
 	"IEAS", "ISchemaResolver", "ISchemaRegistry",
 
