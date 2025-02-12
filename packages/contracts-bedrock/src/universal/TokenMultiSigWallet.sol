@@ -12,13 +12,32 @@ import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
 import "@openzeppelin/contracts-upgradeable-v4.9.3/interfaces/IERC5805Upgradeable.sol";
-import { ITokenMultiSigWallet } from "interfaces/universal/ITokenMultiSigWallet.sol";
 
 /// @custom:upgradeable
 /// @title TokenMultiSigWallet
 /// @notice This contract implements `ITokenMultiSigWallet`.
 ///         Allows multiple parties to agree on transactions before execution.
-abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUpgradeable {
+abstract contract TokenMultiSigWallet is ReentrancyGuardUpgradeable {
+    /// @notice Emitted when anyone submit a transaction.
+    /// @param sender        Address of submitter.
+    /// @param transactionId The ID of transaction submitted.
+    event TransactionSubmitted(address indexed sender, uint256 indexed transactionId);
+
+    /// @notice Emitted when anyone confirm a transaction.
+    /// @param sender        Owner of address that confirm a transaction.
+    /// @param transactionId The ID of transaction confirmed.
+    event TransactionConfirmed(address indexed sender, uint256 indexed transactionId);
+
+    /// @notice Emitted when transaction is executed.
+    /// @param sender        Owner of address that execute a transaction.
+    /// @param transactionId The ID of transaction executed.
+    event TransactionExecuted(address indexed sender, uint256 indexed transactionId);
+
+    /// @notice Emitted when anyone revoke a confirmation.
+    /// @param sender        Owner of address that revoke a transaction.
+    /// @param transactionId The ID of transaction to revoke.
+    event ConfirmationRevoked(address indexed sender, uint256 indexed transactionId);
+
     /// @notice The address of the governor contract. Can be updated via upgrade.
     UpgradeGovernor public immutable GOVERNOR;
 
@@ -67,7 +86,11 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         GOVERNOR = UpgradeGovernor(_governor);
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Allows an owner to submit and confirm a transaction.
+    /// @param _target Transaction target address.
+    /// @param _value  Transaction ether value.
+    /// @param _data   Transaction data payload.
+    /// @return Returns transaction ID.
     function submitTransaction(
         address _target,
         uint256 _value,
@@ -103,7 +126,8 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         return transactionId;
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Allows an owner to confirm a transaction.
+    /// @param _transactionId Transaction ID.
     function confirmTransaction(uint256 _transactionId)
         public
         onlyTokenOwner(msg.sender)
@@ -121,7 +145,8 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         }
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Allows an owner to revoke a transaction.
+    /// @param _transactionId Transaction ID.
     function revokeConfirmation(uint256 _transactionId)
         public
         onlyTokenOwner(msg.sender)
@@ -136,7 +161,8 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         emit ConfirmationRevoked(msg.sender, _transactionId);
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Allows anyone to execute a confirmed transaction.
+    /// @param _transactionId Transaction ID.
     function executeTransaction(uint256 _transactionId)
         public
         nonReentrant
@@ -152,12 +178,15 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         emit TransactionExecuted(msg.sender, _transactionId);
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Returns the confirmation status of a transaction.
+    /// @param _transactionId Transaction ID.
+    /// @return Confirmation status.
     function isConfirmed(uint256 _transactionId) public view returns (bool) {
         return confirmations[_transactionId].confirmationCount >= quorum();
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Returns the current quorum, in terms of number of votes.
+    /// @return Current quorum, in terms of number of votes: `supply * quorumNumerator / quorumDenominator`.
     function quorum() public view returns (uint256) {
         uint256 currentTimepoint = clock() - 1;
         return (
@@ -166,17 +195,24 @@ abstract contract TokenMultiSigWallet is ITokenMultiSigWallet, ReentrancyGuardUp
         ) / GOVERNOR.quorumDenominator();
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Returns the number of votes.
+    /// @param account Account to check votes.
+    /// @return Number of votes.
     function getVotes(address account) public view returns (uint256) {
         return IERC5805Upgradeable(address(GOVERNOR.token())).getVotes(account);
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Returns whether the account has confirmed the transaction.
+    /// @param _transactionId Transaction id to check.
+    /// @param _account       Address to check.
+    /// @return Confirmed status.
     function isConfirmedBy(uint256 _transactionId, address _account) public view returns (bool) {
         return confirmations[_transactionId].confirmedBy[_account];
     }
 
-    /// @inheritdoc ITokenMultiSigWallet
+    /// @notice Returns the number of confirmations that account has confirmed.
+    /// @param _transactionId Transaction id to check.
+    /// @return The number of confirmations.
     function getConfirmationCount(uint256 _transactionId) public view returns (uint256) {
         return confirmations[_transactionId].confirmationCount;
     }
