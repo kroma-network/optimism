@@ -5,13 +5,8 @@ pragma solidity 0.8.15;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Proxy } from "src/universal/Proxy.sol";
 
-/// @title IStaticERC1967Proxy
-/// @notice IStaticERC1967Proxy is a static version of the ERC1967 proxy interface.
-interface IStaticERC1967Proxy {
-    function implementation() external view returns (address);
-
-    function admin() external view returns (address);
-}
+// Interfaces
+import { IStaticERC1967Proxy } from "interfaces/universal/IStaticERC1967Proxy.sol";
 
 /// @title ProxyAdmin
 /// @notice This is an auxiliary contract meant to be assigned as the admin of an ERC1967 Proxy,
