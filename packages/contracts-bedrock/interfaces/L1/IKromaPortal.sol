@@ -6,26 +6,27 @@ import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { SystemConfig } from "src/L1/SystemConfig.sol";
 
 interface IKromaPortal {
-    struct ProvenWithdrawal {
-        bytes32 outputRoot;
-        uint128 timestamp;
-        uint128 l2OutputIndex;
-    }
+    error ContentLengthMismatch();
+    error EmptyItem();
+    error InvalidDataRemainder();
+    error InvalidHeader();
+    error OutOfGas();
+    error Unauthorized();
+    error UnexpectedList();
+    error UnexpectedString();
 
+    event Initialized(uint8 version);
+    event Paused(address account);
     event TransactionDeposited(address indexed from, address indexed to, uint256 indexed version, bytes opaqueData);
+    event Unpaused(address account);
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
     event WithdrawalProven(bytes32 indexed withdrawalHash, address indexed from, address indexed to);
-    event Paused(address account);
-    event Unpaused(address account);
 
     receive() external payable;
 
-    function DEPOSIT_VERISION() external view returns (uint256);
-    function RECEIVE_DEFAULT_GAS_LIMIT() external view returns (uint64);
-    function SYSTEM_DEPOSIT_GAS_LIMIT() external view returns (uint32);
+    function GUARDIAN() external view returns (address);
     function L2_ORACLE() external view returns (L2OutputOracle);
     function SYSTEM_CONFIG() external view returns (SystemConfig);
-    function GUARDIAN() external view returns (address);
     function depositTransaction(
         address _to,
         uint256 _value,
@@ -37,10 +38,12 @@ interface IKromaPortal {
         payable;
     function finalizeWithdrawalTransaction(Types.WithdrawalTransaction memory _tx) external;
     function finalizedWithdrawals(bytes32) external view returns (bool);
-    function initialize(bool paused) external;
+    function initialize(bool _paused) external;
     function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool);
     function l2Sender() external view returns (address);
-    function paused() external view returns (bool paused_);
+    function params() external view returns (uint128 prevBaseFee, uint64 prevBoughtGas, uint64 prevBlockNum);
+    function pause() external;
+    function paused() external view returns (bool);
     function proveWithdrawalTransaction(
         Types.WithdrawalTransaction memory _tx,
         uint256 _l2OutputIndex,
@@ -52,10 +55,9 @@ interface IKromaPortal {
         external
         view
         returns (bytes32 outputRoot, uint128 timestamp, uint128 l2OutputIndex);
-    function version() external pure returns (string memory);
     function setGasPayingToken(address _token, uint8 _decimals, bytes32 _name, bytes32 _symbol) external;
-    function pause() external;
     function unpause() external;
+    function version() external view returns (string memory);
 
     function __constructor__(
         L2OutputOracle _l2Oracle,
