@@ -214,9 +214,12 @@ contract DeployConfig is Script {
         validatorManagerMinActivateAmount = uint128(stdJson.readUint(_json, "$.validatorManagerMinActivateAmount"));
         validatorManagerCommissionChangeDelaySeconds =
             uint128(stdJson.readUint(_json, "$.validatorManagerCommissionChangeDelaySeconds"));
-        validatorManagerRoundDurationSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerRoundDurationSeconds"));
-        validatorManagerSoftJailPeriodSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerSoftJailPeriodSeconds"));
-        validatorManagerHardJailPeriodSeconds = uint128(stdJson.readUint(_json, "$.validatorManagerHardJailPeriodSeconds"));
+        validatorManagerRoundDurationSeconds =
+            uint128(stdJson.readUint(_json, "$.validatorManagerRoundDurationSeconds"));
+        validatorManagerSoftJailPeriodSeconds =
+            uint128(stdJson.readUint(_json, "$.validatorManagerSoftJailPeriodSeconds"));
+        validatorManagerHardJailPeriodSeconds =
+            uint128(stdJson.readUint(_json, "$.validatorManagerHardJailPeriodSeconds"));
         validatorManagerJailThreshold = uint128(stdJson.readUint(_json, "$.validatorManagerJailThreshold"));
         validatorManagerMaxFinalizations = uint128(stdJson.readUint(_json, "$.validatorManagerMaxFinalizations"));
         validatorManagerBaseReward = uint128(stdJson.readUint(_json, "$.validatorManagerBaseReward"));

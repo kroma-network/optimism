@@ -318,9 +318,9 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         } else if (_sel == this.securityCouncilTokenImpl.selector) {
             _securityCouncilTokenImpl = ISecurityCouncilToken(_addr);
         } else if (_sel == this.timeLockImpl.selector) {
-            _timeLockImpl = ITimeLock(_addr);
+            _timeLockImpl = ITimeLock(payable(_addr));
         } else if (_sel == this.upgradeGovernorImpl.selector) {
-            _upgradeGovernorImpl = IUpgradeGovernor(_addr);
+            _upgradeGovernorImpl = IUpgradeGovernor(payable(_addr));
         } else if (_sel == this.validatorManagerImpl.selector) {
             _validatorManagerImpl = IValidatorManager(_addr);
         } else if (_sel == this.zkProofVerifierImpl.selector) {
