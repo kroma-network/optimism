@@ -20,4 +20,17 @@ library Types {
         address SuperchainConfig;
         address OPContractsManager;
     }
+
+    struct KromaContractSet {
+        address AssetManager;
+        address Colosseum;
+        address payable KromaPortal;
+        address L2OutputOracle;
+        address SecurityCouncil;
+        address SecurityCouncilToken;
+        address TimeLock;
+        address UpgradeGovernor;
+        address ValidatorManager;
+        address ZKProofVerifier;
+    }
 }

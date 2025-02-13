@@ -24,6 +24,15 @@ import {
     DeployImplementationsOutput
 } from "scripts/deploy/DeployImplementations.s.sol";
 
+// [Kroma: START]
+import {
+    KromaDeployImplementationsInput,
+    KromaDeployImplementations,
+    KromaDeployImplementationsOutput
+} from "scripts/deploy/KromaDeployImplementations.s.sol";
+import { KromaChainAssertions } from "scripts/deploy/KromaChainAssertions.sol";
+// [Kroma: END]
+
 // Contracts
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
 
@@ -154,6 +163,22 @@ contract Deploy is Deployer {
         });
     }
 
+    /// @notice Returns the Kroma proxy addresses, not reverting if any are unset.
+    function _kromaProxies() internal view returns (Types.KromaContractSet memory proxies_) {
+        proxies_ = Types.KromaContractSet({
+            AssetManager: getAddress("AssetManagerProxy"),
+            Colosseum: getAddress("ColosseumProxy"),
+            KromaPortal: getAddress("KromaPortalProxy"),
+            L2OutputOracle: getAddress("L2OutputOracleProxy"),
+            SecurityCouncil: getAddress("SecurityCouncilProxy"),
+            SecurityCouncilToken: getAddress("SecurityCouncilTokenProxy"),
+            TimeLock: getAddress("TimeLockProxy"),
+            UpgradeGovernor: getAddress("UpgradeGovernorProxy"),
+            ValidatorManager: getAddress("ValidatorManagerProxy"),
+            ZKProofVerifier: getAddress("ZKProofVerifierProxy")
+        });
+    }
+
     ////////////////////////////////////////////////////////////////
     //                    SetUp and Run                           //
     ////////////////////////////////////////////////////////////////
@@ -207,6 +232,8 @@ contract Deploy is Deployer {
         if (_needsSuperchain) {
             deploySuperchain();
         }
+
+        deployKroma();
 
         deployImplementations({ _isInterop: cfg.useInterop() });
 
@@ -325,7 +352,10 @@ contract Deploy is Deployer {
         // Temporary patch for legacy system
         if (!cfg.useFaultProofs()) {
             deployOptimismPortal();
-            deployL2OutputOracle();
+            // [Kroma: START]
+            // Notice that this contract will be deployed at deployKroma() function.
+            // deployL2OutputOracle();
+            // [Kroma: END]
         }
 
         save("L1CrossDomainMessenger", address(dio.l1CrossDomainMessengerImpl()));
@@ -1023,5 +1053,106 @@ contract Deploy is Deployer {
         value = value & ~(0xFF << (slot.offset * 8));
         slotVal = bytes32(value);
         vm.store(proxy, bytes32(vm.parseUint(slot.slot)), slotVal);
+    }
+
+    function deployKroma() public {
+        console.log("Deploying Kroma related contracts");
+
+        address proxyAdmin = mustGetAddress("ProxyAdmin");
+
+        // Deploy Proxys
+        string[10] memory kromaProxies = [
+            "AssetManagerProxy",
+            "ColosseumProxy",
+            "KromaPortalProxy",
+            "L2OutputOracleProxy",
+            "SecurityCoucilProxy",
+            "SecurityCouncilTokenProxy",
+            "TimelockProxy",
+            "UpgradeGovernorProxy",
+            "ValidatorManagerProxy",
+            "ZkProofVerifierProxy"
+        ];
+        for (uint256 i = 0; i < kromaProxies.length; i++) {
+            string memory proxyName = kromaProxies[i];
+            IProxy proxy = IProxy(
+                DeployUtils.create2AndSave({
+                    _save: this,
+                    _salt: _implSalt(),
+                    _name: "Proxy",
+                    _nick: proxyName,
+                    _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (msg.sender)))
+                })
+            );
+            require(EIP1967Helper.getAdmin(address(proxy)) == proxyAdmin);
+        }
+
+        // Deploy Implementations
+        deployKromaImplementations();
+    }
+
+    function deployKromaImplementations() public {
+        console.log("Deploying Kroma Implementations");
+
+        KromaDeployImplementations kdi = new KromaDeployImplementations();
+        (KromaDeployImplementationsInput kdii, KromaDeployImplementationsOutput kdio) = kdi.etchIOContracts();
+
+        // Proxy addresses used as configs
+        kdii.set(kdii.assetManager.selector, mustGetAddress("AssetManagerProxy"));
+        kdii.set(kdii.colosseum.selector, mustGetAddress("ColosseumProxy"));
+        kdii.set(kdii.validatorManager.selector, mustGetAddress("ValidatorManagerProxy"));
+        kdii.set(kdii.securityCouncil.selector, mustGetAddress("SecurityCouncilTokenProxy"));
+        kdii.set(kdii.zkProofVerifier.selector, mustGetAddress("ZkProofVerifierProxy"));
+        kdii.set(kdii.systemConfig.selector, mustGetAddress("SystemConfigProxy"));
+        kdii.set(kdii.governor.selector, mustGetAddress("UpgradeGovernorProxy"));
+        // AssetManager Configs
+        // TODO(sm-stack): add assetToken contract.
+        kdii.set(kdii.kgh.selector, cfg.assetManagerKgh());
+        kdii.set(kdii.vault.selector, cfg.assetManagerVault());
+        kdii.set(kdii.minDelegationPeriod.selector, cfg.assetManagerMinDelegationPeriod());
+        kdii.set(kdii.bondAmount.selector, cfg.assetManagerBondAmount());
+        // Colosseum Configs
+        kdii.set(kdii.creationPeriodSeconds.selector, cfg.colosseumCreationPeriodSeconds());
+        kdii.set(kdii.bisectionTimeout.selector, cfg.colosseumBisectionTimeout());
+        kdii.set(kdii.provingTimeout.selector, cfg.colosseumProvingTimeout());
+        uint256[] memory segmentsLengths;
+        for (uint256 i = 0; i < 3; i++) {
+            segmentsLengths[i] = cfg.colosseumSegmentsLengths(i);
+        }
+        kdii.set(kdii.segmentsLengths.selector, segmentsLengths);
+        // KromaPortal Configs
+        kdii.set(kdii.paused.selector, false);
+        // ValidatorManager Configs
+        kdii.set(kdii.trustedValidator.selector, cfg.validatorManagerTrustedValidator());
+        kdii.set(kdii.minRegisterAmount.selector, cfg.validatorManagerMinRegisterAmount());
+        kdii.set(kdii.minActivateAmount.selector, cfg.validatorManagerMinActivateAmount());
+        kdii.set(kdii.commissionChangeDelaySeconds.selector, cfg.validatorManagerCommissionChangeDelaySeconds());
+        kdii.set(kdii.roundDurationSeconds.selector, cfg.validatorManagerRoundDurationSeconds());
+        kdii.set(kdii.softJailPeriodSeconds.selector, cfg.validatorManagerSoftJailPeriodSeconds());
+        kdii.set(kdii.hardJailPeriodSeconds.selector, cfg.validatorManagerHardJailPeriodSeconds());
+        kdii.set(kdii.jailThreshold.selector, cfg.validatorManagerJailThreshold());
+        kdii.set(kdii.maxFinalizations.selector, cfg.validatorManagerMaxFinalizations());
+        kdii.set(kdii.baseReward.selector, cfg.validatorManagerBaseReward());
+        // ZKProofVerifier Configs
+        kdii.set(kdii.sp1Verifier.selector, cfg.zkProofVerifierSP1Verifier());
+        kdii.set(kdii.vKey.selector, cfg.zkProofVerifierVKey());
+
+        kdi.run(kdii, kdio);
+
+        save("AssetManager", address(kdio.assetManagerImpl()));
+        save("Colosseum", address(kdio.colosseumImpl()));
+        save("KromaPortal", address(kdio.kromaPortalImpl()));
+        save("L2OutputOracle", address(kdio.l2OutputOracleImpl()));
+        save("SecurityCouncil", address(kdio.securityCouncilImpl()));
+        save("SecurityCouncilToken", address(kdio.securityCouncilTokenImpl()));
+        save("Timelock", address(kdio.timeLockImpl()));
+        save("UpgradeGovernor", address(kdio.upgradeGovernorImpl()));
+        save("ValidatorManager", address(kdio.validatorManagerImpl()));
+        save("ZkProofVerifier", address(kdio.zkProofVerifierImpl()));
+
+        // TODO(sm-stack): Add proxy upgrade part to initialize contracts
+
+        Types.KromaContractSet memory contracts = _kromaProxies();
+        // TODO(sm-stack): Add KromaChainAssertions, note that _isProxy should be true
     }
 }
