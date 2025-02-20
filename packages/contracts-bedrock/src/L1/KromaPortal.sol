@@ -14,7 +14,19 @@ import { Hashing } from "src/libraries/Hashing.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
 import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
-import { Unauthorized } from "src/libraries/PortalErrors.sol";
+import {
+    BadTarget,
+    LargeCalldata,
+    SmallGasLimit,
+    TransferFailed,
+    OnlyCustomGasToken,
+    NoValue,
+    Unauthorized,
+    CallPaused,
+    GasEstimation,
+    NonReentrant,
+    Unproven
+} from "src/libraries/PortalErrors.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
@@ -102,7 +114,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Reverts when paused.
     modifier whenNotPaused() {
-        require(paused == false, "OptimismPortal: paused");
+        if (paused) revert CallPaused();
         _;
     }
 
@@ -185,7 +197,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Prevent users from creating a deposit transaction where this address is the message
         // sender on L2. Because this is checked here, we do not need to check again in
         // `finalizeWithdrawalTransaction`.
-        require(_tx.target != address(this), "OptimismPortal: you cannot send messages to the portal contract");
+        if (_tx.target == address(this)) revert BadTarget();
 
         // Get the output root and load onto the stack to prevent multiple mloads. This will
         // revert if there is no output root for the given block number.
@@ -252,7 +264,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Make sure that the l2Sender has not yet been set. The l2Sender is set to a value other
         // than the default value when a withdrawal transaction is being finalized. This check is
         // a defacto reentrancy guard.
-        require(l2Sender == Constants.DEFAULT_L2_SENDER, "OptimismPortal: can only trigger one withdrawal per transaction");
+        if (l2Sender != Constants.DEFAULT_L2_SENDER) revert NonReentrant();
 
         // Grab the proven withdrawal from the `provenWithdrawals` map.
         bytes32 withdrawalHash = Hashing.hashWithdrawal(_tx);
@@ -328,7 +340,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // sub call to the target contract if the minimum gas limit specified by the user would not
         // be sufficient to execute the sub call.
         if (success == false && tx.origin == Constants.ESTIMATION_ADDRESS) {
-            revert("OptimismPortal: withdrawal failed");
+            revert GasEstimation();
         }
     }
 
@@ -354,9 +366,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     {
         // Just to be safe, make sure that people specify address(0) as the target when doing
         // contract creations.
-        if (_isCreation) {
-            require(_to == address(0), "OptimismPortal: must send to address(0) when creating a contract");
-        }
+        if (_isCreation && _to != address(0)) revert BadTarget();
 
         // Prevent depositing transactions that have too small of a gas limit.
         require(_gasLimit >= 21_000, "OptimismPortal: gas limit must cover instrinsic gas cost");
