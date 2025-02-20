@@ -153,18 +153,32 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     }
 
     /// @notice Constructs the OptimismPortal contract.
-    /// @param _l2Oracle      Address of the L2OutputOracle contract.
-    /// @param _config        Address of the SystemConfig contract.
-    constructor(L2OutputOracle _l2Oracle, SystemConfig _config, ISuperchainConfig _superchainConfig) {
-        l2Oracle = _l2Oracle;
-        systemConfig = _config;
-        superchainConfig = _superchainConfig;
-        initialize();
+    constructor() {
+        initialize({
+            _l2Oracle: L2OutputOracle(address(0)),
+            _systemConfig: SystemConfig(address(0)),
+            _superchainConfig: ISuperchainConfig(address(0))
+        });
     }
 
     /// @notice Initializer.
-    function initialize() public initializer {
-        l2Sender = Constants.DEFAULT_L2_SENDER;
+    /// @param _l2Oracle Contract of the L2OutputOracle.
+    /// @param _systemConfig Contract of the SystemConfig.
+    /// @param _superchainConfig Contract of the SuperchainConfig.
+    function initialize(
+        L2OutputOracle _l2Oracle,
+        SystemConfig _systemConfig,
+        ISuperchainConfig _superchainConfig
+    )
+        public
+        initializer
+    {
+        l2Oracle = _l2Oracle;
+        systemConfig = _systemConfig;
+        superchainConfig = _superchainConfig;
+        if (l2Sender == address(0)) {
+            l2Sender = Constants.DEFAULT_L2_SENDER;
+        }
         __ResourceMetering_init();
     }
 
