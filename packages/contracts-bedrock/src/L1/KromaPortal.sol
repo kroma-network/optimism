@@ -33,6 +33,7 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { SystemConfig } from "src/L1/SystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
+import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
 /// @custom:proxied true
@@ -66,8 +67,10 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @notice Address of the SystemConfig contract.
     SystemConfig public systemConfig;
 
-    /// @notice MultiSig wallet address that has the ability to pause and unpause withdrawals.
-    address public guardian;
+    /// @custom:legacy
+    /// @custom:spacer guardian
+    /// @notice Spacer for backwards compatibility.
+    address private spacer_guardian;
 
     /// @notice Address of the L2 account which initiated a withdrawal in this transaction.
     ///         If the of this variable is the default L2 sender address, then we are NOT inside of
@@ -80,9 +83,13 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @notice A mapping of withdrawal hashes to `ProvenWithdrawal` data.
     mapping(bytes32 => ProvenWithdrawal) public provenWithdrawals;
 
-    /// @notice Determines if cross domain messaging is paused. When set to true,
-    ///         withdrawals are paused. This may be removed in the future.
-    bool public paused;
+    /// @custom:legacy
+    /// @custom:spacer paused
+    /// @notice Spacer for backwards compatibility.
+    bool private spacer_paused;
+
+    /// @notice Contract of the Superchain Config.
+    ISuperchainConfig public superchainConfig;
 
     /// @notice Emitted when a transaction is deposited from L1 to L2.
     ///         The parameters of this event are read by the rollup node and used to derive deposit
@@ -104,17 +111,9 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @param success        Whether the withdrawal transaction was successful.
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
 
-    /// @notice Emitted when the pause is triggered.
-    /// @param account Address of the account triggering the pause.
-    event Paused(address account);
-
-    /// @notice Emitted when the pause is lifted.
-    /// @param account Address of the account triggering the unpause.
-    event Unpaused(address account);
-
     /// @notice Reverts when paused.
     modifier whenNotPaused() {
-        if (paused) revert CallPaused();
+        if (paused()) revert CallPaused();
         _;
     }
 
@@ -124,36 +123,32 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Constructs the OptimismPortal contract.
     /// @param _l2Oracle      Address of the L2OutputOracle contract.
-    /// @param _guardian      MultiSig wallet address that can pause deposits and withdrawals.
-    /// @param _paused        Sets the contract's pausability state.
     /// @param _config        Address of the SystemConfig contract.
-    constructor(L2OutputOracle _l2Oracle, address _guardian, bool _paused, SystemConfig _config) {
+    constructor(L2OutputOracle _l2Oracle, SystemConfig _config, ISuperchainConfig _superchainConfig) {
         l2Oracle = _l2Oracle;
-        guardian = _guardian;
         systemConfig = _config;
-        initialize(_paused);
+        superchainConfig = _superchainConfig;
+        initialize();
     }
 
     /// @notice Initializer.
-    /// @param _paused Sets the contract's pausability state.
-    function initialize(bool _paused) public initializer {
+    function initialize() public initializer {
         l2Sender = Constants.DEFAULT_L2_SENDER;
-        paused = _paused;
         __ResourceMetering_init();
     }
 
-    /// @notice Pause deposits and withdrawals.
-    function pause() external {
-        require(msg.sender == guardian, "OptimismPortal: only guardian can pause");
-        paused = true;
-        emit Paused(msg.sender);
+    /// @notice Getter function for the address of the guardian.
+    ///         Public getter is legacy and will be removed in the future. Use `SuperchainConfig.guardian()` instead.
+    /// @return Address of the guardian.
+    /// @custom:legacy
+    function guardian() public view returns (address) {
+        return superchainConfig.guardian();
     }
 
-    /// @notice Unpause deposits and withdrawals.
-    function unpause() external {
-        require(msg.sender == guardian, "OptimismPortal: only guardian can unpause");
-        paused = false;
-        emit Unpaused(msg.sender);
+    /// @notice Getter for the current paused status.
+    /// @return paused_ Whether or not the contract is paused.
+    function paused() public view returns (bool paused_) {
+        paused_ = superchainConfig.paused();
     }
 
     /// @notice Accepts value so that users can send ETH directly to this contract and have the
