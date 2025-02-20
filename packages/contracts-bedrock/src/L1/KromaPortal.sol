@@ -3,23 +3,23 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
 import { ResourceMetering } from "src/L1/ResourceMetering.sol";
-import { SystemConfig } from "src/L1/SystemConfig.sol";
 
 // Libraries
-import { Constants } from "src/libraries/Constants.sol";
-import { Hashing } from "src/libraries/Hashing.sol";
 import { SafeCall } from "src/libraries/SafeCall.sol";
+import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "src/libraries/Types.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
+import { Hashing } from "src/libraries/Hashing.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
+import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { Unauthorized } from "src/libraries/PortalErrors.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { SystemConfig } from "src/L1/SystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
