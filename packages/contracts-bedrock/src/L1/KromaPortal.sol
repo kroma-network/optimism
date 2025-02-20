@@ -23,7 +23,7 @@ import { SystemConfig } from "src/L1/SystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
-/// @custom:proxied
+/// @custom:proxied true
 /// @title KromaPortal
 /// @notice The KromaPortal is a low-level contract responsible for passing messages between L1
 ///         and L2. Messages sent directly to the KromaPortal have no form of replayability.
@@ -75,7 +75,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @notice Emitted when a transaction is deposited from L1 to L2.
     ///         The parameters of this event are read by the rollup node and used to derive deposit
     ///         transactions on L2.
-    ///
     /// @param from       Address that triggered the deposit transaction.
     /// @param to         Address that the deposit transaction is directed to.
     /// @param version    Version of this deposit transaction event.
@@ -103,7 +102,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Reverts when paused.
     modifier whenNotPaused() {
-        require(paused == false, "KromaPortal: paused");
+        require(paused == false, "OptimismPortal: paused");
         _;
     }
 
@@ -111,7 +110,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @custom:semver 2.1.0
     string public constant version = "2.1.0";
 
-    /// @notice Constructs the KromaPortal contract.
+    /// @notice Constructs the OptimismPortal contract.
     /// @param _l2Oracle      Address of the L2OutputOracle contract.
     /// @param _guardian      MultiSig wallet address that can pause deposits and withdrawals.
     /// @param _paused        Sets the contract's pausability state.
@@ -133,14 +132,14 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Pause deposits and withdrawals.
     function pause() external {
-        require(msg.sender == GUARDIAN, "KromaPortal: only guardian can pause");
+        require(msg.sender == GUARDIAN, "OptimismPortal: only guardian can pause");
         paused = true;
         emit Paused(msg.sender);
     }
 
     /// @notice Unpause deposits and withdrawals.
     function unpause() external {
-        require(msg.sender == GUARDIAN, "KromaPortal: only guardian can unpause");
+        require(msg.sender == GUARDIAN, "OptimismPortal: only guardian can unpause");
         paused = false;
         emit Unpaused(msg.sender);
     }
@@ -186,14 +185,16 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Prevent users from creating a deposit transaction where this address is the message
         // sender on L2. Because this is checked here, we do not need to check again in
         // `finalizeWithdrawalTransaction`.
-        require(_tx.target != address(this), "KromaPortal: you cannot send messages to the portal contract");
+        require(_tx.target != address(this), "OptimismPortal: you cannot send messages to the portal contract");
 
         // Get the output root and load onto the stack to prevent multiple mloads. This will
         // revert if there is no output root for the given block number.
         bytes32 outputRoot = L2_ORACLE.getL2Output(_l2OutputIndex).outputRoot;
 
         // Verify that the output root can be generated with the elements in the proof.
-        require(outputRoot == Hashing.hashOutputRootProof(_outputRootProof), "KromaPortal: invalid output root proof");
+        require(
+            outputRoot == Hashing.hashOutputRootProof(_outputRootProof), "OptimismPortal: invalid output root proof"
+        );
 
         // Load the ProvenWithdrawal into memory, using the withdrawal hash as a unique identifier.
         bytes32 withdrawalHash = Hashing.hashWithdrawal(_tx);
@@ -208,7 +209,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         require(
             provenWithdrawal.timestamp == 0
                 || L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex).outputRoot != provenWithdrawal.outputRoot,
-            "KromaPortal: withdrawal hash has already been proven"
+            "OptimismPortal: withdrawal hash has already been proven"
         );
 
         // Compute the storage slot of the withdrawal hash in the L2ToL1MessagePasser contract.
@@ -222,18 +223,18 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         );
 
         // Verify that the hash of this withdrawal was stored in the L2toL1MessagePasser contract
-        // on L2. If this is true, under the assumption that the MerkleTrie does not have
+        // on L2. If this is true, under the assumption that the SecureMerkleTrie does not have
         // bugs, then we know that this withdrawal was actually triggered on L2 and can therefore
         // be relayed on L1.
         require(
             SecureMerkleTrie.verifyInclusionProof(
                 abi.encode(storageKey), hex"01", _withdrawalProof, _outputRootProof.messagePasserStorageRoot
             ),
-            "KromaPortal: invalid withdrawal inclusion proof"
+            "OptimismPortal: invalid withdrawal inclusion proof"
         );
 
         // Designate the withdrawalHash as proven by storing the `outputRoot`, `timestamp`, and
-        // `l2OutputIndex` in the `provenWithdrawals` mapping. A `withdrawalHash` can only be
+        // `l2BlockNumber` in the `provenWithdrawals` mapping. A `withdrawalHash` can only be
         // proven once unless it is submitted again with a different outputRoot.
         provenWithdrawals[withdrawalHash] = ProvenWithdrawal({
             outputRoot: outputRoot,
@@ -251,7 +252,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Make sure that the l2Sender has not yet been set. The l2Sender is set to a value other
         // than the default value when a withdrawal transaction is being finalized. This check is
         // a defacto reentrancy guard.
-        require(l2Sender == Constants.DEFAULT_L2_SENDER, "KromaPortal: can only trigger one withdrawal per transaction");
+        require(l2Sender == Constants.DEFAULT_L2_SENDER, "OptimismPortal: can only trigger one withdrawal per transaction");
 
         // Grab the proven withdrawal from the `provenWithdrawals` map.
         bytes32 withdrawalHash = Hashing.hashWithdrawal(_tx);
@@ -260,14 +261,14 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // A withdrawal can only be finalized if it has been proven. We know that a withdrawal has
         // been proven at least once when its timestamp is non-zero. Unproven withdrawals will have
         // a timestamp of zero.
-        require(provenWithdrawal.timestamp != 0, "KromaPortal: withdrawal has not been proven yet");
+        require(provenWithdrawal.timestamp != 0, "OptimismPortal: withdrawal has not been proven yet");
 
         // As a sanity check, we make sure that the proven withdrawal's timestamp is greater than
         // starting timestamp inside the L2OutputOracle. Not strictly necessary but extra layer of
         // safety against weird bugs in the proving step.
         require(
             provenWithdrawal.timestamp >= L2_ORACLE.startingTimestamp(),
-            "KromaPortal: withdrawal timestamp less than L2 Oracle starting timestamp"
+            "OptimismPortal: withdrawal timestamp less than L2 Oracle starting timestamp"
         );
 
         // A proven withdrawal must wait at least the finalization period before it can be
@@ -276,7 +277,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // withdrawal time is l2 output submission time + finalization period.
         require(
             _isFinalizationPeriodElapsed(provenWithdrawal.timestamp),
-            "KromaPortal: proven withdrawal finalization period has not elapsed"
+            "OptimismPortal: proven withdrawal finalization period has not elapsed"
         );
 
         // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
@@ -288,22 +289,23 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // deleted by the challenger address and then re-submitted.
         require(
             checkpointOutput.outputRoot == provenWithdrawal.outputRoot,
-            "KromaPortal: output root proven is not the same as current output root"
+            "OptimismPortal: output root proven is not the same as current output root"
         );
 
         // Check that the checkpoint output has also been finalized.
         require(
             _isFinalizationPeriodElapsed(checkpointOutput.timestamp),
-            "KromaPortal: checkpoint output finalization period has not elapsed"
+            "OptimismPortal: checkpoint output finalization period has not elapsed"
         );
 
         // Check that this withdrawal has not already been finalized, this is replay protection.
-        require(finalizedWithdrawals[withdrawalHash] == false, "KromaPortal: withdrawal has already been finalized");
+        require(finalizedWithdrawals[withdrawalHash] == false, "OptimismPortal: withdrawal has already been finalized");
 
         // Mark the withdrawal as finalized so it can't be replayed.
         finalizedWithdrawals[withdrawalHash] = true;
 
         // Set the l2Sender so contracts know who triggered this withdrawal on L2.
+        // This acts as a reentrancy guard.
         l2Sender = _tx.sender;
 
         // Trigger the call to the target contract. We use a custom low level method
@@ -326,7 +328,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // sub call to the target contract if the minimum gas limit specified by the user would not
         // be sufficient to execute the sub call.
         if (success == false && tx.origin == Constants.ESTIMATION_ADDRESS) {
-            revert("KromaPortal: withdrawal failed");
+            revert("OptimismPortal: withdrawal failed");
         }
     }
 
@@ -336,7 +338,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     ///         using the CrossDomainMessenger contracts for a simpler developer experience.
     /// @param _to         Target address on L2.
     /// @param _value      ETH value to send to the recipient.
-    /// @param _gasLimit   Minimum L2 gas limit (can be greater than or equal to this value).
+    /// @param _gasLimit   Amount of L2 gas to purchase by burning gas on L1.
     /// @param _isCreation Whether or not the transaction is a contract creation.
     /// @param _data       Data to trigger the recipient with.
     function depositTransaction(
@@ -353,11 +355,11 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Just to be safe, make sure that people specify address(0) as the target when doing
         // contract creations.
         if (_isCreation) {
-            require(_to == address(0), "KromaPortal: must send to address(0) when creating a contract");
+            require(_to == address(0), "OptimismPortal: must send to address(0) when creating a contract");
         }
 
         // Prevent depositing transactions that have too small of a gas limit.
-        require(_gasLimit >= 21_000, "KromaPortal: gas limit must cover instrinsic gas cost");
+        require(_gasLimit >= 21_000, "OptimismPortal: gas limit must cover instrinsic gas cost");
 
         // Transform the from-address to its alias if the caller is a contract.
         address from = msg.sender;
