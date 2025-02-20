@@ -61,13 +61,13 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     uint32 internal constant SYSTEM_DEPOSIT_GAS_LIMIT = 200_000;
 
     /// @notice Address of the L2OutputOracle contract.
-    L2OutputOracle public immutable L2_ORACLE;
+    L2OutputOracle public l2Oracle;
 
     /// @notice Address of the SystemConfig contract.
-    SystemConfig public immutable SYSTEM_CONFIG;
+    SystemConfig public systemConfig;
 
     /// @notice MultiSig wallet address that has the ability to pause and unpause withdrawals.
-    address public immutable GUARDIAN;
+    address public guardian;
 
     /// @notice Address of the L2 account which initiated a withdrawal in this transaction.
     ///         If the of this variable is the default L2 sender address, then we are NOT inside of
@@ -128,9 +128,9 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @param _paused        Sets the contract's pausability state.
     /// @param _config        Address of the SystemConfig contract.
     constructor(L2OutputOracle _l2Oracle, address _guardian, bool _paused, SystemConfig _config) {
-        L2_ORACLE = _l2Oracle;
-        GUARDIAN = _guardian;
-        SYSTEM_CONFIG = _config;
+        l2Oracle = _l2Oracle;
+        guardian = _guardian;
+        systemConfig = _config;
         initialize(_paused);
     }
 
@@ -144,14 +144,14 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Pause deposits and withdrawals.
     function pause() external {
-        require(msg.sender == GUARDIAN, "OptimismPortal: only guardian can pause");
+        require(msg.sender == guardian, "OptimismPortal: only guardian can pause");
         paused = true;
         emit Paused(msg.sender);
     }
 
     /// @notice Unpause deposits and withdrawals.
     function unpause() external {
-        require(msg.sender == GUARDIAN, "OptimismPortal: only guardian can unpause");
+        require(msg.sender == guardian, "OptimismPortal: only guardian can unpause");
         paused = false;
         emit Unpaused(msg.sender);
     }
@@ -169,7 +169,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     ///         The SystemConfig is the source of truth for the resource config.
     /// @return ResourceMetering ResourceConfig
     function _resourceConfig() internal view override returns (ResourceMetering.ResourceConfig memory) {
-        IResourceMetering.ResourceConfig memory config = SYSTEM_CONFIG.resourceConfig();
+        IResourceMetering.ResourceConfig memory config = systemConfig.resourceConfig();
         return ResourceConfig({
             maxResourceLimit: config.maxResourceLimit,
             elasticityMultiplier: config.elasticityMultiplier,
@@ -201,7 +201,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
         // Get the output root and load onto the stack to prevent multiple mloads. This will
         // revert if there is no output root for the given block number.
-        bytes32 outputRoot = L2_ORACLE.getL2Output(_l2OutputIndex).outputRoot;
+        bytes32 outputRoot = l2Oracle.getL2Output(_l2OutputIndex).outputRoot;
 
         // Verify that the output root can be generated with the elements in the proof.
         require(
@@ -220,7 +220,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // output index has been updated.
         require(
             provenWithdrawal.timestamp == 0
-                || L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex).outputRoot != provenWithdrawal.outputRoot,
+                || l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex).outputRoot != provenWithdrawal.outputRoot,
             "OptimismPortal: withdrawal hash has already been proven"
         );
 
@@ -279,7 +279,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // starting timestamp inside the L2OutputOracle. Not strictly necessary but extra layer of
         // safety against weird bugs in the proving step.
         require(
-            provenWithdrawal.timestamp >= L2_ORACLE.startingTimestamp(),
+            provenWithdrawal.timestamp >= l2Oracle.startingTimestamp(),
             "OptimismPortal: withdrawal timestamp less than L2 Oracle starting timestamp"
         );
 
@@ -294,7 +294,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
         // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
         // corresponds to the given index has not been submitted yet.
-        KromaTypes.CheckpointOutput memory checkpointOutput = L2_ORACLE.getL2Output(provenWithdrawal.l2OutputIndex);
+        KromaTypes.CheckpointOutput memory checkpointOutput = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is
@@ -388,12 +388,12 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     }
 
     /// @notice Determine if a given output is finalized.
-    ///         Reverts if the call to L2_ORACLE.getL2Output reverts.
+    ///         Reverts if the call to l2Oracle.getL2Output reverts.
     ///         Returns a boolean otherwise.
     /// @param _l2OutputIndex Index of the L2 output to check.
     /// @return Whether or not the output is finalized.
     function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool) {
-        return _isFinalizationPeriodElapsed(L2_ORACLE.getL2Output(_l2OutputIndex).timestamp);
+        return _isFinalizationPeriodElapsed(l2Oracle.getL2Output(_l2OutputIndex).timestamp);
     }
 
     /// @notice Determines whether the finalization period has elapsed with respect to
@@ -401,13 +401,13 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @param _timestamp Timestamp to check.
     /// @return Whether or not the finalization period has elapsed.
     function _isFinalizationPeriodElapsed(uint256 _timestamp) internal view returns (bool) {
-        return block.timestamp > _timestamp + L2_ORACLE.FINALIZATION_PERIOD_SECONDS();
+        return block.timestamp > _timestamp + l2Oracle.FINALIZATION_PERIOD_SECONDS();
     }
 
     /// @notice Sets the gas paying token for the L2 system. This token is used as the
     ///         L2 native asset. Only the SystemConfig contract can call this function.
     function setGasPayingToken(address _token, uint8 _decimals, bytes32 _name, bytes32 _symbol) external {
-        if (msg.sender != address(SYSTEM_CONFIG)) revert Unauthorized();
+        if (msg.sender != address(systemConfig)) revert Unauthorized();
 
         // Set L2 deposit gas as used without paying burning gas. Ensures that deposits cannot use too much L2 gas.
         // This value must be large enough to cover the cost of calling `L1Block.setGasPayingToken`.
