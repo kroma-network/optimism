@@ -362,28 +362,28 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
         // A proven withdrawal must wait at least the finalization period before it can be
         // finalized. This waiting period can elapse in parallel with the waiting period for the
         // output the withdrawal was proven against. In effect, this means that the minimum
-        // withdrawal time is l2 output submission time + finalization period.
+        // withdrawal time is proposal submission time + finalization period.
         require(
             _isFinalizationPeriodElapsed(provenWithdrawal.timestamp),
             "OptimismPortal: proven withdrawal finalization period has not elapsed"
         );
 
         // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
-        // corresponds to the given index has not been submitted yet.
-        KromaTypes.CheckpointOutput memory checkpointOutput = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
+        // corresponds to the given index has not been proposed yet.
+        KromaTypes.CheckpointOutput memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is
-        // deleted by the challenger address and then re-submitted.
+        // deleted by the challenger address and then re-proposed.
         require(
-            checkpointOutput.outputRoot == provenWithdrawal.outputRoot,
+            proposal.outputRoot == provenWithdrawal.outputRoot,
             "OptimismPortal: output root proven is not the same as current output root"
         );
 
-        // Check that the checkpoint output has also been finalized.
+        // Check that the output proposal has also been finalized.
         require(
-            _isFinalizationPeriodElapsed(checkpointOutput.timestamp),
-            "OptimismPortal: checkpoint output finalization period has not elapsed"
+            _isFinalizationPeriodElapsed(proposal.timestamp),
+            "OptimismPortal: output proposal finalization period has not elapsed"
         );
 
         // Check that this withdrawal has not already been finalized, this is replay protection.
