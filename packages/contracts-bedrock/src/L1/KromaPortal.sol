@@ -66,17 +66,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @notice The L2 gas limit for system deposit transactions that are initiated from L1.
     uint32 internal constant SYSTEM_DEPOSIT_GAS_LIMIT = 200_000;
 
-    /// @notice Address of the L2OutputOracle contract.
-    L2OutputOracle public l2Oracle;
-
-    /// @notice Address of the SystemConfig contract.
-    SystemConfig public systemConfig;
-
-    /// @custom:legacy
-    /// @custom:spacer guardian
-    /// @notice Spacer for backwards compatibility.
-    address private spacer_guardian;
-
     /// @notice Address of the L2 account which initiated a withdrawal in this transaction.
     ///         If the of this variable is the default L2 sender address, then we are NOT inside of
     ///         a call to finalizeWithdrawalTransaction.
@@ -91,10 +80,38 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     /// @custom:legacy
     /// @custom:spacer paused
     /// @notice Spacer for backwards compatibility.
-    bool private spacer_paused;
+    bool private spacer_53_0_1;
 
     /// @notice Contract of the Superchain Config.
     ISuperchainConfig public superchainConfig;
+
+    /// @notice Contract of the L2OutputOracle.
+    /// @custom:network-specific
+    L2OutputOracle public l2Oracle;
+
+    /// @notice Contract of the SystemConfig.
+    /// @custom:network-specific
+    SystemConfig public systemConfig;
+
+    /// @custom:spacer disputeGameFactory
+    /// @notice Spacer for backwards compatibility.
+    address private spacer_56_0_20;
+
+    /// @custom:spacer provenWithdrawals
+    /// @notice Spacer for backwards compatibility.
+    bytes32 private spacer_57_0_32;
+
+    /// @custom:spacer disputeGameBlacklist
+    /// @notice Spacer for backwards compatibility.
+    bytes32 private spacer_58_0_32;
+
+    /// @custom:spacer respectedGameType + respectedGameTypeUpdatedAt
+    /// @notice Spacer for backwards compatibility.
+    bytes32 private spacer_59_0_32;
+
+    /// @custom:spacer proofSubmitters
+    /// @notice Spacer for backwards compatibility.
+    bytes32 private spacer_60_0_32;
 
     /// @notice Represents the amount of native asset minted in L2. This may not
     ///         be 100% accurate due to the ability to send ether to the contract
@@ -131,7 +148,9 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Semantic version.
     /// @custom:semver 2.1.0
-    string public constant version = "2.1.0";
+    function version() public pure virtual returns (string memory) {
+        return "2.1.0";
+    }
 
     /// @notice Constructs the OptimismPortal contract.
     /// @param _l2Oracle      Address of the L2OutputOracle contract.
@@ -173,12 +192,30 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         paused_ = superchainConfig.paused();
     }
 
+    /// @notice Computes the minimum gas limit for a deposit.
+    ///         The minimum gas limit linearly increases based on the size of the calldata.
+    ///         This is to prevent users from creating L2 resource usage without paying for it.
+    ///         This function can be used when interacting with the portal to ensure forwards
+    ///         compatibility.
+    /// @param _byteCount Number of bytes in the calldata.
+    /// @return The minimum gas limit for a deposit.
+    function minimumGasLimit(uint64 _byteCount) public pure returns (uint64) {
+        return _byteCount * 16 + 21000;
+    }
+
     /// @notice Accepts value so that users can send ETH directly to this contract and have the
     ///         funds be deposited to their address on L2. This is intended as a convenience
     ///         function for EOAs. Contracts should call the depositTransaction() function directly
     ///         otherwise any deposited funds will be lost due to address aliasing.
     receive() external payable {
         depositTransaction(msg.sender, msg.value, RECEIVE_DEFAULT_GAS_LIMIT, false, bytes(""));
+    }
+
+    /// @notice Accepts ETH value without triggering a deposit to L2.
+    ///         This function mainly exists for the sake of the migration between the legacy
+    ///         Optimism system and Bedrock.
+    function donateETH() external payable {
+        // Intentionally empty.
     }
 
     /// @notice Returns the gas paying token and its decimals.
@@ -190,7 +227,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
     ///         Used internally by the ResourceMetering contract.
     ///         The SystemConfig is the source of truth for the resource config.
     /// @return ResourceMetering ResourceConfig
-    function _resourceConfig() internal view override returns (ResourceMetering.ResourceConfig memory) {
+    function _resourceConfig() internal view override returns (ResourceConfig memory) {
         IResourceMetering.ResourceConfig memory config = systemConfig.resourceConfig();
         return ResourceConfig({
             maxResourceLimit: config.maxResourceLimit,
@@ -261,9 +298,12 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // bugs, then we know that this withdrawal was actually triggered on L2 and can therefore
         // be relayed on L1.
         require(
-            SecureMerkleTrie.verifyInclusionProof(
-                abi.encode(storageKey), hex"01", _withdrawalProof, _outputRootProof.messagePasserStorageRoot
-            ),
+            SecureMerkleTrie.verifyInclusionProof({
+                _key: abi.encode(storageKey),
+                _value: hex"01",
+                _proof: _withdrawalProof,
+                _root: _outputRootProof.messagePasserStorageRoot
+            }),
             "OptimismPortal: invalid withdrawal inclusion proof"
         );
 
@@ -505,8 +545,15 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // contract creations.
         if (_isCreation && _to != address(0)) revert BadTarget();
 
-        // Prevent depositing transactions that have too small of a gas limit.
-        require(_gasLimit >= 21_000, "OptimismPortal: gas limit must cover instrinsic gas cost");
+                // Prevent depositing transactions that have too small of a gas limit. Users should pay
+        // more for more resource usage.
+        if (_gasLimit < minimumGasLimit(uint64(_data.length))) revert SmallGasLimit();
+
+        // Prevent the creation of deposit transactions that have too much calldata. This gives an
+        // upper limit on the size of unsafe blocks over the p2p network. 120kb is chosen to ensure
+        // that the transaction can fit into the p2p network policy of 128kb even though deposit
+        // transactions are not gossipped over the p2p network.
+        if (_data.length > 120_000) revert LargeCalldata();
 
         // Transform the from-address to its alias if the caller is a contract.
         address from = msg.sender;
@@ -522,23 +569,6 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Emit a TransactionDeposited event so that the rollup node can derive a deposit
         // transaction for this deposit.
         emit TransactionDeposited(from, _to, DEPOSIT_VERSION, opaqueData);
-    }
-
-    /// @notice Determine if a given output is finalized.
-    ///         Reverts if the call to l2Oracle.getL2Output reverts.
-    ///         Returns a boolean otherwise.
-    /// @param _l2OutputIndex Index of the L2 output to check.
-    /// @return Whether or not the output is finalized.
-    function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool) {
-        return _isFinalizationPeriodElapsed(l2Oracle.getL2Output(_l2OutputIndex).timestamp);
-    }
-
-    /// @notice Determines whether the finalization period has elapsed with respect to
-    ///         the provided block timestamp.
-    /// @param _timestamp Timestamp to check.
-    /// @return Whether or not the finalization period has elapsed.
-    function _isFinalizationPeriodElapsed(uint256 _timestamp) internal view returns (bool) {
-        return block.timestamp > _timestamp + l2Oracle.FINALIZATION_PERIOD_SECONDS();
     }
 
     /// @notice Sets the gas paying token for the L2 system. This token is used as the
@@ -564,5 +594,22 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
                 abi.encodeCall(IL1Block.setGasPayingToken, (_token, _decimals, _name, _symbol))
             )
         );
+    }
+
+    /// @notice Determine if a given output is finalized.
+    ///         Reverts if the call to l2Oracle.getL2Output reverts.
+    ///         Returns a boolean otherwise.
+    /// @param _l2OutputIndex Index of the L2 output to check.
+    /// @return Whether or not the output is finalized.
+    function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool) {
+        return _isFinalizationPeriodElapsed(l2Oracle.getL2Output(_l2OutputIndex).timestamp);
+    }
+
+    /// @notice Determines whether the finalization period has elapsed with respect to
+    ///         the provided block timestamp.
+    /// @param _timestamp Timestamp to check.
+    /// @return Whether or not the finalization period has elapsed.
+    function _isFinalizationPeriodElapsed(uint256 _timestamp) internal view returns (bool) {
+        return block.timestamp > _timestamp + l2Oracle.FINALIZATION_PERIOD_SECONDS();
     }
 }
