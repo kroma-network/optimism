@@ -359,6 +359,33 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         payable
         metered(_gasLimit)
     {
+        _depositTransaction({
+            _to: _to,
+            _mint: msg.value,
+            _value: _value,
+            _gasLimit: _gasLimit,
+            _isCreation: _isCreation,
+            _data: _data
+        });
+    }
+
+    /// @notice Common logic for creating deposit transactions.
+    /// @param _to         Target address on L2.
+    /// @param _mint       Units of asset to deposit into L2.
+    /// @param _value      Units of asset to send on L2 to the recipient.
+    /// @param _gasLimit   Amount of L2 gas to purchase by burning gas on L1.
+    /// @param _isCreation Whether or not the transaction is a contract creation.
+    /// @param _data       Data to trigger the recipient with.
+    function _depositTransaction(
+        address _to,
+        uint256 _mint,
+        uint256 _value,
+        uint64 _gasLimit,
+        bool _isCreation,
+        bytes memory _data
+    )
+        internal
+    {
         // Just to be safe, make sure that people specify address(0) as the target when doing
         // contract creations.
         if (_isCreation && _to != address(0)) revert BadTarget();
@@ -375,7 +402,7 @@ contract KromaPortal is Initializable, ResourceMetering, ISemver {
         // Compute the opaque data that will be emitted as part of the TransactionDeposited event.
         // We use opaque data so that we can update the TransactionDeposited event in the future
         // without breaking the current interface.
-        bytes memory opaqueData = abi.encodePacked(msg.value, _value, _gasLimit, _isCreation, _data);
+        bytes memory opaqueData = abi.encodePacked(_mint, _value, _gasLimit, _isCreation, _data);
 
         // Emit a TransactionDeposited event so that the rollup node can derive a deposit
         // transaction for this deposit.
