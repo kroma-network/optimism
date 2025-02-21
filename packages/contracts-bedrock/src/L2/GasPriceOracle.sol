@@ -11,7 +11,7 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
 /// @custom:proxied true
-/// @custom:predeploy 0x420000000000000000000000000000000000000F
+/// @custom:predeploy 0x4200000000000000000000000000000000000005
 /// @title GasPriceOracle
 /// @notice This contract maintains the variables responsible for computing the L1 portion of the
 ///         total fee charged on L2. Before Bedrock, this contract held variables in state that were

@@ -11,7 +11,7 @@ import { Burn } from "src/libraries/Burn.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
 /// @custom:proxied true
-/// @custom:predeploy 0x4200000000000000000000000000000000000016
+/// @custom:predeploy 0x4200000000000000000000000000000000000003
 /// @title L2ToL1MessagePasser
 /// @notice The L2ToL1MessagePasser is a dedicated contract where messages that are being sent from
 ///         L2 to L1 can be stored. The storage root of this contract is pulled up to the top level

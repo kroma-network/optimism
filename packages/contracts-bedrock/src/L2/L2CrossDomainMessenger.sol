@@ -14,7 +14,7 @@ import { IL2ToL1MessagePasser } from "interfaces/L2/IL2ToL1MessagePasser.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 
 /// @custom:proxied true
-/// @custom:predeploy 0x4200000000000000000000000000000000000007
+/// @custom:predeploy 0x4200000000000000000000000000000000000004
 /// @title L2CrossDomainMessenger
 /// @notice The L2CrossDomainMessenger is a high-level interface for message passing between L1 and
 ///         L2 on the L2 side. Users are generally encouraged to use this contract instead of lower

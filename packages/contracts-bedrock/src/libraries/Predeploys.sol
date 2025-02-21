@@ -11,7 +11,8 @@ library Predeploys {
     /// @custom:legacy
     /// @notice Address of the LegacyMessagePasser predeploy. Deprecate. Use the updated
     ///         L2ToL1MessagePasser contract instead.
-    address internal constant LEGACY_MESSAGE_PASSER = 0x4200000000000000000000000000000000000000;
+    ///         Address has fixed to an useless address, to avoid conflict with Kroma ProxyAdmin contract.
+    address internal constant LEGACY_MESSAGE_PASSER = 0x42000000000000000000000000000000000000fF;
 
     /// @custom:legacy
     /// @notice Address of the L1MessageSender predeploy. Deprecated. Use L2CrossDomainMessenger
@@ -26,15 +27,16 @@ library Predeploys {
     /// @notice Address of the canonical WETH contract.
     address internal constant WETH = 0x4200000000000000000000000000000000000006;
 
-    /// @notice Address of the L2CrossDomainMessenger predeploy.
-    address internal constant L2_CROSS_DOMAIN_MESSENGER = 0x4200000000000000000000000000000000000007;
+    /// @notice Address of the L2CrossDomainMessenger predeploy. Note that the address is for Kroma.
+    address internal constant L2_CROSS_DOMAIN_MESSENGER = 0x4200000000000000000000000000000000000004;
 
     /// @notice Address of the GasPriceOracle predeploy. Includes fee information
     ///         and helpers for computing the L1 portion of the transaction fee.
-    address internal constant GAS_PRICE_ORACLE = 0x420000000000000000000000000000000000000F;
+    ///         Note that the address is for Kroma.
+    address internal constant GAS_PRICE_ORACLE = 0x4200000000000000000000000000000000000005;
 
-    /// @notice Address of the L2StandardBridge predeploy.
-    address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000010;
+    /// @notice Address of the L2StandardBridge predeploy. Note that the address is for Kroma.
+    address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000009;
 
     //// @notice Address of the SequencerFeeWallet predeploy.
     address internal constant SEQUENCER_FEE_WALLET = 0x4200000000000000000000000000000000000011;
@@ -47,20 +49,20 @@ library Predeploys {
     ///         instead, which exposes more information about the L1 state.
     address internal constant L1_BLOCK_NUMBER = 0x4200000000000000000000000000000000000013;
 
-    /// @notice Address of the L2ERC721Bridge predeploy.
-    address internal constant L2_ERC721_BRIDGE = 0x4200000000000000000000000000000000000014;
+    /// @notice Address of the L2ERC721Bridge predeploy. Note that the address is for Kroma.
+    address internal constant L2_ERC721_BRIDGE = 0x420000000000000000000000000000000000000A;
 
     /// @notice Address of the L1Block predeploy.
     address internal constant L1_BLOCK_ATTRIBUTES = 0x4200000000000000000000000000000000000015;
 
-    /// @notice Address of the L2ToL1MessagePasser predeploy.
-    address internal constant L2_TO_L1_MESSAGE_PASSER = 0x4200000000000000000000000000000000000016;
+    /// @notice Address of the L2ToL1MessagePasser predeploy. Note that the address is for Kroma.
+    address internal constant L2_TO_L1_MESSAGE_PASSER = 0x4200000000000000000000000000000000000003;
 
     /// @notice Address of the OptimismMintableERC721Factory predeploy.
     address internal constant OPTIMISM_MINTABLE_ERC721_FACTORY = 0x4200000000000000000000000000000000000017;
 
-    /// @notice Address of the ProxyAdmin predeploy.
-    address internal constant PROXY_ADMIN = 0x4200000000000000000000000000000000000018;
+    /// @notice Address of the ProxyAdmin predeploy. Note that the address is for Kroma.
+    address internal constant PROXY_ADMIN = 0x4200000000000000000000000000000000000000;
 
     /// @notice Address of the BaseFeeVault predeploy.
     address internal constant BASE_FEE_VAULT = 0x4200000000000000000000000000000000000019;
