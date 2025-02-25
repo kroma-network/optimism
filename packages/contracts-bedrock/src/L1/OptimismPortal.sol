@@ -10,6 +10,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCall } from "src/libraries/SafeCall.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "src/libraries/Types.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Hashing } from "src/libraries/Hashing.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
@@ -31,8 +32,8 @@ import {
 // Interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
-import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { SystemConfig } from "src/L1/SystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
@@ -86,11 +87,11 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Contract of the L2OutputOracle.
     /// @custom:network-specific
-    IL2OutputOracle public l2Oracle;
+    L2OutputOracle public l2Oracle;
 
     /// @notice Contract of the SystemConfig.
     /// @custom:network-specific
-    ISystemConfig public systemConfig;
+    SystemConfig public systemConfig;
 
     /// @custom:spacer disputeGameFactory
     /// @notice Spacer for backwards compatibility.
@@ -146,16 +147,16 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     }
 
     /// @notice Semantic version.
-    /// @custom:semver 2.8.1-beta.5
+    /// @custom:semver 2.8.1-beta.5-kroma;
     function version() public pure virtual returns (string memory) {
-        return "2.8.1-beta.5";
+        return "2.8.1-beta.5-kroma";
     }
 
     /// @notice Constructs the OptimismPortal contract.
     constructor() {
         initialize({
-            _l2Oracle: IL2OutputOracle(address(0)),
-            _systemConfig: ISystemConfig(address(0)),
+            _l2Oracle: L2OutputOracle(address(0)),
+            _systemConfig: SystemConfig(address(0)),
             _superchainConfig: ISuperchainConfig(address(0))
         });
     }
@@ -165,8 +166,8 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @param _systemConfig Contract of the SystemConfig.
     /// @param _superchainConfig Contract of the SuperchainConfig.
     function initialize(
-        IL2OutputOracle _l2Oracle,
-        ISystemConfig _systemConfig,
+        L2OutputOracle _l2Oracle,
+        SystemConfig _systemConfig,
         ISuperchainConfig _superchainConfig
     )
         public
@@ -361,28 +362,28 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
         // A proven withdrawal must wait at least the finalization period before it can be
         // finalized. This waiting period can elapse in parallel with the waiting period for the
         // output the withdrawal was proven against. In effect, this means that the minimum
-        // withdrawal time is proposal submission time + finalization period.
+        // withdrawal time is l2 output submission time + finalization period.
         require(
             _isFinalizationPeriodElapsed(provenWithdrawal.timestamp),
             "OptimismPortal: proven withdrawal finalization period has not elapsed"
         );
 
-        // Grab the OutputProposal from the L2OutputOracle, will revert if the output that
-        // corresponds to the given index has not been proposed yet.
-        Types.OutputProposal memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
+        // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
+        // corresponds to the given index has not been submitted yet.
+        KromaTypes.CheckpointOutput memory checkpointOutput = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is
-        // deleted by the challenger address and then re-proposed.
+        // deleted by the challenger address and then re-submitted.
         require(
-            proposal.outputRoot == provenWithdrawal.outputRoot,
+            checkpointOutput.outputRoot == provenWithdrawal.outputRoot,
             "OptimismPortal: output root proven is not the same as current output root"
         );
 
-        // Check that the output proposal has also been finalized.
+        // Check that the checkpoint output has also been finalized.
         require(
-            _isFinalizationPeriodElapsed(proposal.timestamp),
-            "OptimismPortal: output proposal finalization period has not elapsed"
+            _isFinalizationPeriodElapsed(checkpointOutput.timestamp),
+            "OptimismPortal: checkpoint output finalization period has not elapsed"
         );
 
         // Check that this withdrawal has not already been finalized, this is replay protection.

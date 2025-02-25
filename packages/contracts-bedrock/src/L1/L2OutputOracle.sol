@@ -16,7 +16,7 @@ import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 /// @custom:proxied
 /// @title L2OutputOracle
 /// @notice The L2OutputOracle contains an array of L2 state outputs, where each output is a
-///         commitment to the state of the L2 chain. Other contracts like the KromaPortal use
+///         commitment to the state of the L2 chain. Other contracts like the OptimismPortal use
 ///         these outputs to verify information about the state of L2.
 contract L2OutputOracle is Initializable, ISemver {
     /// @notice The address of the validator manager contract. Can be updated via upgrade.
