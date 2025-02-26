@@ -14,6 +14,7 @@ import { SuperchainConfig } from "src/L1/SuperchainConfig.sol";
 
 // Libraries
 import { Types } from "src/libraries/Types.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Hashing } from "src/libraries/Hashing.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
@@ -742,7 +743,7 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         vm.store(address(optimismPortal), slot, bytes32(0));
 
         // Fetch the output proposal at `_proposedOutputIndex` from the L2OutputOracle
-        Types.OutputProposal memory proposal = optimismPortal.l2Oracle().getL2Output(_proposedOutputIndex);
+        KromaTypes.CheckpointOutput memory proposal = optimismPortal.l2Oracle().getL2Output(_proposedOutputIndex);
 
         // Propose the same output root again, creating the same output at a different index + l2BlockNumber.
         vm.startPrank(optimismPortal.l2Oracle().PROPOSER());

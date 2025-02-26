@@ -32,8 +32,8 @@ import {
 // Interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { SystemConfig } from "src/L1/SystemConfig.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
@@ -87,11 +87,11 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Contract of the L2OutputOracle.
     /// @custom:network-specific
-    L2OutputOracle public l2Oracle;
+    IL2OutputOracle public l2Oracle;
 
     /// @notice Contract of the SystemConfig.
     /// @custom:network-specific
-    SystemConfig public systemConfig;
+    ISystemConfig public systemConfig;
 
     /// @custom:spacer disputeGameFactory
     /// @notice Spacer for backwards compatibility.
@@ -155,8 +155,8 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @notice Constructs the OptimismPortal contract.
     constructor() {
         initialize({
-            _l2Oracle: L2OutputOracle(address(0)),
-            _systemConfig: SystemConfig(address(0)),
+            _l2Oracle: IL2OutputOracle(address(0)),
+            _systemConfig: ISystemConfig(address(0)),
             _superchainConfig: ISuperchainConfig(address(0))
         });
     }
@@ -166,8 +166,8 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @param _systemConfig Contract of the SystemConfig.
     /// @param _superchainConfig Contract of the SuperchainConfig.
     function initialize(
-        L2OutputOracle _l2Oracle,
-        SystemConfig _systemConfig,
+        IL2OutputOracle _l2Oracle,
+        ISystemConfig _systemConfig,
         ISuperchainConfig _superchainConfig
     )
         public
