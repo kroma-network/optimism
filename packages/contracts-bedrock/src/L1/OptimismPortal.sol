@@ -10,6 +10,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCall } from "src/libraries/SafeCall.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "src/libraries/Types.sol";
+import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Hashing } from "src/libraries/Hashing.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
@@ -146,9 +147,9 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     }
 
     /// @notice Semantic version.
-    /// @custom:semver 2.8.1-beta.5
+    /// @custom:semver 2.8.1-beta.5-kroma;
     function version() public pure virtual returns (string memory) {
-        return "2.8.1-beta.5";
+        return "2.8.1-beta.5-kroma";
     }
 
     /// @notice Constructs the OptimismPortal contract.
@@ -367,9 +368,9 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
             "OptimismPortal: proven withdrawal finalization period has not elapsed"
         );
 
-        // Grab the OutputProposal from the L2OutputOracle, will revert if the output that
+        // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
         // corresponds to the given index has not been proposed yet.
-        Types.OutputProposal memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
+        KromaTypes.CheckpointOutput memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is

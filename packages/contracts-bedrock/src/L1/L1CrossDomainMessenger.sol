@@ -8,7 +8,7 @@ import { CrossDomainMessenger } from "src/universal/CrossDomainMessenger.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
 
 // Interfaces
-import { IKromaPortal } from "interfaces/L1/IKromaPortal.sol";
+import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
@@ -22,9 +22,9 @@ contract L1CrossDomainMessenger is CrossDomainMessenger, ISemver {
     /// @notice Contract of the SuperchainConfig.
     ISuperchainConfig public superchainConfig;
 
-    /// @notice Contract of the KromaPortal.
+    /// @notice Contract of the OptimismPortal.
     /// @custom:network-specific
-    IKromaPortal public portal;
+    IOptimismPortal public portal;
 
     /// @notice Address of the SystemConfig contract.
     ISystemConfig public systemConfig;
@@ -37,18 +37,18 @@ contract L1CrossDomainMessenger is CrossDomainMessenger, ISemver {
     constructor() CrossDomainMessenger() {
         initialize({
             _superchainConfig: ISuperchainConfig(address(0)),
-            _portal: IKromaPortal(payable(address(0))),
+            _portal: IOptimismPortal(payable(address(0))),
             _systemConfig: ISystemConfig(address(0))
         });
     }
 
     /// @notice Initializes the contract.
     /// @param _superchainConfig Contract of the SuperchainConfig contract on this network.
-    /// @param _portal Contract of the KromaPortal contract on this network.
+    /// @param _portal Contract of the OptimismPortal contract on this network.
     /// @param _systemConfig Contract of the SystemConfig contract on this network.
     function initialize(
         ISuperchainConfig _superchainConfig,
-        IKromaPortal _portal,
+        IOptimismPortal _portal,
         ISystemConfig _systemConfig
     )
         public
@@ -65,11 +65,11 @@ contract L1CrossDomainMessenger is CrossDomainMessenger, ISemver {
         (addr_, decimals_) = systemConfig.gasPayingToken();
     }
 
-    /// @notice Getter function for the KromaPortal contract on this chain.
+    /// @notice Getter function for the OptimismPortal contract on this chain.
     ///         Public getter is legacy and will be removed in the future. Use `portal()` instead.
-    /// @return Contract of the KromaPortal on this chain.
+    /// @return Contract of the OptimismPortal on this chain.
     /// @custom:legacy
-    function PORTAL() external view returns (IKromaPortal) {
+    function PORTAL() external view returns (IOptimismPortal) {
         return portal;
     }
 
