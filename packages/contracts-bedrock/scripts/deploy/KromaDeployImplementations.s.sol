@@ -11,7 +11,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IColosseum } from "interfaces/L1/IColosseum.sol";
-import { IKromaPortal } from "interfaces/L1/IKromaPortal.sol";
+import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
@@ -46,7 +46,7 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
     uint256 internal _provingTimeout;
     uint256[] internal _segmentsLengths;
 
-    /// @notice Deploy configs for KromaPortal.
+    /// @notice Deploy configs for OptimismPortal.
     bool internal _paused;
     SystemConfig internal _systemConfig;
 
@@ -293,7 +293,7 @@ contract KromaDeployImplementationsInput is BaseDeployIO {
 contract KromaDeployImplementationsOutput is BaseDeployIO {
     IAssetManager internal _assetManagerImpl;
     IColosseum internal _colosseumImpl;
-    IKromaPortal internal _kromaPortalImpl;
+    IOptimismPortal internal _optimismPortalImpl;
     IL2OutputOracle internal _l2OutputOracleImpl;
     ISecurityCouncil internal _securityCouncilImpl;
     ISecurityCouncilToken internal _securityCouncilTokenImpl;
@@ -309,8 +309,8 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
             _assetManagerImpl = IAssetManager(_addr);
         } else if (_sel == this.colosseumImpl.selector) {
             _colosseumImpl = IColosseum(_addr);
-        } else if (_sel == this.kromaPortalImpl.selector) {
-            _kromaPortalImpl = IKromaPortal(payable(_addr));
+        } else if (_sel == this.optimismPortalImpl.selector) {
+            _optimismPortalImpl = IOptimismPortal(payable(_addr));
         } else if (_sel == this.l2OutputOracleImpl.selector) {
             _l2OutputOracleImpl = IL2OutputOracle(_addr);
         } else if (_sel == this.securityCouncilImpl.selector) {
@@ -334,7 +334,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         address[] memory addresses = Solarray.addresses(
             address(this.assetManagerImpl()),
             address(this.colosseumImpl()),
-            address(this.kromaPortalImpl()),
+            address(this.optimismPortalImpl()),
             address(this.l2OutputOracleImpl()),
             address(this.securityCouncilImpl()),
             address(this.securityCouncilTokenImpl()),
@@ -359,9 +359,9 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         return _colosseumImpl;
     }
 
-    function kromaPortalImpl() public view returns (IKromaPortal) {
-        DeployUtils.assertValidContractAddress(address(_kromaPortalImpl));
-        return _kromaPortalImpl;
+    function optimismPortalImpl() public view returns (IOptimismPortal) {
+        DeployUtils.assertValidContractAddress(address(_optimismPortalImpl));
+        return _optimismPortalImpl;
     }
 
     function l2OutputOracleImpl() public view returns (IL2OutputOracle) {
@@ -403,7 +403,7 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
     function assertValidDeploy(KromaDeployImplementationsInput _dii) public view {
         assertValidAssetManager(_dii);
         assertValidColosseum(_dii);
-        assertValidKromaPortal(_dii);
+        assertValidOptimismPortal(_dii);
         assertValidSecurityCouncil(_dii);
         assertValidSecurityCouncilToken(_dii);
         assertValidTimeLock(_dii);
@@ -441,15 +441,15 @@ contract KromaDeployImplementationsOutput is BaseDeployIO {
         require(colosseum.SECURITY_COUNCIL() == _dii.securityCouncil(), "COLOSSEUM-80");
     }
 
-    function assertValidKromaPortal(KromaDeployImplementationsInput _dii) public view {
-        IKromaPortal portal = kromaPortalImpl();
+    function assertValidOptimismPortal(KromaDeployImplementationsInput _dii) public view {
+        IOptimismPortal portal = optimismPortalImpl();
 
         DeployUtils.assertInitialized({ _contractAddress: address(portal), _slot: 0, _offset: 0 });
 
-        require(address(portal.L2_ORACLE()) == address(_dii.l2OutputOracle()), "KP-10");
-        require(address(portal.GUARDIAN()) == address(_dii.securityCouncil()), "KP-20");
+        require(address(portal.l2Oracle()) == address(_dii.l2OutputOracle()), "KP-10");
+        require(address(portal.guardian()) == address(_dii.securityCouncil()), "KP-20");
         require(portal.paused() == _dii.paused(), "KP-30");
-        require(address(portal.SYSTEM_CONFIG()) == address(_dii.systemConfig()), "KP-40");
+        require(address(portal.systemConfig()) == address(_dii.systemConfig()), "KP-40");
     }
 
     function assertValidSecurityCouncil(KromaDeployImplementationsInput _dii) public view {
@@ -522,7 +522,7 @@ contract KromaDeployImplementations is Script {
         // Deploy the implementations.
         deployAssetManagerImpl(_dii, _dio);
         deployColosseumImpl(_dii, _dio);
-        deployKromaPortalImpl(_dii, _dio);
+        deployOptimismPortalImpl(_dii, _dio);
         deploySecurityCouncilImpl(_dii, _dio);
         deploySecurityCouncilTokenImpl(_dii, _dio);
         deployTimeLockImpl(_dii, _dio);
@@ -601,7 +601,7 @@ contract KromaDeployImplementations is Script {
         _dio.set(_dio.colosseumImpl.selector, address(impl));
     }
 
-    function deployKromaPortalImpl(
+    function deployOptimismPortalImpl(
         KromaDeployImplementationsInput _dii,
         KromaDeployImplementationsOutput _dio
     )
@@ -609,20 +609,20 @@ contract KromaDeployImplementations is Script {
         virtual
     {
         vm.broadcast(msg.sender);
-        IKromaPortal impl = IKromaPortal(
+        IOptimismPortal impl = IOptimismPortal(
             DeployUtils.create1({
-                _name: "KromaPortal",
+                _name: "OptimismPortal",
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(
-                        IKromaPortal.__constructor__,
-                        (_dii.l2OutputOracle(), _dii.securityCouncil(), _dii.paused(), _dii.systemConfig())
+                        IOptimismPortal.__constructor__,
+                        ()
                     )
                 )
             })
         );
 
-        vm.label(address(impl), "KromaPortalImpl");
-        _dio.set(_dio.kromaPortalImpl.selector, address(impl));
+        vm.label(address(impl), "OptimismPortalImpl");
+        _dio.set(_dio.optimismPortalImpl.selector, address(impl));
     }
 
     function deploySecurityCouncilImpl(
