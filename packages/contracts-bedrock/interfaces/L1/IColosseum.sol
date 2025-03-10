@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 interface IColosseum {
@@ -109,8 +109,8 @@ interface IColosseum {
     function version() external view returns (string memory);
 
     function __constructor__(
-        L2OutputOracle _l2Oracle,
-        ZKProofVerifier _zkProofVerifier,
+        IL2OutputOracle _l2Oracle,
+        IZKProofVerifier _zkProofVerifier,
         uint256 _submissionInterval,
         uint256 _creationPeriodSeconds,
         uint256 _bisectionTimeout,

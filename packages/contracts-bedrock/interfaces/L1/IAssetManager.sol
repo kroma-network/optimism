@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
 
 /// @title IAssetManager
 /// @notice Interface for AssetManager contract.
@@ -34,7 +35,7 @@ interface IAssetManager {
     function DECIMAL_OFFSET() external view returns (uint128);
     function KGH() external view returns (IERC721);
     function MIN_DELEGATION_PERIOD() external view returns (uint128);
-    function SECURITY_COUNCIL() external view returns (address);
+    function SECURITY_COUNCIL() external view returns (ISecurityCouncil);
     function TAX_DENOMINATOR() external view returns (uint128);
     function TAX_NUMERATOR() external view returns (uint128);
     function VALIDATOR_MANAGER() external view returns (IValidatorManager);
@@ -90,7 +91,7 @@ interface IAssetManager {
     function __constructor__(
         IERC20 _assetToken,
         IERC721 _kgh,
-        address _securityCouncil,
+        ISecurityCouncil _securityCouncil,
         address _validatorRewardVault,
         IValidatorManager _validatorManager,
         uint128 _minDelegationPeriod,

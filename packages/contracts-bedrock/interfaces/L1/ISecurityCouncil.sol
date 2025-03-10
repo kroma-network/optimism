@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { UpgradeGovernor } from "src/governance/UpgradeGovernor.sol";
+import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
 
 interface ISecurityCouncil {
     event ConfirmationRevoked(address indexed sender, uint256 indexed transactionId);
@@ -13,7 +13,7 @@ interface ISecurityCouncil {
     event ValidationRequested(uint256 indexed transactionId, bytes32 outputRoot, uint256 l2BlockNumber);
 
     function COLOSSEUM() external view returns (address);
-    function GOVERNOR() external view returns (UpgradeGovernor);
+    function GOVERNOR() external view returns (IUpgradeGovernor);
     function clock() external view returns (uint48);
     function confirmTransaction(uint256 _transactionId) external;
     function confirmations(uint256) external view returns (uint256 confirmationCount);
