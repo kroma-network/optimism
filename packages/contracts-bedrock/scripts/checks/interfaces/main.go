@@ -27,8 +27,6 @@ var excludeContracts = []string{
 	// External dependencies
 	"IERC5267", "IEIP712", "IVotesUpgradeable", "IAccessControlUpgradeable",
 	"IERC5192", "IERC721EnumerableUpgradeable",
-	// TODO: Temp. Remove the following line once the interface is fixed
-	"IL2OutputOracle", "IL1CrossDomainMessenger", "IProxyAdmin",
 	// [Kroma: END]
 
 	// EAS

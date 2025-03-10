@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
+
 interface IUpgradeGovernor {
     enum ProposalState {
         Pending,
@@ -182,7 +184,7 @@ interface IUpgradeGovernor {
     function setVotingPeriod(uint256 newVotingPeriod) external;
     function state(uint256 proposalId) external view returns (ProposalState);
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
-    function timelock() external view returns (address);
+    function timelock() external view returns (ITimeLock);
     function token() external view returns (address);
     function updateQuorumNumerator(uint256 newQuorumNumerator) external;
     function updateTimelock(address newTimelock) external;
