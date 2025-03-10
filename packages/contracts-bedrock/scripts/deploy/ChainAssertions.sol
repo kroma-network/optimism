@@ -173,7 +173,10 @@ library ChainAssertions {
         require(address(messenger) != address(0), "CHECK-L1XDM-10");
 
         // Check that the contract is initialized
-        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
+        // [Kroma: START]
+        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 0 });
+        // assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
+        // [Kroma: END]
 
         require(address(messenger.OTHER_MESSENGER()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-20");
         require(address(messenger.otherMessenger()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-30");
@@ -182,7 +185,10 @@ library ChainAssertions {
             require(address(messenger.PORTAL()) == _contracts.OptimismPortal, "CHECK-L1XDM-40");
             require(address(messenger.portal()) == _contracts.OptimismPortal, "CHECK-L1XDM-50");
             require(address(messenger.superchainConfig()) == _contracts.SuperchainConfig, "CHECK-L1XDM-60");
-            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(204)));
+            // [Kroma: START]
+            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(102)));
+            // bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(204)));
+            // [Kroma: END]
             require(address(uint160(uint256(xdmSenderSlot))) == Constants.DEFAULT_L2_SENDER, "CHECK-L1XDM-70");
         } else {
             require(address(messenger.PORTAL()) == address(0), "CHECK-L1XDM-80");
@@ -190,7 +196,7 @@ library ChainAssertions {
             require(address(messenger.superchainConfig()) == address(0), "CHECK-L1XDM-100");
         }
     }
-
+    //ggggg
     /// @notice Asserts that the L1StandardBridge is setup correctly
     function checkL1StandardBridge(Types.ContractSet memory _contracts, bool _isProxy) internal view {
         IL1StandardBridge bridge = IL1StandardBridge(payable(_contracts.L1StandardBridge));
@@ -202,7 +208,10 @@ library ChainAssertions {
         require(address(bridge) != address(0), "CHECK-L1SB-10");
 
         // Check that the contract is initialized
-        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 0, _offset: 0 });
+        // [Kroma: START]
+        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 2, _offset: 20 });
+        // assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 0, _offset: 0 });
+        // [Kroma: END]
 
         if (_isProxy) {
             require(address(bridge.MESSENGER()) == _contracts.L1CrossDomainMessenger, "CHECK-L1SB-20");
