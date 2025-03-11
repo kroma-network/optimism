@@ -19,7 +19,6 @@ import { IMIPS } from "interfaces/cannon/IMIPS.sol";
 import { IDisputeGameFactory } from "interfaces/dispute/IDisputeGameFactory.sol";
 
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
-import { IOptimismPortal2 } from "interfaces/L1/IOptimismPortal2.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { IL1CrossDomainMessenger } from "interfaces/L1/IL1CrossDomainMessenger.sol";
 import { IL1ERC721Bridge } from "interfaces/L1/IL1ERC721Bridge.sol";
@@ -429,7 +428,9 @@ contract DeployImplementationsInput is BaseDeployIO {
 contract DeployImplementationsOutput is BaseDeployIO {
     OPContractsManager internal _opcm;
     IDelayedWETH internal _delayedWETHImpl;
-    IOptimismPortal2 internal _optimismPortalImpl;
+    // [Kroma: START]
+    // IOptimismPortal2 internal _optimismPortalImpl;
+    // [Kroma: END]
     IPreimageOracle internal _preimageOracleSingleton;
     IMIPS internal _mipsSingleton;
     ISystemConfig internal _systemConfigImpl;
@@ -456,7 +457,9 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         // forgefmt: disable-start
         if (_sel == this.opcm.selector) _opcm = OPContractsManager(_addr);
-        else if (_sel == this.optimismPortalImpl.selector) _optimismPortalImpl = IOptimismPortal2(payable(_addr));
+        // [Kroma: START]
+        // else if (_sel == this.optimismPortalImpl.selector) _optimismPortalImpl = IOptimismPortal2(payable(_addr));
+        // [Kroma: END]
         else if (_sel == this.delayedWETHImpl.selector) _delayedWETHImpl = IDelayedWETH(payable(_addr));
         else if (_sel == this.preimageOracleSingleton.selector) _preimageOracleSingleton = IPreimageOracle(_addr);
         else if (_sel == this.mipsSingleton.selector) _mipsSingleton = IMIPS(_addr);
@@ -525,10 +528,12 @@ contract DeployImplementationsOutput is BaseDeployIO {
         return _opcm;
     }
 
-    function optimismPortalImpl() public view returns (IOptimismPortal2) {
-        DeployUtils.assertValidContractAddress(address(_optimismPortalImpl));
-        return _optimismPortalImpl;
-    }
+    // [Kroma: START]
+    // function optimismPortalImpl() public view returns (IOptimismPortal2) {
+    //     DeployUtils.assertValidContractAddress(address(_optimismPortalImpl));
+    //     return _optimismPortalImpl;
+    // }
+    // [Kroma: END]
 
     function delayedWETHImpl() public view returns (IDelayedWETH) {
         DeployUtils.assertValidContractAddress(address(_delayedWETHImpl));
@@ -640,6 +645,17 @@ contract DeployImplementationsOutput is BaseDeployIO {
         assertValidOptimismPortalImpl(_dii);
         assertValidPreimageOracleSingleton(_dii);
         assertValidSystemConfigImpl(_dii);
+        // [Kroma: START]
+        assertValidAssetManager(_dii);
+        assertValidColosseum(_dii);
+        assertValidOptimismPortal(_dii);
+        assertValidSecurityCouncil(_dii);
+        assertValidSecurityCouncilToken(_dii);
+        assertValidTimeLock(_dii);
+        assertValidUpgradeGovernor(_dii);
+        assertValidValidatorManager(_dii);
+        assertValidZKProofVerifier(_dii);
+        // [Kroma: END]
     }
 
     function assertValidOpcm(DeployImplementationsInput _dii) internal view {
@@ -649,11 +665,17 @@ contract DeployImplementationsOutput is BaseDeployIO {
     }
 
     function assertValidOptimismPortalImpl(DeployImplementationsInput) internal view {
-        IOptimismPortal2 portal = optimismPortalImpl();
+        // [Kroma: START]
+        IOptimismPortal portal = optimismPortalImpl();
+        // IOptimismPortal2 portal = optimismPortalImpl();
+        // [Kroma: END]
 
         DeployUtils.assertInitialized({ _contractAddress: address(portal), _slot: 0, _offset: 0 });
 
-        require(address(portal.disputeGameFactory()) == address(0), "PORTAL-10");
+        // [Kroma: START]
+        require(address(portal.l2Oracle()) == address(0), "PORTAL-10");
+        // require(address(portal.disputeGameFactory()) == address(0), "PORTAL-10");
+        // [Kroma: END]
         require(address(portal.systemConfig()) == address(0), "PORTAL-20");
         require(address(portal.superchainConfig()) == address(0), "PORTAL-30");
         require(portal.l2Sender() == Constants.DEFAULT_L2_SENDER, "PORTAL-40");
@@ -780,6 +802,103 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         require(address(factory.owner()) == address(0), "DG-10");
     }
+
+    // [Kroma: START]
+    function assertValidAssetManager(DeployImplementationsInput _dii) public view {
+        IAssetManager assetManager = assetManagerImpl();
+
+        require(address(assetManager.ASSET_TOKEN()) == address(_dii.assetToken()), "ASSETMGR-10");
+        require(address(assetManager.KGH()) == address(_dii.kgh()), "ASSETMGR-20");
+        require(address(assetManager.SECURITY_COUNCIL()) == address(_dii.securityCouncil()), "ASSETMGR-30");
+        require(address(assetManager.VALIDATOR_REWARD_VAULT()) == address(_dii.vault()), "ASSETMGR-40");
+        // TODO: There is a problem around cyclic dependencies, leaving this out for now.
+        // require(address(assetManager.VALIDATOR_MANAGER()) == address(_dii.validatorManager()), "ASSETMGR-50");
+        require(assetManager.MIN_DELEGATION_PERIOD() == _dii.minDelegationPeriod(), "ASSETMGR-60");
+        require(assetManager.BOND_AMOUNT() == _dii.bondAmount(), "ASSETMGR-70");
+    }
+
+    function assertValidColosseum(DeployImplementationsInput _dii) public view {
+        IColosseum colosseum = colosseumImpl();
+
+        require(address(colosseum.L2_ORACLE()) == address(_dii.l2OutputOracle()), "COLOSSEUM-10");
+        require(address(colosseum.ZK_PROOF_VERIFIER()) == address(_dii.zkProofVerifier()), "COLOSSEUM-20");
+        require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == _dii.creationPeriodSeconds(), "COLOSSEUM-30");
+        require(colosseum.CREATION_PERIOD_SECONDS() == _dii.creationPeriodSeconds(), "COLOSSEUM-40");
+        require(colosseum.BISECTION_TIMEOUT() == _dii.bisectionTimeout(), "COLOSSEUM-50");
+        require(colosseum.PROVING_TIMEOUT() == _dii.provingTimeout(), "COLOSSEUM-60");
+        for (uint256 i = 0; i < _dii.segmentsLengths().length; i++) {
+            require(colosseum.segmentsLengths(i) == _dii.segmentsLengths()[i], "COLOSSEUM-70");
+        }
+        require(colosseum.SECURITY_COUNCIL() == _dii.securityCouncil(), "COLOSSEUM-80");
+    }
+
+    function assertValidOptimismPortal(DeployImplementationsInput _dii) public view {
+        IOptimismPortal optimismPortal = optimismPortalImpl();
+
+        require(address(optimismPortal.l2Oracle()) == address(_dii.l2OutputOracle()), "KP-10");
+        require(address(optimismPortal.guardian()) == address(_dii.securityCouncil()), "KP-20");
+        require(optimismPortal.paused() == _dii.paused(), "KP-30");
+        require(address(optimismPortal.systemConfig()) == address(_dii.systemConfig()), "KP-40");
+    }
+
+    function assertValidSecurityCouncil(DeployImplementationsInput _dii) public view {
+        ISecurityCouncil securityCouncil = securityCouncilImpl();
+
+        require(securityCouncil.COLOSSEUM() == address(_dii.colosseum()), "SC-10");
+        require(address(securityCouncil.GOVERNOR()) == address(_dii.governor()), "SC-20");
+    }
+
+    function assertValidSecurityCouncilToken(DeployImplementationsInput) public view {
+        ISecurityCouncilToken securityCouncilToken = securityCouncilTokenImpl();
+
+        DeployUtils.assertInitialized({ _contractAddress: address(securityCouncilToken), _slot: 0, _offset: 0 });
+
+        require(address(securityCouncilToken.owner()) == address(0), "SCT-10");
+    }
+
+    function assertValidTimeLock(DeployImplementationsInput) public view {
+        ITimeLock timeLock = timeLockImpl();
+
+        require(timeLock.getMinDelay() == 0, "TL-10");
+    }
+
+    function assertValidUpgradeGovernor(DeployImplementationsInput) public view {
+        IUpgradeGovernor upgradeGovernor = upgradeGovernorImpl();
+
+        DeployUtils.assertInitialized({ _contractAddress: address(upgradeGovernor), _slot: 0, _offset: 0 });
+
+        require(address(upgradeGovernor.token()) == address(0), "UG-10");
+        require(address(upgradeGovernor.timelock()) == address(0), "UG-20");
+        require(upgradeGovernor.votingDelay() == 0, "UG-30");
+        require(upgradeGovernor.votingPeriod() == 0, "UG-40");
+        require(upgradeGovernor.proposalThreshold() == 0, "UG-50");
+        require(upgradeGovernor.quorumNumerator() == 0, "UG-60");
+    }
+
+    function assertValidValidatorManager(DeployImplementationsInput _dii) public view {
+        IValidatorManager validatorManager = validatorManagerImpl();
+
+        require(address(validatorManager.L2_ORACLE()) == address(_dii.l2OutputOracle()), "VM-10");
+        require(address(validatorManager.ASSET_MANAGER()) == address(_dii.assetManager()), "VM-20");
+        require(address(validatorManager.TRUSTED_VALIDATOR()) == address(_dii.trustedValidator()), "VM-30");
+        require(validatorManager.COMMISSION_CHANGE_DELAY_SECONDS() == _dii.commissionChangeDelaySeconds(), "VM-40");
+        require(validatorManager.ROUND_DURATION_SECONDS() == _dii.roundDurationSeconds(), "VM-50");
+        require(validatorManager.SOFT_JAIL_PERIOD_SECONDS() == _dii.softJailPeriodSeconds(), "VM-60");
+        require(validatorManager.HARD_JAIL_PERIOD_SECONDS() == _dii.hardJailPeriodSeconds(), "VM-70");
+        require(validatorManager.JAIL_THRESHOLD() == _dii.jailThreshold(), "VM-80");
+        require(validatorManager.MAX_OUTPUT_FINALIZATIONS() == _dii.maxFinalizations(), "VM-90");
+        require(validatorManager.BASE_REWARD() == _dii.baseReward(), "VM-100");
+        require(validatorManager.MIN_REGISTER_AMOUNT() == _dii.minRegisterAmount(), "VM-110");
+        require(validatorManager.MIN_ACTIVATE_AMOUNT() == _dii.minActivateAmount(), "VM-120");
+    }
+
+    function assertValidZKProofVerifier(DeployImplementationsInput _dii) public view {
+        IZKProofVerifier zkProofVerifier = zkProofVerifierImpl();
+
+        require(address(zkProofVerifier.sp1Verifier()) == address(_dii.sp1Verifier()), "ZKP-10");
+        require(zkProofVerifier.zkVmProgramVKey() == _dii.vKey(), "ZKP-20");
+    }
+    // [Kroma: END]
 }
 
 contract DeployImplementations is Script {
@@ -803,7 +922,6 @@ contract DeployImplementations is Script {
         // [Kroma: START]
         deployAssetManagerImpl(_dii, _dio);
         deployColosseumImpl(_dii, _dio);
-        deployOptimismPortalImpl(_dii, _dio);
         deploySecurityCouncilImpl(_dii, _dio);
         deploySecurityCouncilTokenImpl(_dii, _dio);
         deployTimeLockImpl(_dii, _dio);
@@ -1074,40 +1192,40 @@ contract DeployImplementations is Script {
     // - DelayedWeth (proxies only)
     // - OptimismPortal2 (proxies only)
 
-    function deployOptimismPortalImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "optimism_portal";
-        IOptimismPortal2 impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IOptimismPortal2(payable(existingImplementation));
-        } else {
-            uint256 proofMaturityDelaySeconds = _dii.proofMaturityDelaySeconds();
-            uint256 disputeGameFinalityDelaySeconds = _dii.disputeGameFinalityDelaySeconds();
-            vm.broadcast(msg.sender);
-            impl = IOptimismPortal2(
-                DeployUtils.create1({
-                    _name: "OptimismPortal2",
-                    _args: DeployUtils.encodeConstructor(
-                        abi.encodeCall(
-                            IOptimismPortal2.__constructor__, (proofMaturityDelaySeconds, disputeGameFinalityDelaySeconds)
-                        )
-                    )
-                })
-            );
-        }
-
-        vm.label(address(impl), "OptimismPortalImpl");
-        _dio.set(_dio.optimismPortalImpl.selector, address(impl));
-    }
+//    function deployOptimismPortalImpl(
+//        DeployImplementationsInput _dii,
+//        DeployImplementationsOutput _dio
+//    )
+//        public
+//        virtual
+//    {
+//        string memory release = _dii.l1ContractsRelease();
+//        string memory stdVerToml = _dii.standardVersionsToml();
+//        string memory contractName = "optimism_portal";
+//        IOptimismPortal2 impl;
+//
+//        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
+//        if (existingImplementation != address(0)) {
+//            impl = IOptimismPortal2(payable(existingImplementation));
+//        } else {
+//            uint256 proofMaturityDelaySeconds = _dii.proofMaturityDelaySeconds();
+//            uint256 disputeGameFinalityDelaySeconds = _dii.disputeGameFinalityDelaySeconds();
+//            vm.broadcast(msg.sender);
+//            impl = IOptimismPortal2(
+//                DeployUtils.create1({
+//                    _name: "OptimismPortal2",
+//                    _args: DeployUtils.encodeConstructor(
+//                        abi.encodeCall(
+//                            IOptimismPortal2.__constructor__, (proofMaturityDelaySeconds, disputeGameFinalityDelaySeconds)
+//                        )
+//                    )
+//                })
+//            );
+//        }
+//
+//        vm.label(address(impl), "OptimismPortalImpl");
+//        _dio.set(_dio.optimismPortalImpl.selector, address(impl));
+//    }
 
     function deployDelayedWETHImpl(DeployImplementationsInput _dii, DeployImplementationsOutput _dio) public virtual {
         string memory release = _dii.l1ContractsRelease();
