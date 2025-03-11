@@ -783,6 +783,8 @@ contract DeployImplementationsOutput is BaseDeployIO {
 }
 
 contract DeployImplementations is Script {
+    /// @notice Dummy selector for the virtual constructor function.
+    bytes4 internal constant DUMMY_CONSTRUCTOR_SELECTOR = 0xffffffff;
     // -------- Core Deployment Methods --------
 
     function run(DeployImplementationsInput _dii, DeployImplementationsOutput _dio) public {
@@ -797,6 +799,17 @@ contract DeployImplementations is Script {
         deployPreimageOracleSingleton(_dii, _dio);
         deployMipsSingleton(_dii, _dio);
         deployDisputeGameFactoryImpl(_dii, _dio);
+
+        // [Kroma: START]
+        deployAssetManagerImpl(_dii, _dio);
+        deployColosseumImpl(_dii, _dio);
+        deployOptimismPortalImpl(_dii, _dio);
+        deploySecurityCouncilImpl(_dii, _dio);
+        deploySecurityCouncilTokenImpl(_dii, _dio);
+        deployTimeLockImpl(_dii, _dio);
+        deployUpgradeGovernorImpl(_dii, _dio);
+        deployValidatorManagerImpl(_dii, _dio);
+        // [Kroma: END]
 
         // Deploy the OP Contracts Manager with the new implementations set.
         deployOPContractsManager(_dii, _dio);
@@ -1209,6 +1222,213 @@ contract DeployImplementations is Script {
         _dio.set(_dio.disputeGameFactoryImpl.selector, address(impl));
     }
 
+    // [Kroma: START]
+    function deployAssetManagerImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IAssetManager impl = IAssetManager(
+            DeployUtils.create1({
+                _name: "AssetManager",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.assetToken(),
+                        _dii.kgh(),
+                        _dii.securityCouncil(),
+                        _dii.vault(),
+                        _dii.validatorManager(),
+                        _dii.minDelegationPeriod(),
+                        _dii.bondAmount()
+                    )
+                )
+            })
+        );
+
+        vm.label(address(impl), "AssetManagerImpl");
+        _dio.set(_dio.assetManagerImpl.selector, address(impl));
+    }
+
+    function deployColosseumImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IColosseum impl = IColosseum(
+            DeployUtils.create1({
+                _name: "Colosseum",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.l2OutputOracle(),
+                        _dii.zkProofVerifier(),
+                        _dii.creationPeriodSeconds(),
+                        _dii.bisectionTimeout(),
+                        _dii.provingTimeout(),
+                        _dii.segmentsLengths(),
+                        _dii.securityCouncil()
+                    )
+                )
+            })
+        );
+
+        vm.label(address(impl), "ColosseumImpl");
+        _dio.set(_dio.colosseumImpl.selector, address(impl));
+    }
+
+    function deployOptimismPortalImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IOptimismPortal impl = IOptimismPortal(
+            DeployUtils.create1({
+                _name: "OptimismPortal",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.l2OutputOracle(),
+                        _dii.securityCouncil(),
+                        _dii.paused(),
+                        _dii.systemConfig()
+                    )
+                )
+            })
+        );
+
+        vm.label(address(impl), "OptimismPortalImpl");
+        _dio.set(_dio.optimismPortalImpl.selector, address(impl));
+    }
+
+    function deploySecurityCouncilImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ISecurityCouncil impl = ISecurityCouncil(
+            DeployUtils.create1({
+                _name: "SecurityCouncil",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.colosseum(), _dii.governor())
+                )
+            })
+        );
+
+        vm.label(address(impl), "SecurityCouncilImpl");
+        _dio.set(_dio.securityCouncilImpl.selector, address(impl));
+    }
+
+    function deploySecurityCouncilTokenImpl(
+        DeployImplementationsInput,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ISecurityCouncilToken impl = ISecurityCouncilToken(
+            DeployUtils.create1({
+                _name: "SecurityCouncilToken",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "SecurityCouncilTokenImpl");
+        _dio.set(_dio.securityCouncilTokenImpl.selector, address(impl));
+    }
+
+    function deployTimeLockImpl(
+        DeployImplementationsInput,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        ITimeLock impl = ITimeLock(
+            DeployUtils.create1({
+                _name: "TimeLock",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "TimeLockImpl");
+        _dio.set(_dio.timeLockImpl.selector, address(impl));
+    }
+
+    function deployUpgradeGovernorImpl(
+        DeployImplementationsInput,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IUpgradeGovernor impl = IUpgradeGovernor(
+            DeployUtils.create1({
+                _name: "UpgradeGovernor",
+                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+            })
+        );
+
+        vm.label(address(impl), "UpgradeGovernorImpl");
+        _dio.set(_dio.upgradeGovernorImpl.selector, address(impl));
+    }
+
+    function deployValidatorManagerImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IValidatorManager impl = IValidatorManager(
+            DeployUtils.create1({
+                _name: "ValidatorManager",
+                _args: encodeValMgrConstructorParams(_dii) // To avoid stack too deep error.
+             })
+        );
+
+        vm.label(address(impl), "ValidatorManagerImpl");
+        _dio.set(_dio.validatorManagerImpl.selector, address(impl));
+    }
+
+    function deployZKProofVerifierImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.broadcast(msg.sender);
+        IZKProofVerifier impl = IZKProofVerifier(
+            DeployUtils.create1({
+                _name: "ZKProofVerifier",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.sp1Verifier(), _dii.vKey())
+                )
+            })
+        );
+
+        vm.label(address(impl), "ZKProofVerifierImpl");
+        _dio.set(_dio.zkProofVerifierImpl.selector, address(impl));
+    }
+    // [Kroma: END]
+
     // -------- Utilities --------
 
     function etchIOContracts() public returns (DeployImplementationsInput dii_, DeployImplementationsOutput dio_) {
@@ -1272,6 +1492,26 @@ contract DeployImplementations is Script {
             }
         }
     }
+
+    // [Kroma: START]
+    function encodeValMgrConstructorParams(DeployImplementationsInput _dii) public view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            DUMMY_CONSTRUCTOR_SELECTOR,
+            _dii.l2OutputOracle(),
+            _dii.assetManager(),
+            _dii.trustedValidator(),
+            _dii.commissionChangeDelaySeconds(),
+            _dii.roundDurationSeconds(),
+            _dii.softJailPeriodSeconds(),
+            _dii.hardJailPeriodSeconds(),
+            _dii.jailThreshold(),
+            _dii.maxFinalizations(),
+            _dii.baseReward(),
+            _dii.minRegisterAmount(),
+            _dii.minActivateAmount()
+        );
+    }
+    // [Kroma: END]
 }
 
 // Similar to how DeploySuperchain.s.sol contains a lot of comments to thoroughly document the script
