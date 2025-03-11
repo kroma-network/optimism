@@ -438,6 +438,18 @@ contract DeployImplementationsOutput is BaseDeployIO {
     IL1StandardBridge internal _l1StandardBridgeImpl;
     IOptimismMintableERC20Factory internal _optimismMintableERC20FactoryImpl;
     IDisputeGameFactory internal _disputeGameFactoryImpl;
+    // [Kroma: START]
+    IAssetManager internal _assetManagerImpl;
+    IColosseum internal _colosseumImpl;
+    IOptimismPortal internal _optimismPortalImpl;
+    IL2OutputOracle internal _l2OutputOracleImpl;
+    ISecurityCouncil internal _securityCouncilImpl;
+    ISecurityCouncilToken internal _securityCouncilTokenImpl;
+    ITimeLock internal _timeLockImpl;
+    IUpgradeGovernor internal _upgradeGovernorImpl;
+    IValidatorManager internal _validatorManagerImpl;
+    IZKProofVerifier internal _zkProofVerifierImpl;
+    // [Kroma: END]
 
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "DeployImplementationsOutput: cannot set zero address");
@@ -454,6 +466,18 @@ contract DeployImplementationsOutput is BaseDeployIO {
         else if (_sel == this.l1StandardBridgeImpl.selector) _l1StandardBridgeImpl = IL1StandardBridge(payable(_addr));
         else if (_sel == this.optimismMintableERC20FactoryImpl.selector) _optimismMintableERC20FactoryImpl = IOptimismMintableERC20Factory(_addr);
         else if (_sel == this.disputeGameFactoryImpl.selector) _disputeGameFactoryImpl = IDisputeGameFactory(_addr);
+        // [Kroma: START]
+        else if (_sel == this.assetManagerImpl.selector) _assetManagerImpl = IAssetManager(_addr);
+        else if (_sel == this.colosseumImpl.selector) _colosseumImpl = IColosseum(_addr);
+        else if (_sel == this.optimismPortalImpl.selector) _optimismPortalImpl = IOptimismPortal(payable(_addr));
+        else if (_sel == this.l2OutputOracleImpl.selector) _l2OutputOracleImpl = IL2OutputOracle(_addr);
+        else if (_sel == this.securityCouncilImpl.selector) _securityCouncilImpl = ISecurityCouncil(_addr);
+        else if (_sel == this.securityCouncilTokenImpl.selector) _securityCouncilTokenImpl = ISecurityCouncilToken(_addr);
+        else if (_sel == this.timeLockImpl.selector) _timeLockImpl = ITimeLock(payable(_addr));
+        else if (_sel == this.upgradeGovernorImpl.selector) _upgradeGovernorImpl = IUpgradeGovernor(payable(_addr));
+        else if (_sel == this.validatorManagerImpl.selector) _validatorManagerImpl = IValidatorManager(_addr);
+        else if (_sel == this.zkProofVerifierImpl.selector) _zkProofVerifierImpl = IZKProofVerifier(_addr);
+        // [Kroma: END]
         else revert("DeployImplementationsOutput: unknown selector");
         // forgefmt: disable-end
     }
@@ -478,7 +502,20 @@ contract DeployImplementationsOutput is BaseDeployIO {
             address(this.disputeGameFactoryImpl())
         );
 
-        DeployUtils.assertValidContractAddresses(Solarray.extend(addrs1, addrs2));
+        address[] memory addrs3 = Solarray.addresses(
+            address(this.assetManagerImpl()),
+            address(this.colosseumImpl()),
+            address(this.optimismPortalImpl()),
+            address(this.l2OutputOracleImpl()),
+            address(this.securityCouncilImpl()),
+            address(this.securityCouncilTokenImpl()),
+            address(this.timeLockImpl()),
+            address(this.upgradeGovernorImpl()),
+            address(this.validatorManagerImpl()),
+            address(this.zkProofVerifierImpl())
+        );
+
+        DeployUtils.assertValidContractAddresses(Solarray.extend(Solarray.extend(addrs1, addrs2), addrs3));
 
         assertValidDeploy(_dii);
     }
@@ -537,6 +574,58 @@ contract DeployImplementationsOutput is BaseDeployIO {
         DeployUtils.assertValidContractAddress(address(_disputeGameFactoryImpl));
         return _disputeGameFactoryImpl;
     }
+
+    // [Kroma: START]
+    function assetManagerImpl() public view returns (IAssetManager) {
+        require(address(_assetManagerImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _assetManagerImpl;
+    }
+
+    function colosseumImpl() public view returns (IColosseum) {
+        require(address(_colosseumImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _colosseumImpl;
+    }
+
+    function optimismPortalImpl() public view returns (IOptimismPortal) {
+        require(address(_optimismPortalImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _optimismPortalImpl;
+    }
+
+    function l2OutputOracleImpl() public view returns (IL2OutputOracle) {
+        require(address(_l2OutputOracleImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _l2OutputOracleImpl;
+    }
+
+    function securityCouncilImpl() public view returns (ISecurityCouncil) {
+        require(address(_securityCouncilImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _securityCouncilImpl;
+    }
+
+    function securityCouncilTokenImpl() public view returns (ISecurityCouncilToken) {
+        require(address(_securityCouncilTokenImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _securityCouncilTokenImpl;
+    }
+
+    function timeLockImpl() public view returns (ITimeLock) {
+        require(address(_timeLockImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _timeLockImpl;
+    }
+
+    function upgradeGovernorImpl() public view returns (IUpgradeGovernor) {
+        require(address(_upgradeGovernorImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _upgradeGovernorImpl;
+    }
+
+    function validatorManagerImpl() public view returns (IValidatorManager) {
+        require(address(_validatorManagerImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _validatorManagerImpl;
+    }
+
+    function zkProofVerifierImpl() public view returns (IZKProofVerifier) {
+        require(address(_zkProofVerifierImpl) != address(0), "DeployImplementationsOutput: not set");
+        return _zkProofVerifierImpl;
+    }
+    // [Kroma: END]
 
     // -------- Deployment Assertions --------
     function assertValidDeploy(DeployImplementationsInput _dii) public view {
