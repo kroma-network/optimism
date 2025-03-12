@@ -283,6 +283,12 @@ contract DeployConfig is Script {
         return uint256(_l2OutputOracleStartingTimestamp);
     }
 
+    // [Kroma: START]
+    function getColosseumSegmentsLengths() public view returns (uint256[] memory) {
+        return colosseumSegmentsLengths;
+    }
+    // [Kroma: END]
+
     /// @notice Allow the `useAltDA` config to be overridden in testing environments
     function setUseAltDA(bool _useAltDA) public {
         useAltDA = _useAltDA;
