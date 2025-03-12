@@ -138,6 +138,20 @@ contract DeployImplementationsInput is BaseDeployIO {
         else if (_sel == this.creationPeriodSeconds.selector) _creationPeriodSeconds = _value;
         else if (_sel == this.bisectionTimeout.selector) _bisectionTimeout = _value;
         else if (_sel == this.provingTimeout.selector) _provingTimeout = _value;
+
+        ///
+        else if (_sel == this.minRegisterAmount.selector) _minRegisterAmount = uint128(_value);
+        else if (_sel == this.minActivateAmount.selector) _minActivateAmount = uint128(_value);
+        else if (_sel == this.commissionChangeDelaySeconds.selector) _commissionChangeDelaySeconds = uint128(_value);
+        else if (_sel == this.roundDurationSeconds.selector) _roundDurationSeconds = uint128(_value);
+        else if (_sel == this.softJailPeriodSeconds.selector) _softJailPeriodSeconds = uint128(_value);
+        else if (_sel == this.hardJailPeriodSeconds.selector) _hardJailPeriodSeconds = uint128(_value);
+        else if (_sel == this.jailThreshold.selector) _jailThreshold = uint128(_value);
+        else if (_sel == this.maxFinalizations.selector) _maxFinalizations = uint128(_value);
+        else if (_sel == this.baseReward.selector) _baseReward = uint128(_value);
+        else if (_sel == this.minDelegationPeriod.selector) _minDelegationPeriod = uint128(_value);
+        else if (_sel == this.bondAmount.selector) _bondAmount = uint128(_value);
+        ///
         // [Kroma: END]
         else {
             revert("DeployImplementationsInput: unknown selector");
@@ -150,22 +164,6 @@ contract DeployImplementationsInput is BaseDeployIO {
 
         if (_sel == this.segmentsLengths.selector) _segmentsLengths = _values;
         else revert("DeployImplementationsInput: unknown selector");
-    }
-
-    function set(bytes4 _sel, uint128 _value) public {
-        require(_value != 0, "DeployImplementationsInput: cannot set zero value");
-
-        if (_sel == this.minRegisterAmount.selector) _minRegisterAmount = _value;
-        else if (_sel == this.minActivateAmount.selector) _minActivateAmount = _value;
-        else if (_sel == this.commissionChangeDelaySeconds.selector) _commissionChangeDelaySeconds = _value;
-        else if (_sel == this.roundDurationSeconds.selector) _roundDurationSeconds = _value;
-        else if (_sel == this.softJailPeriodSeconds.selector) _softJailPeriodSeconds = _value;
-        else if (_sel == this.hardJailPeriodSeconds.selector) _hardJailPeriodSeconds = _value;
-        else if (_sel == this.jailThreshold.selector) _jailThreshold = _value;
-        else if (_sel == this.maxFinalizations.selector) _maxFinalizations = _value;
-        else if (_sel == this.baseReward.selector) _baseReward = _value;
-        else if (_sel == this.minDelegationPeriod.selector) _minDelegationPeriod = _value;
-        else if (_sel == this.bondAmount.selector) _bondAmount = _value;
     }
     // [Kroma: END]
 
@@ -274,152 +272,152 @@ contract DeployImplementationsInput is BaseDeployIO {
 
     // [Kroma: START]
     function creationPeriodSeconds() public view returns (uint256) {
-        require(_creationPeriodSeconds != 0, "DeployImplementationsInput: not set");
+        require(_creationPeriodSeconds != 0, "DeployImplementationsInput: creationPeriodSeconds not set");
         return _creationPeriodSeconds;
     }
 
     function bisectionTimeout() public view returns (uint256) {
-        require(_bisectionTimeout != 0, "DeployImplementationsInput: not set");
+        require(_bisectionTimeout != 0, "DeployImplementationsInput: bisectionTimeout not set");
         return _bisectionTimeout;
     }
 
     function provingTimeout() public view returns (uint256) {
-        require(_provingTimeout != 0, "DeployImplementationsInput: not set");
+        require(_provingTimeout != 0, "DeployImplementationsInput: provingTimeout not set");
         return _provingTimeout;
     }
 
     function minRegisterAmount() public view returns (uint128) {
-        require(_minRegisterAmount != 0, "DeployImplementationsInput: not set");
+        require(_minRegisterAmount != 0, "DeployImplementationsInput: minRegisterAmount not set");
         return _minRegisterAmount;
     }
 
     function minActivateAmount() public view returns (uint128) {
-        require(_minActivateAmount != 0, "DeployImplementationsInput: not set");
+        require(_minActivateAmount != 0, "DeployImplementationsInput: minActivateAmount not set");
         return _minActivateAmount;
     }
 
     function commissionChangeDelaySeconds() public view returns (uint128) {
-        require(_commissionChangeDelaySeconds != 0, "DeployImplementationsInput: not set");
+        require(_commissionChangeDelaySeconds != 0, "DeployImplementationsInput: commissionChangeDelaySeconds not set");
         return _commissionChangeDelaySeconds;
     }
 
     function roundDurationSeconds() public view returns (uint128) {
-        require(_roundDurationSeconds != 0, "DeployImplementationsInput: not set");
+        require(_roundDurationSeconds != 0, "DeployImplementationsInput: roundDurationSeconds not set");
         return _roundDurationSeconds;
     }
 
     function softJailPeriodSeconds() public view returns (uint128) {
-        require(_softJailPeriodSeconds != 0, "DeployImplementationsInput: not set");
+        require(_softJailPeriodSeconds != 0, "DeployImplementationsInput: softJailPeriodSeconds not set");
         return _softJailPeriodSeconds;
     }
 
     function hardJailPeriodSeconds() public view returns (uint128) {
-        require(_hardJailPeriodSeconds != 0, "DeployImplementationsInput: not set");
+        require(_hardJailPeriodSeconds != 0, "DeployImplementationsInput: hardJailPeriodSeconds not set");
         return _hardJailPeriodSeconds;
     }
 
     function jailThreshold() public view returns (uint128) {
-        require(_jailThreshold != 0, "DeployImplementationsInput: not set");
+        require(_jailThreshold != 0, "DeployImplementationsInput: jailThreshold not set");
         return _jailThreshold;
     }
 
     function maxFinalizations() public view returns (uint128) {
-        require(_maxFinalizations != 0, "DeployImplementationsInput: not set");
+        require(_maxFinalizations != 0, "DeployImplementationsInput: maxFinalizations not set");
         return _maxFinalizations;
     }
 
     function baseReward() public view returns (uint128) {
-        require(_baseReward != 0, "DeployImplementationsInput: not set");
+        require(_baseReward != 0, "DeployImplementationsInput: baseReward not set");
         return _baseReward;
     }
 
     function minDelegationPeriod() public view returns (uint128) {
-        require(_minDelegationPeriod != 0, "DeployImplementationsInput: not set");
+        require(_minDelegationPeriod != 0, "DeployImplementationsInput: minDelegationPeriod not set");
         return _minDelegationPeriod;
     }
 
     function bondAmount() public view returns (uint128) {
-        require(_bondAmount != 0, "DeployImplementationsInput: not set");
+        require(_bondAmount != 0, "DeployImplementationsInput: bondAmount not set");
         return _bondAmount;
     }
 
     function assetToken() public view returns (IERC20) {
-        require(address(_assetToken) != address(0), "DeployImplementationsInput: not set");
+        require(address(_assetToken) != address(0), "DeployImplementationsInput: assetToken not set");
         return _assetToken;
     }
 
     function kgh() public view returns (IERC721) {
-        require(address(_kgh) != address(0), "DeployImplementationsInput: not set");
+        require(address(_kgh) != address(0), "DeployImplementationsInput: kgh not set");
         return _kgh;
     }
 
     function securityCouncil() public view returns (address) {
-        require(_securityCouncil != address(0), "DeployImplementationsInput: not set");
+        require(_securityCouncil != address(0), "DeployImplementationsInput: securityCouncil not set");
         return _securityCouncil;
     }
 
     function vault() public view returns (address) {
-        require(_vault != address(0), "DeployImplementationsInput: not set");
+        require(_vault != address(0), "DeployImplementationsInput: vault not set");
         return _vault;
     }
 
     function validatorManager() public view returns (IValidatorManager) {
-        require(address(_validatorManager) != address(0), "DeployImplementationsInput: not set");
+        require(address(_validatorManager) != address(0), "DeployImplementationsInput: validatorManager not set");
         return _validatorManager;
     }
 
     function l2OutputOracle() public view returns (L2OutputOracle) {
-        require(address(_l2OutputOracle) != address(0), "DeployImplementationsInput: not set");
+        require(address(_l2OutputOracle) != address(0), "DeployImplementationsInput: l2OutputOracle not set");
         return _l2OutputOracle;
     }
 
     function zkProofVerifier() public view returns (ZKProofVerifier) {
-        require(address(_zkProofVerifier) != address(0), "DeployImplementationsInput: not set");
+        require(address(_zkProofVerifier) != address(0), "DeployImplementationsInput: zkProofVerifier not set");
         return _zkProofVerifier;
     }
 
     function systemConfig() public view returns (SystemConfig) {
-        require(address(_systemConfig) != address(0), "DeployImplementationsInput: not set");
+        require(address(_systemConfig) != address(0), "DeployImplementationsInput: systemConfig not set");
         return _systemConfig;
     }
 
     function colosseum() public view returns (address) {
-        require(_colosseum != address(0), "DeployImplementationsInput: not set");
+        require(_colosseum != address(0), "DeployImplementationsInput: colosseum not set");
         return _colosseum;
     }
 
     function governor() public view returns (address) {
-        require(_governor != address(0), "DeployImplementationsInput: not set");
+        require(_governor != address(0), "DeployImplementationsInput: governor not set");
         return _governor;
     }
 
     function assetManager() public view returns (AssetManager) {
-        require(address(_assetManager) != address(0), "DeployImplementationsInput: not set");
+        require(address(_assetManager) != address(0), "DeployImplementationsInput: assetManager not set");
         return _assetManager;
     }
 
     function trustedValidator() public view returns (address) {
-        require(_trustedValidator != address(0), "DeployImplementationsInput: not set");
+        require(_trustedValidator != address(0), "DeployImplementationsInput: trustedValidator not set");
         return _trustedValidator;
     }
 
     function sp1Verifier() public view returns (ISP1Verifier) {
-        require(address(_sp1Verifier) != address(0), "DeployImplementationsInput: not set");
+        require(address(_sp1Verifier) != address(0), "DeployImplementationsInput: sp1Verifier not set");
         return _sp1Verifier;
     }
 
     function segmentsLengths() public view returns (uint256[] memory) {
-        require(_segmentsLengths.length != 0, "DeployImplementationsInput: not set");
+        require(_segmentsLengths.length != 0, "DeployImplementationsInput: segmentsLengths not set");
         return _segmentsLengths;
     }
 
     function vKey() public view returns (bytes32) {
-        require(_vKey != bytes32(0), "DeployImplementationsInput: not set");
+        require(_vKey != bytes32(0), "DeployImplementationsInput: vKey not set");
         return _vKey;
     }
 
     function paused() public view returns (bool) {
-        require(_paused, "DeployImplementationsInput: not set");
+        require(_paused, "DeployImplementationsInput: paused not set");
         return _paused;
     }
     // [Kroma: END]
@@ -1348,7 +1346,7 @@ contract DeployImplementations is Script {
         public
         virtual
     {
-        vm.broadcast(msg.sender);
+        vm.startBroadcast(msg.sender);
         IAssetManager impl = IAssetManager(
             DeployUtils.create1({
                 _name: "AssetManager",
@@ -1366,7 +1364,7 @@ contract DeployImplementations is Script {
                 )
             })
         );
-
+        vm.stopBroadcast();
         vm.label(address(impl), "AssetManagerImpl");
         _dio.set(_dio.assetManagerImpl.selector, address(impl));
     }
@@ -1378,7 +1376,7 @@ contract DeployImplementations is Script {
         public
         virtual
     {
-        vm.broadcast(msg.sender);
+        vm.startBroadcast(msg.sender);
         IColosseum impl = IColosseum(
             DeployUtils.create1({
                 _name: "Colosseum",
@@ -1396,7 +1394,7 @@ contract DeployImplementations is Script {
                 )
             })
         );
-
+        vm.stopBroadcast();
         vm.label(address(impl), "ColosseumImpl");
         _dio.set(_dio.colosseumImpl.selector, address(impl));
     }
@@ -1408,7 +1406,7 @@ contract DeployImplementations is Script {
         public
         virtual
     {
-        vm.broadcast(msg.sender);
+        vm.startBroadcast(msg.sender);
         IOptimismPortal impl = IOptimismPortal(
             DeployUtils.create1({
                 _name: "OptimismPortal",
@@ -1423,6 +1421,7 @@ contract DeployImplementations is Script {
                 )
             })
         );
+        vm.stopBroadcast();
 
         vm.label(address(impl), "OptimismPortalImpl");
         _dio.set(_dio.optimismPortalImpl.selector, address(impl));
