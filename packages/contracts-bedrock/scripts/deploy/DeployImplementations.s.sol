@@ -918,6 +918,7 @@ contract DeployImplementations is Script {
         deployDisputeGameFactoryImpl(_dii, _dio);
 
         // [Kroma: START]
+        deployL2OutputOracleImpl(_dii, _dio);
         deployAssetManagerImpl(_dii, _dio);
         deployColosseumImpl(_dii, _dio);
         deploySecurityCouncilImpl(_dii, _dio);
@@ -971,6 +972,7 @@ contract DeployImplementations is Script {
         _dio.set(_dio.opcm.selector, address(opcm_));
     }
 
+    // TODO : OPCM here!
     function deployOPContractsManager(
         DeployImplementationsInput _dii,
         DeployImplementationsOutput _dio
@@ -1339,6 +1341,37 @@ contract DeployImplementations is Script {
     }
 
     // [Kroma: START]
+    // TODO : implement
+    function deployL2OutputOracleImpl(
+        DeployImplementationsInput _dii,
+        DeployImplementationsOutput _dio
+    )
+        public
+        virtual
+    {
+        vm.startBroadcast(msg.sender);
+        IAssetManager impl = IAssetManager(
+            DeployUtils.create1({
+                _name: "AssetManager",
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.assetToken(),
+                        _dii.kgh(),
+                        _dii.securityCouncil(),
+                        _dii.vault(),
+                        _dii.validatorManager(),
+                        _dii.minDelegationPeriod(),
+                        _dii.bondAmount()
+                    )
+                )
+            })
+        );
+        vm.stopBroadcast();
+        vm.label(address(impl), "AssetManagerImpl");
+        _dio.set(_dio.assetManagerImpl.selector, address(impl));
+    }
+
     function deployAssetManagerImpl(
         DeployImplementationsInput _dii,
         DeployImplementationsOutput _dio
@@ -1439,7 +1472,11 @@ contract DeployImplementations is Script {
             DeployUtils.create1({
                 _name: "SecurityCouncil",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.colosseum(), _dii.governor())
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.colosseum(),
+                        _dii.governor()
+                    )
                 )
             })
         );
@@ -1459,7 +1496,11 @@ contract DeployImplementations is Script {
         ISecurityCouncilToken impl = ISecurityCouncilToken(
             DeployUtils.create1({
                 _name: "SecurityCouncilToken",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR
+                    )
+                )
             })
         );
 
@@ -1478,7 +1519,11 @@ contract DeployImplementations is Script {
         ITimeLock impl = ITimeLock(
             DeployUtils.create1({
                 _name: "TimeLock",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR
+                    )
+                )
             })
         );
 
@@ -1497,7 +1542,11 @@ contract DeployImplementations is Script {
         IUpgradeGovernor impl = IUpgradeGovernor(
             DeployUtils.create1({
                 _name: "UpgradeGovernor",
-                _args: DeployUtils.encodeConstructor(abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR))
+                _args: DeployUtils.encodeConstructor(
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR
+                    )
+                )
             })
         );
 
@@ -1536,7 +1585,11 @@ contract DeployImplementations is Script {
             DeployUtils.create1({
                 _name: "ZKProofVerifier",
                 _args: DeployUtils.encodeConstructor(
-                    abi.encodeWithSelector(DUMMY_CONSTRUCTOR_SELECTOR, _dii.sp1Verifier(), _dii.vKey())
+                    abi.encodeWithSelector(
+                        DUMMY_CONSTRUCTOR_SELECTOR,
+                        _dii.sp1Verifier(),
+                        _dii.vKey()
+                    )
                 )
             })
         );

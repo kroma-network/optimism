@@ -196,7 +196,7 @@ library ChainAssertions {
             require(address(messenger.superchainConfig()) == address(0), "CHECK-L1XDM-100");
         }
     }
-    //ggggg
+
     /// @notice Asserts that the L1StandardBridge is setup correctly
     function checkL1StandardBridge(Types.ContractSet memory _contracts, bool _isProxy) internal view {
         IL1StandardBridge bridge = IL1StandardBridge(payable(_contracts.L1StandardBridge));
@@ -596,4 +596,6 @@ library ChainAssertions {
             "ChainAssertions: storage value is not 1 or 0xff at the given slot and offset"
         );
     }
+
+    // TODO : implement kroma assertions
 }

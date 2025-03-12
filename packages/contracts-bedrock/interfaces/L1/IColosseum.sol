@@ -50,11 +50,11 @@ interface IColosseum {
 
     function BISECTION_TIMEOUT() external view returns (uint256);
     function CREATION_PERIOD_SECONDS() external view returns (uint256);
-    function L2_ORACLE() external view returns (L2OutputOracle);
+    function L2_ORACLE() external view returns (IL2OutputOracle);
     function L2_ORACLE_SUBMISSION_INTERVAL() external view returns (uint256);
     function PROVING_TIMEOUT() external view returns (uint256);
     function SECURITY_COUNCIL() external view returns (address);
-    function ZK_PROOF_VERIFIER() external view returns (ZKProofVerifier);
+    function ZK_PROOF_VERIFIER() external view returns (IZKProofVerifier);
     function bisect(uint256 _outputIndex, address _challenger, uint256 _pos, bytes32[] memory _segments) external;
     function cancelChallenge(uint256 _outputIndex) external;
     function challengerTimeout(uint256 _outputIndex, address _challenger) external;
