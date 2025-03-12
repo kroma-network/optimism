@@ -8,10 +8,10 @@ import { Proxy } from "src/universal/Proxy.sol";
 // Interfaces
 import { IStaticERC1967Proxy } from "interfaces/universal/IStaticERC1967Proxy.sol";
 
-/// @title ProxyAdmin
+/// @title KromaProxyAdmin
 /// @notice This is an auxiliary contract meant to be assigned as the admin of an ERC1967 Proxy,
 ///         based on the OpenZeppelin implementation.
-contract ProxyAdmin is Ownable {
+contract KromaProxyAdmin is Ownable {
     /// @param _owner Address of the initial owner of this contract.
     constructor(address _owner) Ownable() {
         _transferOwnership(_owner);
