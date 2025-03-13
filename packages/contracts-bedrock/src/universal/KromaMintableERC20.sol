@@ -15,7 +15,7 @@ import { IKromaMintableERC20 } from "interfaces/universal/IKromaMintableERC20.so
 ///         use a KromaMintableRC20 as the L2 representation of an L1 token, or vice-versa.
 ///         Designed to be backwards compatible with the older StandardL2ERC20 token which was only
 ///         meant for use on L2.
-contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
+contract KromaMintableERC20 is ERC20, ISemver {
     /// @notice Address of the corresponding version of this token on the remote chain.
     address public immutable REMOTE_TOKEN;
 
@@ -62,7 +62,7 @@ contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
     /// @notice Allows the StandardBridge on this network to mint tokens.
     /// @param _to     Address to mint tokens to.
     /// @param _amount Amount of tokens to mint.
-    function mint(address _to, uint256 _amount) external virtual override(IKromaMintableERC20) onlyBridge {
+    function mint(address _to, uint256 _amount) external virtual onlyBridge {
         _mint(_to, _amount);
         emit Mint(_to, _amount);
     }
@@ -70,7 +70,7 @@ contract KromaMintableERC20 is IKromaMintableERC20, ERC20, ISemver {
     /// @notice Allows the StandardBridge on this network to burn tokens.
     /// @param _from   Address to burn tokens from.
     /// @param _amount Amount of tokens to burn.
-    function burn(address _from, uint256 _amount) external virtual override(IKromaMintableERC20) onlyBridge {
+    function burn(address _from, uint256 _amount) external virtual onlyBridge {
         _burn(_from, _amount);
         emit Burn(_from, _amount);
     }
