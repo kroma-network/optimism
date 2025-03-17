@@ -19,23 +19,6 @@ import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 ///         commitment to the state of the L2 chain. Other contracts like the OptimismPortal use
 ///         these outputs to verify information about the state of L2.
 contract L2OutputOracle is Initializable, ISemver {
-    /// @notice The address of the validator manager contract. Can be updated via upgrade.
-    IValidatorManager public immutable VALIDATOR_MANAGER;
-
-    /// @notice The address of the colosseum contract. Can be updated via upgrade.
-    address public immutable COLOSSEUM;
-
-    /// @notice The interval in L2 blocks at which checkpoints must be submitted. Although this is
-    ///         immutable, it can be modified by upgrading the implementation contract.
-    ///         Note that nodes that fetch and use this value need to restart when it is modified.
-    uint256 public immutable SUBMISSION_INTERVAL;
-
-    /// @notice The time between L2 blocks in seconds. Once set, this value MUST NOT be modified.
-    uint256 public immutable L2_BLOCK_TIME;
-
-    /// @notice Minimum time (in seconds) that must elapse before a withdrawal can be finalized.
-    uint256 public immutable FINALIZATION_PERIOD_SECONDS;
-
     /// @notice The number of the first L2 block recorded in this contract.
     uint256 public startingBlockNumber;
 
@@ -47,6 +30,23 @@ contract L2OutputOracle is Initializable, ISemver {
 
     /// @notice The output index of the next finalization target output.
     uint256 public nextFinalizeOutputIndex;
+
+    /// @notice The address of the validator manager contract. Can be updated via upgrade.
+    IValidatorManager public validatorManager;
+
+    /// @notice The address of the colosseum contract. Can be updated via upgrade.
+    address public colosseum;
+
+    /// @notice The interval in L2 blocks at which checkpoints must be submitted. Although this is
+    ///         immutable, it can be modified by upgrading the implementation contract.
+    ///         Note that nodes that fetch and use this value need to restart when it is modified.
+    uint256 public submissionInterval;
+
+    /// @notice The time between L2 blocks in seconds. Once set, this value MUST NOT be modified.
+    uint256 public l2BlockTime;
+
+    /// @notice Minimum time (in seconds) that must elapse before a withdrawal can be finalized.
+    uint256 public finalizationPeriodSeconds;
 
     /// @notice Emitted when an output is submitted.
     /// @param outputRoot    The output root.
@@ -67,7 +67,21 @@ contract L2OutputOracle is Initializable, ISemver {
     /// @custom:semver 1.2.0
     string public constant version = "1.2.0";
 
-    /// @notice Constructs the L2OutputOracle contract.
+    /// @notice Constructs the L2OutputOracle contract. Initializes variables to the same values as
+    ///         in the getting-started config.
+    constructor() {
+        initialize({
+            _validatorManager: IValidatorManager(address(0)),
+            _colosseum: address(0),
+            _submissionInterval: 1,
+            _l2BlockTime: 1,
+            _startingBlockNumber: 0,
+            _startingTimestamp: 0,
+            _finalizationPeriodSeconds: 0
+        });
+    }
+
+    /// @notice Initializer
     /// @param _validatorManager          The address of the ValidatorManager contract.
     /// @param _colosseum                 The address of the Colosseum contract.
     /// @param _submissionInterval        Interval in blocks at which checkpoints must be submitted.
@@ -75,7 +89,7 @@ contract L2OutputOracle is Initializable, ISemver {
     /// @param _startingBlockNumber       The number of the first L2 block.
     /// @param _startingTimestamp         The timestamp of the first L2 block.
     /// @param _finalizationPeriodSeconds Output finalization time in seconds.
-    constructor(
+    function initialize(
         IValidatorManager _validatorManager,
         address _colosseum,
         uint256 _submissionInterval,
@@ -83,30 +97,63 @@ contract L2OutputOracle is Initializable, ISemver {
         uint256 _startingBlockNumber,
         uint256 _startingTimestamp,
         uint256 _finalizationPeriodSeconds
-    ) {
+    )
+        public
+        reinitializer(2)
+    {
         require(_l2BlockTime > 0, "L2OutputOracle: L2 block time must be greater than 0");
         require(_submissionInterval > 0, "L2OutputOracle: submission interval must be greater than 0");
-
-        VALIDATOR_MANAGER = _validatorManager;
-        COLOSSEUM = _colosseum;
-        SUBMISSION_INTERVAL = _submissionInterval;
-        L2_BLOCK_TIME = _l2BlockTime;
-        FINALIZATION_PERIOD_SECONDS = _finalizationPeriodSeconds;
-
-        initialize(_startingBlockNumber, _startingTimestamp);
-    }
-
-    /// @notice Initializer.
-    /// @param _startingBlockNumber Block number for the first recorded L2 block.
-    /// @param _startingTimestamp   Timestamp for the first recorded L2 block.
-    function initialize(uint256 _startingBlockNumber, uint256 _startingTimestamp) public initializer {
         require(
             _startingTimestamp <= block.timestamp,
             "L2OutputOracle: starting L2 timestamp must be less than current time"
         );
-
-        startingTimestamp = _startingTimestamp;
+        validatorManager = IValidatorManager(_validatorManager);
+        colosseum = _colosseum;
+        submissionInterval = _submissionInterval;
+        l2BlockTime = _l2BlockTime;
         startingBlockNumber = _startingBlockNumber;
+        startingTimestamp = _startingTimestamp;
+        finalizationPeriodSeconds = _finalizationPeriodSeconds;
+    }
+
+    /// @notice Getter for the validatorManager address.
+    ///         Public getter is legacy and will be removed in the future. Use `validatorManager` instead.
+    /// @return Address of the validatorManager.
+    /// @custom:legacy
+    function VALIDATOR_MANAGER() external view returns (IValidatorManager) {
+        return validatorManager;
+    }
+
+    /// @notice Getter for the colosseum address.
+    ///         Public getter is legacy and will be removed in the future. Use `colosseum` instead.
+    /// @return Address of the colosseum.
+    /// @custom:legacy
+    function COLOSSEUM() external view returns (address) {
+        return colosseum;
+    }
+
+    /// @notice Getter for the submissionInterval.
+    ///         Public getter is legacy and will be removed in the future. Use `submissionInterval` instead.
+    /// @return Submission interval.
+    /// @custom:legacy
+    function SUBMISSION_INTERVAL() external view returns (uint256) {
+        return submissionInterval;
+    }
+
+    /// @notice Getter for the l2BlockTime.
+    ///         Public getter is legacy and will be removed in the future. Use `l2BlockTime` instead.
+    /// @return L2 block time.
+    /// @custom:legacy
+    function L2_BLOCK_TIME() external view returns (uint256) {
+        return l2BlockTime;
+    }
+
+    /// @notice Getter for the finalizationPeriodSeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `finalizationPeriodSeconds` instead.
+    /// @return Finalization period in seconds.
+    /// @custom:legacy
+    function FINALIZATION_PERIOD_SECONDS() external view returns (uint256) {
+        return finalizationPeriodSeconds;
     }
 
     /// @notice Replaces the output that corresponds to the given output index.
@@ -115,7 +162,7 @@ contract L2OutputOracle is Initializable, ISemver {
     /// @param _newOutputRoot The L2 output root to replace the existing one.
     /// @param _submitter     Address of the L2 output submitter.
     function replaceL2Output(uint256 _l2OutputIndex, bytes32 _newOutputRoot, address _submitter) external {
-        require(msg.sender == COLOSSEUM, "L2OutputOracle: only the colosseum contract can replace an output");
+        require(msg.sender == colosseum, "L2OutputOracle: only the colosseum contract can replace an output");
 
         require(_submitter != address(0), "L2OutputOracle: submitter address cannot be zero");
 
@@ -127,7 +174,7 @@ contract L2OutputOracle is Initializable, ISemver {
         KromaTypes.CheckpointOutput storage output = l2Outputs[_l2OutputIndex];
         // Do not allow replacing any outputs that have already been finalized.
         require(
-            block.timestamp - output.timestamp < FINALIZATION_PERIOD_SECONDS,
+            block.timestamp - output.timestamp < finalizationPeriodSeconds,
             "L2OutputOracle: cannot replace an output that has already been finalized"
         );
 
@@ -153,7 +200,7 @@ contract L2OutputOracle is Initializable, ISemver {
         external
         payable
     {
-        VALIDATOR_MANAGER.checkSubmissionEligibility(msg.sender);
+        validatorManager.checkSubmissionEligibility(msg.sender);
 
         require(
             _l2BlockNumber == nextBlockNumber(),
@@ -188,14 +235,14 @@ contract L2OutputOracle is Initializable, ISemver {
 
         emit OutputSubmitted(_outputRoot, outputIndex, _l2BlockNumber, block.timestamp);
 
-        VALIDATOR_MANAGER.afterSubmitL2Output(outputIndex);
+        validatorManager.afterSubmitL2Output(outputIndex);
     }
 
     /// @notice Updates the next output index to be finalized.
     /// @param _outputIndex Index of the next output to be finalized.
     function setNextFinalizeOutputIndex(uint256 _outputIndex) external {
         require(
-            msg.sender == address(VALIDATOR_MANAGER),
+            msg.sender == address(validatorManager),
             "L2OutputOracle: only the validator manager contract can set next finalize output index"
         );
 
@@ -270,14 +317,14 @@ contract L2OutputOracle is Initializable, ISemver {
     ///         number, which is the starting block number.
     /// @return Next L2 block number.
     function nextBlockNumber() public view returns (uint256) {
-        return l2Outputs.length == 0 ? latestBlockNumber() : latestBlockNumber() + SUBMISSION_INTERVAL;
+        return l2Outputs.length == 0 ? latestBlockNumber() : latestBlockNumber() + submissionInterval;
     }
 
     /// @notice Returns the L2 timestamp corresponding to a given L2 block number.
     /// @param _l2BlockNumber The L2 block number of the target block.
     /// @return L2 timestamp of the given block.
     function computeL2Timestamp(uint256 _l2BlockNumber) public view returns (uint256) {
-        return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * L2_BLOCK_TIME);
+        return startingTimestamp + ((_l2BlockNumber - startingBlockNumber) * l2BlockTime);
     }
 
     /// @notice Returns the L2 timestamp corresponding to the right next block of the block that
@@ -306,6 +353,6 @@ contract L2OutputOracle is Initializable, ISemver {
     /// @param _outputIndex Index of an output.
     /// @return The finalization time of given output index.
     function finalizedAt(uint256 _outputIndex) public view returns (uint256) {
-        return l2Outputs[_outputIndex].timestamp + FINALIZATION_PERIOD_SECONDS;
+        return l2Outputs[_outputIndex].timestamp + finalizationPeriodSeconds;
     }
 }
