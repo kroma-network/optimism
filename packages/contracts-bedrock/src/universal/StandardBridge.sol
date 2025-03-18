@@ -149,6 +149,17 @@ abstract contract StandardBridge {
         }
     }
 
+    /// @notice A modifier that defines a protected reinitializer, from OpenZeppelin's Initializable.sol.
+    /// @custom:oz
+    modifier reinitializer(uint8 newVersion) {
+        require(!_initializing && _initialized < newVersion, "Initializable: contract is already initialized");
+        _initialized = newVersion;
+        _initializing = true;
+        _;
+        _initializing = false;
+        emit Initialized(newVersion);
+    }
+
     /// @notice Modifier to protect an initialization function, from OpenZeppelin's Initializable.sol.
     /// @custom:oz
     modifier onlyInitializing() {
