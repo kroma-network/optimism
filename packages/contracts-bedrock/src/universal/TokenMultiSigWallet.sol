@@ -4,13 +4,13 @@ pragma solidity 0.8.15;
 // Contracts
 import "@openzeppelin/contracts-upgradeable-v4.9.3/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable-v4.9.3/utils/math/SafeCastUpgradeable.sol";
-import { UpgradeGovernor } from "src/governance/UpgradeGovernor.sol";
 
 // Libraries
 import { SafeCall } from "src/libraries/SafeCall.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
+import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
 import "@openzeppelin/contracts-upgradeable-v4.9.3/interfaces/IERC5805Upgradeable.sol";
 
 /// @custom:upgradeable
@@ -38,17 +38,17 @@ abstract contract TokenMultiSigWallet is ReentrancyGuardUpgradeable {
     /// @param transactionId The ID of transaction to revoke.
     event ConfirmationRevoked(address indexed sender, uint256 indexed transactionId);
 
-    /// @notice The address of the governor contract. Can be updated via upgrade.
-    UpgradeGovernor public immutable GOVERNOR;
-
     /// @notice A mapping of transactions submitted.
     mapping(uint256 => KromaTypes.MultiSigTransaction) public transactions;
 
     /// @notice A mapping of confirmations.
     mapping(uint256 => KromaTypes.MultiSigConfirmation) public confirmations;
 
+    /// @notice The address of the governor contract. Can be updated via upgrade.
+    IUpgradeGovernor public governor;
+
     /// @notice Spacer for backwards compatibility.
-    uint256[3] private spacer_53_0_96;
+    uint256[2] private spacer_54_0_64;
 
     /// @notice The number of transactions submitted.
     uint256 public transactionCount;
@@ -81,9 +81,26 @@ abstract contract TokenMultiSigWallet is ReentrancyGuardUpgradeable {
         _;
     }
 
-    /// @param _governor Address of the Governor contract.
-    constructor(address payable _governor) {
-        GOVERNOR = UpgradeGovernor(_governor);
+    /// @notice Initializer
+    /// @param _governor  Address of Governor contract.
+    function initialize(address payable _governor) public initializer {
+        __TokenMultiSigWallet_init(_governor);
+    }
+
+    function __TokenMultiSigWallet_init(address payable _governor) internal onlyInitializing {
+        __TokenMultiSigWallet_init_unchained(_governor);
+    }
+
+    function __TokenMultiSigWallet_init_unchained(address payable _governor) internal onlyInitializing {
+        governor = IUpgradeGovernor(_governor);
+    }
+
+    /// @notice Getter for the governor address.
+    ///         Public getter is legacy and will be removed in the future. Use `governor` instead.
+    /// @return Address of the governor.
+    /// @custom:legacy
+    function GOVERNOR() external view returns (IUpgradeGovernor) {
+        return governor;
     }
 
     /// @notice Allows an owner to submit and confirm a transaction.
@@ -190,16 +207,16 @@ abstract contract TokenMultiSigWallet is ReentrancyGuardUpgradeable {
     function quorum() public view returns (uint256) {
         uint256 currentTimepoint = clock() - 1;
         return (
-            IERC5805Upgradeable(address(GOVERNOR.token())).getPastTotalSupply(currentTimepoint)
-                * GOVERNOR.quorumNumerator(currentTimepoint)
-        ) / GOVERNOR.quorumDenominator();
+            IERC5805Upgradeable(address(governor.token())).getPastTotalSupply(currentTimepoint)
+                * governor.quorumNumerator(currentTimepoint)
+        ) / governor.quorumDenominator();
     }
 
     /// @notice Returns the number of votes.
     /// @param account Account to check votes.
     /// @return Number of votes.
     function getVotes(address account) public view returns (uint256) {
-        return IERC5805Upgradeable(address(GOVERNOR.token())).getVotes(account);
+        return IERC5805Upgradeable(address(governor.token())).getVotes(account);
     }
 
     /// @notice Returns whether the account has confirmed the transaction.
@@ -238,7 +255,7 @@ abstract contract TokenMultiSigWallet is ReentrancyGuardUpgradeable {
     /// @dev Clock (as specified in EIP-6372) is set to match the token's clock.
     ///      Fallback to block numbers if the token does not implement EIP-6372.
     function clock() public view returns (uint48) {
-        try IERC5805Upgradeable(address(GOVERNOR.token())).clock() returns (uint48 timepoint) {
+        try IERC5805Upgradeable(address(governor.token())).clock() returns (uint48 timepoint) {
             return timepoint;
         } catch {
             return SafeCastUpgradeable.toUint48(block.number);
