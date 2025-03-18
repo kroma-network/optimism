@@ -123,7 +123,7 @@ contract Initializer_Test is CommonTest {
             InitializeableContract({
                 name: "L2OutputOracle",
                 target: deploy.mustGetAddress("L2OutputOracle"),
-                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (0, 0, 0, 0, address(0), address(0), 0))
+                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (address(0), address(0), 0, 0, 0, 0, 0))
             })
         );
         // L2OutputOracleProxy
@@ -131,7 +131,7 @@ contract Initializer_Test is CommonTest {
             InitializeableContract({
                 name: "L2OutputOracleProxy",
                 target: address(l2OutputOracle),
-                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (0, 0, 0, 0, address(0), address(0), 0))
+                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (address(0), address(0), 0, 0, 0, 0, 0))
             })
         );
         // OptimismPortalImpl
