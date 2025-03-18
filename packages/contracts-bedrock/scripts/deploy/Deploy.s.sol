@@ -129,7 +129,11 @@ contract Deploy is Deployer {
             L1ERC721Bridge: getAddress("L1ERC721BridgeProxy"),
             ProtocolVersions: getAddress("ProtocolVersionsProxy"),
             SuperchainConfig: getAddress("SuperchainConfigProxy"),
-            OPContractsManager: getAddress("OPContractsManager")
+            OPContractsManager: getAddress("OPContractsManager"),
+            // [Kroma: START]
+            ValidatorManager: getAddress("ValidatorManager"),
+            Colosseum: getAddress("Colosseum")
+            // [Kroma: END]
         });
     }
 
@@ -150,7 +154,11 @@ contract Deploy is Deployer {
             L1ERC721Bridge: getAddress("L1ERC721Bridge"),
             ProtocolVersions: getAddress("ProtocolVersions"),
             SuperchainConfig: getAddress("SuperchainConfig"),
-            OPContractsManager: getAddress("OPContractsManager")
+            OPContractsManager: getAddress("OPContractsManager"),
+            // [Kroma: START]
+            ValidatorManager: getAddress("ValidatorManager"),
+            Colosseum: getAddress("Colosseum")
+            // [Kroma: END]
         });
     }
 
@@ -221,6 +229,7 @@ contract Deploy is Deployer {
             );
             vm.stopPrank();
         } else {
+            // TODO(ayaan): 콜로세움 주소를 필요로 함.
             // The L2OutputOracle is not deployed by the OPCM, we deploy the proxy and initialize it here.
             deployERC1967Proxy("L2OutputOracleProxy");
             initializeL2OutputOracle();
@@ -320,7 +329,39 @@ contract Deploy is Deployer {
         if (_isInterop) {
             di = DeployImplementations(new DeployImplementationsInterop());
         }
+        // [Kroma: START]
+        dii.set(dii.creationPeriodSeconds.selector, cfg.colosseumCreationPeriodSeconds());
+        dii.set(dii.bisectionTimeout.selector, cfg.colosseumBisectionTimeout());
+        dii.set(dii.provingTimeout.selector, cfg.colosseumProvingTimeout());
+        dii.set(dii.segmentsLengths.selector, cfg.getColosseumSegmentsLengths());
 
+        dii.set(dii.minRegisterAmount.selector, cfg.validatorManagerMinRegisterAmount());
+        dii.set(dii.minActivateAmount.selector, cfg.validatorManagerMinActivateAmount());
+        dii.set(dii.commissionChangeDelaySeconds.selector, cfg.validatorManagerCommissionChangeDelaySeconds());
+        dii.set(dii.roundDurationSeconds.selector, cfg.validatorManagerRoundDurationSeconds());
+        dii.set(dii.softJailPeriodSeconds.selector, cfg.validatorManagerSoftJailPeriodSeconds());
+        dii.set(dii.hardJailPeriodSeconds.selector, cfg.validatorManagerHardJailPeriodSeconds());
+        dii.set(dii.jailThreshold.selector, cfg.validatorManagerJailThreshold());
+        dii.set(dii.maxFinalizations.selector, cfg.validatorManagerMaxFinalizations());
+        dii.set(dii.baseReward.selector, cfg.validatorManagerBaseReward());
+        dii.set(dii.minDelegationPeriod.selector, cfg.assetManagerMinDelegationPeriod());
+        dii.set(dii.bondAmount.selector, cfg.assetManagerBondAmount());
+
+        // TODO : l1GovernanceTokenProxyAddress
+//        dii.set(dii.assetToken.selector, cfg.assetManagerBondAmount());
+        dii.set(dii.kgh.selector, cfg.assetManagerKgh());
+//        dii.set(dii.securityCouncil.selector, cfg.assetManagerBondAmount());
+        dii.set(dii.vault.selector, cfg.assetManagerVault());
+//        dii.set(dii.validatorManager.selector, cfg.assetManagerBondAmount());
+//        dii.set(dii.l2OutputOracle.selector, mustGetAddress("L2OutputOracleProxy"));
+//        dii.set(dii.zkProofVerifier.selector, cfg.assetManagerBondAmount());
+//        dii.set(dii.systemConfig.selector, cfg.assetManagerBondAmount());
+//        dii.set(dii.colosseum.selector, cfg.assetManagerBondAmount());
+//        dii.set(dii.governor.selector, cfg.assetManagerBondAmount());
+//        dii.set(dii.assetManager.selector, cfg.assetManagerBondAmount());
+        dii.set(dii.trustedValidator.selector, cfg.validatorManagerTrustedValidator());
+        dii.set(dii.sp1Verifier.selector, cfg.zkProofVerifierSP1Verifier());
+        // [Kroma: END]
         di.run(dii, dio);
 
         // Temporary patch for legacy system
@@ -341,6 +382,18 @@ contract Deploy is Deployer {
         save("DelayedWETH", address(dio.delayedWETHImpl()));
         save("PreimageOracle", address(dio.preimageOracleSingleton()));
         save("Mips", address(dio.mipsSingleton()));
+
+        // [Kroma: START]
+        save("AssetManager", address(dio.assetManagerImpl()));
+        save("Colosseum", address(dio.colosseumImpl()));
+        save("SecurityCouncil", address(dio.securityCouncilImpl()));
+        save("SecurityCouncilToken", address(dio.securityCouncilTokenImpl()));
+        save("TimeLock", address(dio.timeLockImpl()));
+        save("UpgradeGovernor", address(dio.upgradeGovernorImpl()));
+        save("ValidatorManager", address(dio.validatorManagerImpl()));
+        // [Kroma: END]
+
+
         save("OPContractsManager", address(dio.opcm()));
 
         Types.ContractSet memory contracts = _impls();
@@ -601,11 +654,14 @@ contract Deploy is Deployer {
         ChainAssertions.checkSystemConfig({ _contracts: _proxies(), _cfg: cfg, _isProxy: true });
     }
 
+    // TODO(ayaan) : update for kroma
     /// @notice Initialize the L2OutputOracle
     function initializeL2OutputOracle() public broadcast {
         console.log("Upgrading and initializing L2OutputOracle proxy");
         address l2OutputOracleProxy = mustGetAddress("L2OutputOracleProxy");
         address l2OutputOracle = mustGetAddress("L2OutputOracle");
+        address validatorManagerProxy = mustGetAddress("ValidatorManagerProxy");
+        address colosseumProxy = mustGetAddress("ColosseumProxy");
 
         IProxyAdmin proxyAdmin = IProxyAdmin(payable(mustGetAddress("ProxyAdmin")));
         proxyAdmin.upgradeAndCall({
@@ -614,12 +670,12 @@ contract Deploy is Deployer {
             _data: abi.encodeCall(
                 IL2OutputOracle.initialize,
                 (
+                    validatorManagerProxy,
+                    colosseumProxy,
                     cfg.l2OutputOracleSubmissionInterval(),
                     cfg.l2BlockTime(),
                     cfg.l2OutputOracleStartingBlockNumber(),
                     cfg.l2OutputOracleStartingTimestamp(),
-                    cfg.l2OutputOracleProposer(),
-                    cfg.l2OutputOracleChallenger(),
                     cfg.finalizationPeriodSeconds()
                 )
             )

@@ -19,5 +19,9 @@ library Types {
         address ProtocolVersions;
         address SuperchainConfig;
         address OPContractsManager;
+        // [Kroma: START]
+        address ValidatorManager;
+        address Colosseum;
+        // [Kroma: END]
     }
 }
