@@ -320,6 +320,7 @@ contract Deploy is Deployer {
         if (_isInterop) {
             di = DeployImplementations(new DeployImplementationsInterop());
         }
+
         di.run(dii, dio);
 
         // Temporary patch for legacy system
