@@ -19,6 +19,7 @@ interface IAssetManager {
     error ZeroAddress();
 
     event Deposited(address indexed validator, uint128 amount);
+    event Initialized(uint8 version);
     event KghBatchDelegated(address indexed validator, address indexed delegator, uint256[] tokenIds);
     event KghBatchUndelegated(address indexed validator, address indexed delegator, uint256[] tokenIds, uint128 amount);
     event KghDelegated(address indexed validator, address indexed delegator, uint256 tokenId);
@@ -35,17 +36,15 @@ interface IAssetManager {
     function DECIMAL_OFFSET() external view returns (uint128);
     function KGH() external view returns (IERC721);
     function MIN_DELEGATION_PERIOD() external view returns (uint128);
-    function SECURITY_COUNCIL() external view returns (ISecurityCouncil);
+    function SECURITY_COUNCIL() external view returns (address);
     function TAX_DENOMINATOR() external view returns (uint128);
     function TAX_NUMERATOR() external view returns (uint128);
     function VALIDATOR_MANAGER() external view returns (IValidatorManager);
     function VALIDATOR_REWARD_VAULT() external view returns (address);
+    function assetToken() external view returns (IERC20);
+    function bondAmount() external view returns (uint128);
     function bondValidatorKro(address validator) external;
-    function canUndelegateKghAt(
-        address validator,
-        address delegator,
-        uint256 tokenId
-    )
+    function canUndelegateKghAt(address validator, address delegator, uint256 tokenId)
         external
         view
         returns (uint128);
@@ -69,13 +68,24 @@ interface IAssetManager {
         uint128 baseReward,
         uint128 boostedReward,
         uint128 validatorReward
-    )
-        external;
+    ) external;
+    function initialize(
+        address _assetToken,
+        address _kgh,
+        address _securityCouncil,
+        address _validatorRewardVault,
+        address _validatorManager,
+        uint128 _minDelegationPeriod,
+        uint128 _bondAmount
+    ) external;
+    function kgh() external view returns (IERC721);
+    function minDelegationPeriod() external view returns (uint128);
     function onERC721Received(address, address, uint256, bytes memory) external pure returns (bytes4);
     function previewDelegate(address validator, uint128 assets) external view returns (uint128);
     function previewUndelegate(address validator, uint128 shares) external view returns (uint128);
     function reflectiveWeight(address validator) external view returns (uint128);
     function revertDecreaseBalanceWithChallenge(address loser) external returns (uint128);
+    function securityCouncil() external view returns (address);
     function totalKghNum(address validator) external view returns (uint128);
     function totalKroAssets(address validator) external view returns (uint128);
     function totalValidatorKro(address validator) external view returns (uint128);
@@ -85,17 +95,9 @@ interface IAssetManager {
     function undelegate(address validator, uint128 assets) external;
     function undelegateKgh(address validator, uint256 tokenId) external;
     function undelegateKghBatch(address validator, uint256[] memory tokenIds) external;
+    function validatorManager() external view returns (IValidatorManager);
+    function validatorRewardVault() external view returns (address);
     function version() external view returns (string memory);
     function withdraw(address validator, uint128 assets) external;
-
-    function __constructor__(
-        IERC20 _assetToken,
-        IERC721 _kgh,
-        ISecurityCouncil _securityCouncil,
-        address _validatorRewardVault,
-        IValidatorManager _validatorManager,
-        uint128 _minDelegationPeriod,
-        uint128 _bondAmount
-    )
-        external;
+    function __constructor__() external;
 }
