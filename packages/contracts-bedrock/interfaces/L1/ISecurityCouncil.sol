@@ -15,19 +15,19 @@ interface ISecurityCouncil {
     function COLOSSEUM() external view returns (address);
     function GOVERNOR() external view returns (IUpgradeGovernor);
     function clock() external view returns (uint48);
+    function colosseum() external view returns (address);
     function confirmTransaction(uint256 _transactionId) external;
     function confirmations(uint256) external view returns (uint256 confirmationCount);
     function executeTransaction(uint256 _transactionId) external;
-    function generateTransactionId(
-        address _target,
-        uint256 _value,
-        bytes memory _data
-    )
+    function generateTransactionId(address _target, uint256 _value, bytes memory _data)
         external
         view
         returns (uint256);
     function getConfirmationCount(uint256 _transactionId) external view returns (uint256);
     function getVotes(address account) external view returns (uint256);
+    function governor() external view returns (IUpgradeGovernor);
+    function initialize(address _colosseum, address payable _governor) external;
+    function initialize(address payable _governor) external;
     function isConfirmed(uint256 _transactionId) external view returns (bool);
     function isConfirmedBy(uint256 _transactionId, address _account) external view returns (bool);
     function outputsDeleteRequested(uint256) external view returns (bool);
@@ -42,6 +42,5 @@ interface ISecurityCouncil {
         view
         returns (address target, bool executed, uint256 value, bytes memory data);
     function version() external view returns (string memory);
-
-    function __constructor__(address _colosseum, address payable _governor) external;
+    function __constructor__() external;
 }
