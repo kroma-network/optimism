@@ -12,7 +12,12 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 contract TimeLock is Initializable, TimelockControllerUpgradeable, ISemver {
     /// @notice Semantic version.
     /// @custom:semver 1.0.0
-    string public constant version = "1.0.0";
+    string public constant version = "1.1.0";
+
+    /// @notice Constructs the TimeLock contract.
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @notice Initializer.
     /// @param _minDelay  Initial minimum delay for operations.
