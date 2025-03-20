@@ -19,5 +19,15 @@ library Types {
         address ProtocolVersions;
         address SuperchainConfig;
         address OPContractsManager;
+        // [Kroma: START]
+        address AssetManager;
+        address Colosseum;
+        address SecurityCouncil;
+        address SecurityCouncilToken;
+        address TimeLock;
+        address UpgradeGovernor;
+        address ValidatorManager;
+        address ZkProofVerifier;
     }
+    // [Kroma: END]
 }

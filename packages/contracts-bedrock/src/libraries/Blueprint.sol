@@ -131,6 +131,41 @@ library Blueprint {
         if (newContract_ == address(0)) revert DeploymentFailed();
     }
 
+    /// @notice Compute deploy address
+    function computeDeployAddress(
+        address _target,
+        bytes32 _salt,
+        bytes memory _data,
+        address deployer
+    )
+        internal
+        view
+        returns (address predictedAddress)
+    {
+        Preamble memory preamble = parseBlueprintPreamble(address(_target).code);
+        if (preamble.ercVersion != 0) revert UnsupportedERCVersion(preamble.ercVersion);
+        if (preamble.preambleData.length != 0) revert UnexpectedPreambleData(preamble.preambleData);
+
+        bytes memory initcode = bytes.concat(preamble.initcode, _data);
+        bytes32 initcodeHash = keccak256(initcode);
+
+        // Compute the CREATE2 address manually
+        predictedAddress = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            bytes1(0xff), // CREATE2 prefix
+                            deployer,
+                            _salt,
+                            initcodeHash
+                        )
+                    )
+                )
+            )
+        );
+    }
+
     /// @notice Parses the code at two target addresses as individual blueprints, concatentates them and then deploys
     /// the resulting initcode with the given `_data` appended, i.e. `_data` is the ABI-encoded constructor arguments.
     function deployFrom(
