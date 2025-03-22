@@ -86,8 +86,35 @@ contract OPContractsManager_Deploy_Test is DeployOPChain_TestBase {
             disputeMaxGameDepth: _doi.disputeMaxGameDepth(),
             disputeSplitDepth: _doi.disputeSplitDepth(),
             disputeClockExtension: _doi.disputeClockExtension(),
-            disputeMaxClockDuration: _doi.disputeMaxClockDuration()
+            disputeMaxClockDuration: _doi.disputeMaxClockDuration(),
+            // [Kroma: START]
+            kgh: _doi.kgh(),
+            vault: _doi.vault(),
+            minDelegationPeriod: _doi.minDelegationPeriod(),
+            bondAmount: _doi.bondAmount(),
+            l2OutputOracle: _doi.l2OutputOracle(),
+            submissionInterval: _doi.submissionInterval(),
+            creationPeriodSeconds: _doi.creationPeriodSeconds(),
+            bisectionTimeout: _doi.bisectionTimeout(),
+            provingTimeout: _doi.provingTimeout(),
+            segmentsLengths: _doi.segmentsLengths(),
+            timeLockMinDelaySeconds: _doi.timeLockMinDelaySeconds(),
+            initialVotingDelay: _doi.initialVotingDelay(),
+            initialVotingPeriod: _doi.initialVotingPeriod(),
+            initialProposalThreshold: _doi.initialProposalThreshold(),
+            votesQuorumFraction: _doi.votesQuorumFraction(),
+            trustedValidator: _doi.trustedValidator(),
+            minRegisterAmount: _doi.minRegisterAmount(),
+            minActivateAmount: _doi.minActivateAmount(),
+            commissionChangeDelaySeconds: _doi.commissionChangeDelaySeconds(),
+            roundDurationSeconds: _doi.roundDurationSeconds(),
+            softJailPeriodSeconds: _doi.softJailPeriodSeconds(),
+            hardJailPeriodSeconds: _doi.hardJailPeriodSeconds(),
+            jailThreshold: _doi.jailThreshold(),
+            maxFinalizations: _doi.maxFinalizations(),
+            baseReward: _doi.baseReward()
         });
+        // [Kroma: END]
     }
 
     function test_deploy_l2ChainIdEqualsZero_reverts() public {

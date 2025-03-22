@@ -49,7 +49,6 @@ import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
 import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
 import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
-import { IMintManager } from "interfaces/governance/IMintManager.sol";
 import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 contract OPContractsManager is ISemver {
@@ -115,8 +114,6 @@ contract OPContractsManager is ISemver {
         uint128 jailThreshold;
         uint128 maxFinalizations;
         uint128 baseReward;
-        // Deploy configs for MintManager
-        address mintManagerOwner;
     }
     // [Kroma: END]
 
@@ -148,7 +145,6 @@ contract OPContractsManager is ISemver {
         IValidatorManager validatorManagerProxy;
         IZKProofVerifier zkProofVerifierProxy;
         IKromaGovernanceToken kromaGovernanceTokenProxy;
-        IMintManager mintManagerProxy;
     }
     // [Kroma: END]
 
@@ -180,8 +176,6 @@ contract OPContractsManager is ISemver {
         address delayedWETHImpl;
         address mipsImpl;
         // [Kroma: START]
-        address kromaGovernanceTokenImpl;
-        address mintManagerImpl;
         address assetManagerImpl;
         address colosseumImpl;
         address securityCouncilImpl;
@@ -315,8 +309,6 @@ contract OPContractsManager is ISemver {
             IAnchorStateRegistry(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "AnchorStateRegistry"));
 
         // [Kroma: START]
-        output.mintManagerProxy =
-            IMintManager(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "MintManager"));
         output.kromaGovernanceTokenProxy =
             IKromaGovernanceToken(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "KromaGovernanceToken"));
         output.assetManagerProxy =
@@ -487,16 +479,6 @@ contract OPContractsManager is ISemver {
             output.opChainProxyAdmin, address(output.validatorManagerProxy), implementation.validatorManagerImpl, data
         );
         upgrade(output.opChainProxyAdmin, address(output.zkProofVerifierProxy), implementation.zkProofVerifierImpl);
-
-        data = encodeMintManagerInitializer(_input, output);
-        upgradeAndCall(output.opChainProxyAdmin, address(output.mintManagerProxy), implementation.mintManagerImpl, data);
-        data = encodeKromaGovernanceTokenrInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin,
-            address(output.kromaGovernanceTokenProxy),
-            implementation.kromaGovernanceTokenImpl,
-            data
-        );
         // [Kroma: END]
 
         // -------- Finalize Deployment --------
@@ -907,20 +889,6 @@ contract OPContractsManager is ISemver {
         });
 
         return abi.encodeWithSelector(selector, params);
-    }
-
-    /// @notice Helper method for encoding the MintManager initializer data.
-    function encodeMintManagerInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IMintManager.initialize.selector;
-        return abi.encodeWithSelector(selector, _input.mintManagerOwner, _output.kromaGovernanceTokenProxy);
     }
 
     /// @notice Helper method for encoding the KromaGovernanceToken initializer data.

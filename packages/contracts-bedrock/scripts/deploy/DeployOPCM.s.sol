@@ -36,6 +36,18 @@ contract DeployOPCMInput is BaseDeployIO {
     address internal _delayedWETHImpl;
     address internal _mipsImpl;
 
+    // [Kroma: START]
+    address internal _assetManagerImpl;
+    address internal _colosseumImpl;
+    address internal _l2OutputOracleImpl;
+    address internal _securityCouncilImpl;
+    address internal _securityCouncilTokenImpl;
+    address internal _timeLockImpl;
+    address internal _upgradeGovernorImpl;
+    address internal _validatorManagerImpl;
+    address internal _zkProofVerifierImpl;
+    // [Kroma: END]
+
     // Setter for address type
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "DeployOPCMInput: cannot set zero address");
@@ -59,6 +71,17 @@ contract DeployOPCMInput is BaseDeployIO {
         else if (_sel == this.disputeGameFactoryImpl.selector) _disputeGameFactoryImpl = _addr;
         else if (_sel == this.delayedWETHImpl.selector) _delayedWETHImpl = _addr;
         else if (_sel == this.mipsImpl.selector) _mipsImpl = _addr;
+        // [Kroma: START]
+        else if (_sel == this.assetManagerImpl.selector) _assetManagerImpl = _addr;
+        else if (_sel == this.colosseumImpl.selector) _colosseumImpl = _addr;
+        else if (_sel == this.l2OutputOracleImpl.selector) _l2OutputOracleImpl = _addr;
+        else if (_sel == this.securityCouncilImpl.selector) _securityCouncilImpl = _addr;
+        else if (_sel == this.securityCouncilTokenImpl.selector) _securityCouncilTokenImpl = _addr;
+        else if (_sel == this.timeLockImpl.selector) _timeLockImpl = payable(_addr);
+        else if (_sel == this.upgradeGovernorImpl.selector) _upgradeGovernorImpl = payable(_addr);
+        else if (_sel == this.validatorManagerImpl.selector) _validatorManagerImpl = _addr;
+        else if (_sel == this.zkProofVerifierImpl.selector) _zkProofVerifierImpl = _addr;
+        // [Kroma: END]
         else revert("DeployOPCMInput: unknown selector");
     }
 
@@ -169,6 +192,58 @@ contract DeployOPCMInput is BaseDeployIO {
         require(_mipsImpl != address(0), "DeployOPCMInput: not set");
         return _mipsImpl;
     }
+
+    // [Kroma: START]
+    function assetManagerImpl() public view returns (address) {
+        require(address(_assetManagerImpl) != address(0), "DeployImplementationsOutput: assetManagerImpl not set");
+        return _assetManagerImpl;
+    }
+
+    function colosseumImpl() public view returns (address) {
+        require(address(_colosseumImpl) != address(0), "DeployImplementationsOutput: colosseumImpl not set");
+        return _colosseumImpl;
+    }
+
+    function l2OutputOracleImpl() public view returns (address) {
+        require(address(_l2OutputOracleImpl) != address(0), "DeployImplementationsOutput: l2OutputOracleImpl not set");
+        return _l2OutputOracleImpl;
+    }
+
+    function securityCouncilImpl() public view returns (address) {
+        require(address(_securityCouncilImpl) != address(0), "DeployImplementationsOutput: securityCouncilImpl not set");
+        return _securityCouncilImpl;
+    }
+
+    function securityCouncilTokenImpl() public view returns (address) {
+        require(
+            address(_securityCouncilTokenImpl) != address(0),
+            "DeployImplementationsOutput: securityCouncilTokenImpl not set"
+        );
+        return _securityCouncilTokenImpl;
+    }
+
+    function timeLockImpl() public view returns (address) {
+        require(address(_timeLockImpl) != address(0), "DeployImplementationsOutput: timeLockImpl not set");
+        return _timeLockImpl;
+    }
+
+    function upgradeGovernorImpl() public view returns (address) {
+        require(address(_upgradeGovernorImpl) != address(0), "DeployImplementationsOutput: upgradeGovernorImpl not set");
+        return _upgradeGovernorImpl;
+    }
+
+    function validatorManagerImpl() public view returns (address) {
+        require(
+            address(_validatorManagerImpl) != address(0), "DeployImplementationsOutput: validatorManagerImpl not set"
+        );
+        return _validatorManagerImpl;
+    }
+
+    function zkProofVerifierImpl() public view returns (address) {
+        require(address(_zkProofVerifierImpl) != address(0), "DeployImplementationsOutput: zkProofVerifierImpl not set");
+        return _zkProofVerifierImpl;
+    }
+    // [Kroma: END]
 }
 
 contract DeployOPCMOutput is BaseDeployIO {
@@ -209,7 +284,17 @@ contract DeployOPCM is Script {
             l1StandardBridgeImpl: address(_doi.l1StandardBridgeImpl()),
             disputeGameFactoryImpl: address(_doi.disputeGameFactoryImpl()),
             delayedWETHImpl: address(_doi.delayedWETHImpl()),
-            mipsImpl: address(_doi.mipsImpl())
+            mipsImpl: address(_doi.mipsImpl()),
+            // [Kroma: START]
+            assetManagerImpl: address(_doi.assetManagerImpl()),
+            colosseumImpl: address(_doi.colosseumImpl()),
+            securityCouncilImpl: address(_doi.securityCouncilImpl()),
+            securityCouncilTokenImpl: address(_doi.securityCouncilTokenImpl()),
+            timeLockImpl: address(_doi.timeLockImpl()),
+            upgradeGovernorImpl: address(_doi.upgradeGovernorImpl()),
+            validatorManagerImpl: address(_doi.validatorManagerImpl()),
+            zkProofVerifierImpl: address(_doi.zkProofVerifierImpl())
+            // [Kroma: END]
         });
 
         OPContractsManager opcm_ = deployOPCM(
