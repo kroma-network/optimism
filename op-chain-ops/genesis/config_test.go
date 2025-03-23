@@ -136,6 +136,29 @@ func TestL1Deployments(t *testing.T) {
 	require.Equal(t, "OptimismPortalProxy", deployments.GetName(deployments.OptimismPortalProxy))
 	// One that doesn't exist returns empty string
 	require.Equal(t, "", deployments.GetName(common.Address{19: 0xff}))
+
+	// [Kroma: START]
+	require.NotEqual(t, deployments.Colosseum, common.Address{})
+	require.NotEqual(t, deployments.ColosseumProxy, common.Address{})
+	require.NotEqual(t, deployments.Poseidon2, common.Address{})
+	require.NotEqual(t, deployments.SecurityCouncil, common.Address{})
+	require.NotEqual(t, deployments.SecurityCouncilProxy, common.Address{})
+	require.NotEqual(t, deployments.TimeLock, common.Address{})
+	require.NotEqual(t, deployments.TimeLockProxy, common.Address{})
+	require.NotEqual(t, deployments.UpgradeGovernor, common.Address{})
+	require.NotEqual(t, deployments.UpgradeGovernorProxy, common.Address{})
+	require.NotEqual(t, deployments.ValidatorPool, common.Address{})
+	require.NotEqual(t, deployments.ValidatorPoolProxy, common.Address{})
+	require.NotEqual(t, deployments.AssetManager, common.Address{})
+	require.NotEqual(t, deployments.AssetManagerProxy, common.Address{})
+	require.NotEqual(t, deployments.ValidatorManager, common.Address{})
+	require.NotEqual(t, deployments.ValidatorManagerProxy, common.Address{})
+	require.NotEqual(t, deployments.ZKMerkleTrie, common.Address{})
+	require.NotEqual(t, deployments.ZKVerifier, common.Address{})
+	require.NotEqual(t, deployments.ZKVerifierProxy, common.Address{})
+	require.NotEqual(t, deployments.ZKProofVerifier, common.Address{})
+	require.NotEqual(t, deployments.ZKProofVerifierProxy, common.Address{})
+	// [Kroma: END]
 }
 
 // This test guarantees that getters and setters for all forks are present.
