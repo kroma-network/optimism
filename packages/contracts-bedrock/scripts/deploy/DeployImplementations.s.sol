@@ -499,7 +499,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         // [Kroma: START]
         DeployUtils.assertInitialized({ _contractAddress: address(messenger), _slot: 0, _offset: 0 });
-        // DeployUtils.assertInitialized({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
         // [Kroma: END]
         require(address(messenger.OTHER_MESSENGER()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "L1xDM-10");
         require(address(messenger.otherMessenger()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "L1xDM-20");
@@ -509,7 +508,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         // [Kroma: START]
         bytes32 xdmSenderSlot = vm.load(address(messenger), bytes32(uint256(102)));
-        // bytes32 xdmSenderSlot = vm.load(address(messenger), bytes32(uint256(204)));
         // [Kroma: END]
         require(address(uint160(uint256(xdmSenderSlot))) == Constants.DEFAULT_L2_SENDER, "L1xDM-60");
     }
@@ -531,7 +529,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         // [Kroma: START]
         DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 2, _offset: 20 });
-        // DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 0, _offset: 0 });
         // [Kroma: END]
 
         require(address(bridge.MESSENGER()) == address(0), "L1SB-10");
