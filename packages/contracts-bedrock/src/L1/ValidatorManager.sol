@@ -15,11 +15,14 @@ import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
+// Contracts
+import { DynamicInitializable  } from "src/universal/DynamicInitializable .sol";
+
 /// @custom:proxied
 /// @title ValidatorManager
 /// @notice The ValidatorManager manages validator set and determines the next validator who can
 ///         submit the checkpoint output to L2OutputOracle.
-contract ValidatorManager is ISemver {
+contract ValidatorManager is ISemver, DynamicInitializable {
     using BalancedWeightTree for BalancedWeightTree.Tree;
     using Uint128Math for uint128;
     using Math for uint256;
@@ -120,15 +123,6 @@ contract ValidatorManager is ISemver {
 
     /// @notice A mapping of output index challenged successfully to pending challenge rewards.
     mapping(uint256 => uint128) internal _pendingChallengeReward;
-
-    /// @notice Indicates that the contract has been initialized, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    uint8 private _initialized;
-
-    /// @notice Indicates that the contract is in the process of being initialized, from OpenZeppelin's
-    ///         Initializable.sol.
-    /// @custom:oz
-    bool private _initializing;
 
     /// @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
     IL2OutputOracle public l2Oracle;
@@ -245,10 +239,6 @@ contract ValidatorManager is ISemver {
     /// @param amount      The amount of KRO refunded to the loser.
     event SlashReverted(uint256 indexed outputIndex, address indexed loser, uint128 amount);
 
-    /// @notice Triggered when the contract has been initialized, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    event Initialized(uint8 version);
-
     /// @notice Reverts when caller is not allowed.
     error NotAllowedCaller();
 
@@ -297,43 +287,6 @@ contract ValidatorManager is ISemver {
         _;
     }
 
-    /// @notice A modifier that defines a protected initializer, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier initializer() {
-        bool isTopLevelCall = !_initializing;
-        require(
-            (isTopLevelCall && _initialized < 1) || (!Address.isContract(address(this)) && _initialized == 1),
-            "Initializable: contract is already initialized"
-        );
-        _initialized = 1;
-        if (isTopLevelCall) {
-            _initializing = true;
-        }
-        _;
-        if (isTopLevelCall) {
-            _initializing = false;
-            emit Initialized(1);
-        }
-    }
-
-    /// @notice A modifier that defines a protected reinitializer, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier reinitializer(uint8 newVersion) {
-        require(!_initializing && _initialized < newVersion, "Initializable: contract is already initialized");
-        _initialized = newVersion;
-        _initializing = true;
-        _;
-        _initializing = false;
-        emit Initialized(newVersion);
-    }
-
-    /// @notice Modifier to protect an initialization function, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier onlyInitializing() {
-        require(_initializing, "Initializable: contract is not initializing");
-        _;
-    }
-
     /// @notice Semantic version.
     /// @custom:semver 1.1.0
     string public constant version = "1.1.0";
@@ -363,16 +316,6 @@ contract ValidatorManager is ISemver {
         jailThreshold = _initializationParams._jailThreshold;
         maxOutputFinalizations = _initializationParams._maxOutputFinalizations;
         baseReward = _initializationParams._baseReward;
-    }
-
-    /// @notice Function to preventing any future reinitialization, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    function _disableInitializers() internal virtual {
-        require(!_initializing, "Initializable: contract is initializing");
-        if (_initialized != type(uint8).max) {
-            _initialized = type(uint8).max;
-            emit Initialized(type(uint8).max);
-        }
     }
 
     /// @notice Getter for the l2Oracle address.

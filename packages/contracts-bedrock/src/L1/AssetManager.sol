@@ -3,6 +3,7 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { DynamicInitializable  } from "src/universal/DynamicInitializable .sol";
 
 // Libraries
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -19,7 +20,7 @@ import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 /// @title AssetManager
 /// @notice AssetManager is a contract that handles (un)delegations of KRO and KGH, and the
 ///         distribution of rewards to the delegators and the validator.
-contract AssetManager is ISemver, IERC721Receiver {
+contract AssetManager is ISemver, IERC721Receiver, DynamicInitializable {
     using SafeERC20 for IERC20;
     using Uint128Math for uint128;
 
@@ -147,10 +148,6 @@ contract AssetManager is ISemver, IERC721Receiver {
     /// @param remainder The remaining amount of validator KRO excluding bonded KRO.
     event ValidatorKroUnbonded(address indexed validator, uint128 amount, uint128 remainder);
 
-    /// @notice Triggered when the contract has been initialized, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    event Initialized(uint8 version);
-
     /// @notice Reverts when caller is not allowed.
     error NotAllowedCaller();
 
@@ -186,15 +183,6 @@ contract AssetManager is ISemver, IERC721Receiver {
 
     /// @notice A mapping of validator address to the vault.
     mapping(address => Vault) internal _vaults;
-
-    /// @notice Indicates that the contract has been initialized, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    uint8 private _initialized;
-
-    /// @notice Indicates that the contract is in the process of being initialized, from OpenZeppelin's
-    ///         Initializable.sol.
-    /// @custom:oz
-    bool private _initializing;
 
     /// @notice Address of the KRO token contract.
     IERC20 public assetToken;
@@ -238,43 +226,6 @@ contract AssetManager is ISemver, IERC721Receiver {
         _;
     }
 
-    /// @notice A modifier that defines a protected initializer, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier initializer() {
-        bool isTopLevelCall = !_initializing;
-        require(
-            (isTopLevelCall && _initialized < 1) || (!Address.isContract(address(this)) && _initialized == 1),
-            "Initializable: contract is already initialized"
-        );
-        _initialized = 1;
-        if (isTopLevelCall) {
-            _initializing = true;
-        }
-        _;
-        if (isTopLevelCall) {
-            _initializing = false;
-            emit Initialized(1);
-        }
-    }
-
-    /// @notice A modifier that defines a protected reinitializer, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier reinitializer(uint8 newVersion) {
-        require(!_initializing && _initialized < newVersion, "Initializable: contract is already initialized");
-        _initialized = newVersion;
-        _initializing = true;
-        _;
-        _initializing = false;
-        emit Initialized(newVersion);
-    }
-
-    /// @notice Modifier to protect an initialization function, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    modifier onlyInitializing() {
-        require(_initializing, "Initializable: contract is not initializing");
-        _;
-    }
-
     /// @notice Semantic version.
     /// @custom:semver 1.0.0
     string public constant version = "1.1.0";
@@ -311,16 +262,6 @@ contract AssetManager is ISemver, IERC721Receiver {
         validatorManager = _validatorManager;
         minDelegationPeriod = _minDelegationPeriod;
         bondAmount = _bondAmount;
-    }
-
-    /// @notice Function to preventing any future reinitialization, from OpenZeppelin's Initializable.sol.
-    /// @custom:oz
-    function _disableInitializers() internal virtual {
-        require(!_initializing, "Initializable: contract is initializing");
-        if (_initialized != type(uint8).max) {
-            _initialized = type(uint8).max;
-            emit Initialized(type(uint8).max);
-        }
     }
 
     /// @notice Getter for the assetToken address.
