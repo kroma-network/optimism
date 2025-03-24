@@ -784,19 +784,8 @@ type FaultProofDeployConfig struct {
 
 type KromaFaultProofDeployConfig struct {
 	// [Kroma: START]
-	// ValidatorPool proxy address on L1
-	ValidatorPoolProxy common.Address `json:"validatorPoolProxy"`
 	// The initial value of the validator reward scalar
 	ValidatorRewardScalar uint64 `json:"validatorRewardScalar"`
-
-	ValidatorPoolTrustedValidator   common.Address `json:"validatorPoolTrustedValidator"`
-	ValidatorPoolRequiredBondAmount *hexutil.Big   `json:"validatorPoolRequiredBondAmount"`
-	ValidatorPoolMaxUnbond          uint64         `json:"validatorPoolMaxUnbond"`
-	ValidatorPoolRoundDuration      uint64         `json:"validatorPoolRoundDuration"`
-	// ValidatorPoolTerminateOutputIndex is the output index where ValidatorPool is terminated after
-	// in hex value.
-	ValidatorPoolTerminateOutputIndex *hexutil.Big `json:"validatorPoolTerminateOutputIndex"`
-
 	// ValidatorManagerTrustedValidator represents the address of the trusted validator.
 	ValidatorManagerTrustedValidator common.Address `json:"validatorManagerTrustedValidator"`
 	// ValidatorManagerMinRegisterAmount is the amount of the minimum register amount.
@@ -1036,10 +1025,6 @@ func (d *DeployConfig) SetDeployments(deployments *L1Deployments) {
 	d.SystemConfigProxy = deployments.SystemConfigProxy
 	d.OptimismPortalProxy = deployments.OptimismPortalProxy
 	d.DAChallengeProxy = deployments.DataAvailabilityChallengeProxy
-
-	// [Kroma: START]
-	d.ValidatorPoolProxy = deployments.ValidatorPoolProxy
-	// [Kroma: END]
 }
 
 // RollupConfig converts a DeployConfig to a rollup.Config. If Ecotone is active at genesis, the
@@ -1170,8 +1155,6 @@ type L1Deployments struct {
 	TimeLockProxy             common.Address `json:"TimeLockProxy"`
 	UpgradeGovernor           common.Address `json:"UpgradeGovernor"`
 	UpgradeGovernorProxy      common.Address `json:"UpgradeGovernorProxy"`
-	ValidatorPool             common.Address `json:"ValidatorPool"`
-	ValidatorPoolProxy        common.Address `json:"ValidatorPoolProxy"`
 	AssetManager              common.Address `json:"AssetManager"`
 	AssetManagerProxy         common.Address `json:"AssetManagerProxy"`
 	ValidatorManager          common.Address `json:"ValidatorManager"`

@@ -147,8 +147,6 @@ func TestL1Deployments(t *testing.T) {
 	require.NotEqual(t, deployments.TimeLockProxy, common.Address{})
 	require.NotEqual(t, deployments.UpgradeGovernor, common.Address{})
 	require.NotEqual(t, deployments.UpgradeGovernorProxy, common.Address{})
-	require.NotEqual(t, deployments.ValidatorPool, common.Address{})
-	require.NotEqual(t, deployments.ValidatorPoolProxy, common.Address{})
 	require.NotEqual(t, deployments.AssetManager, common.Address{})
 	require.NotEqual(t, deployments.AssetManagerProxy, common.Address{})
 	require.NotEqual(t, deployments.ValidatorManager, common.Address{})
