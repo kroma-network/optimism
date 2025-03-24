@@ -558,8 +558,8 @@ contract DeployImplementationsOutput is BaseDeployIO {
     // [Kroma: START]
     function assertValidAssetManager(DeployImplementationsInput) public view {
         IAssetManager assetManager = assetManagerImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(assetManager), _slot: 1, _offset: 0 });
+        uint256 slot = uint256(keccak256("initializable.dynamic.initialized")) - 1;
+        DeployUtils.assertInitialized({ _contractAddress: address(assetManager), _slot: slot, _offset: 0 });
 
         require(address(assetManager.ASSET_TOKEN()) == address(0), "ASSETMGR-10");
         require(address(assetManager.assetToken()) == address(0), "ASSETMGR-20");
@@ -642,7 +642,8 @@ contract DeployImplementationsOutput is BaseDeployIO {
     function assertValidValidatorManager(DeployImplementationsInput) public view {
         IValidatorManager validatorManager = validatorManagerImpl();
 
-        DeployUtils.assertInitialized({ _contractAddress: address(validatorManager), _slot: 7, _offset: 0 });
+        uint256 slot = uint256(keccak256("initializable.dynamic.initialized")) - 1;
+        DeployUtils.assertInitialized({ _contractAddress: address(validatorManager), _slot: slot, _offset: 0 });
 
         require(address(validatorManager.L2_ORACLE()) == address(0), "VM-10");
         require(address(validatorManager.l2Oracle()) == address(0), "VM-20");
