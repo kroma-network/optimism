@@ -33,5 +33,103 @@
     "offset": 0,
     "slot": "6",
     "type": "mapping(uint256 => uint128)"
+  },
+  {
+    "bytes": "1",
+    "label": "_initialized",
+    "offset": 0,
+    "slot": "7",
+    "type": "uint8"
+  },
+  {
+    "bytes": "1",
+    "label": "_initializing",
+    "offset": 1,
+    "slot": "7",
+    "type": "bool"
+  },
+  {
+    "bytes": "20",
+    "label": "l2Oracle",
+    "offset": 2,
+    "slot": "7",
+    "type": "contract IL2OutputOracle"
+  },
+  {
+    "bytes": "20",
+    "label": "assetManager",
+    "offset": 0,
+    "slot": "8",
+    "type": "contract IAssetManager"
+  },
+  {
+    "bytes": "20",
+    "label": "trustedValidator",
+    "offset": 0,
+    "slot": "9",
+    "type": "address"
+  },
+  {
+    "bytes": "16",
+    "label": "minRegisterAmount",
+    "offset": 0,
+    "slot": "10",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "minActiveAmount",
+    "offset": 16,
+    "slot": "10",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "commissionChangeDelaySeconds",
+    "offset": 0,
+    "slot": "11",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "roundDurationSeconds",
+    "offset": 16,
+    "slot": "11",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "softJailPeriodSeconds",
+    "offset": 0,
+    "slot": "12",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "hardJailPeriodSeconds",
+    "offset": 16,
+    "slot": "12",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "jailThreshold",
+    "offset": 0,
+    "slot": "13",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "maxOutputFinalizations",
+    "offset": 16,
+    "slot": "13",
+    "type": "uint128"
+  },
+  {
+    "bytes": "16",
+    "label": "baseReward",
+    "offset": 0,
+    "slot": "14",
+    "type": "uint128"
   }
 ]

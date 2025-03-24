@@ -117,5 +117,19 @@
     "offset": 0,
     "slot": "112",
     "type": "uint256[49]"
+  },
+  {
+    "bytes": "20",
+    "label": "bridge",
+    "offset": 0,
+    "slot": "161",
+    "type": "address"
+  },
+  {
+    "bytes": "20",
+    "label": "remoteToken",
+    "offset": 0,
+    "slot": "162",
+    "type": "address"
   }
 ]

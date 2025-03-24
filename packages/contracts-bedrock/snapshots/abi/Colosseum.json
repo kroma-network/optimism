@@ -1,47 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "contract L2OutputOracle",
-        "name": "_l2Oracle",
-        "type": "address"
-      },
-      {
-        "internalType": "contract ZKProofVerifier",
-        "name": "_zkProofVerifier",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_submissionInterval",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_creationPeriodSeconds",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_bisectionTimeout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_provingTimeout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "_segmentsLengths",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "address",
-        "name": "_securityCouncil",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -76,7 +35,7 @@
     "name": "L2_ORACLE",
     "outputs": [
       {
-        "internalType": "contract L2OutputOracle",
+        "internalType": "contract IL2OutputOracle",
         "name": "",
         "type": "address"
       }
@@ -115,7 +74,7 @@
     "name": "SECURITY_COUNCIL",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract ISecurityCouncil",
         "name": "",
         "type": "address"
       }
@@ -128,7 +87,7 @@
     "name": "ZK_PROOF_VERIFIER",
     "outputs": [
       {
-        "internalType": "contract ZKProofVerifier",
+        "internalType": "contract IZKProofVerifier",
         "name": "",
         "type": "address"
       }
@@ -162,6 +121,19 @@
     "name": "bisect",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bisectionTimeout",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -275,6 +247,19 @@
     "name": "createChallenge",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "creationPeriodSeconds",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -450,6 +435,41 @@
   {
     "inputs": [
       {
+        "internalType": "contract IL2OutputOracle",
+        "name": "_l2Oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IZKProofVerifier",
+        "name": "_zkProofVerifier",
+        "type": "address"
+      },
+      {
+        "internalType": "contract ISecurityCouncil",
+        "name": "_securityCouncil",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_submissionInterval",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_creationPeriodSeconds",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_bisectionTimeout",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_provingTimeout",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256[]",
         "name": "_segmentsLengths",
         "type": "uint256[]"
@@ -474,6 +494,32 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2Oracle",
+    "outputs": [
+      {
+        "internalType": "contract IL2OutputOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2OracleSubmissionInterval",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -517,6 +563,32 @@
     "name": "proveFaultWithZkVm",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "provingTimeout",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "securityCouncil",
+    "outputs": [
+      {
+        "internalType": "contract ISecurityCouncil",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -565,6 +637,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "zkProofVerifier",
+    "outputs": [
+      {
+        "internalType": "contract IZKProofVerifier",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

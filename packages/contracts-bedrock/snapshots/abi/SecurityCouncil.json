@@ -1,17 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_colosseum",
-        "type": "address"
-      },
-      {
-        "internalType": "address payable",
-        "name": "_governor",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -33,7 +22,7 @@
     "name": "GOVERNOR",
     "outputs": [
       {
-        "internalType": "contract UpgradeGovernor",
+        "internalType": "contract IUpgradeGovernor",
         "name": "",
         "type": "address"
       }
@@ -49,6 +38,19 @@
         "internalType": "uint48",
         "name": "",
         "type": "uint48"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "colosseum",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -164,6 +166,50 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "governor",
+    "outputs": [
+      {
+        "internalType": "contract IUpgradeGovernor",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_colosseum",
+        "type": "address"
+      },
+      {
+        "internalType": "address payable",
+        "name": "_governor",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "_governor",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
