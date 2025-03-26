@@ -3,15 +3,15 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { SecurityCouncil } from "src/L1/SecurityCouncil.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 // Libraries
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
+import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 
 contract Colosseum is Initializable, ISemver {
     /// @notice The constant value for the first turn.
@@ -47,28 +47,6 @@ contract Colosseum is Initializable, ISemver {
         READY_TO_PROVE
     }
 
-    /// @notice Address of the L2OutputOracle.
-    L2OutputOracle public immutable L2_ORACLE;
-
-    /// @notice Address of the ZKProofVerifier.
-    ZKProofVerifier public immutable ZK_PROOF_VERIFIER;
-
-    /// @notice The period seconds for which challenges can be created per each output.
-    uint256 public immutable CREATION_PERIOD_SECONDS;
-
-    /// @notice Timeout seconds for the bisection.
-    uint256 public immutable BISECTION_TIMEOUT;
-
-    /// @notice Timeout seconds for the proving.
-    uint256 public immutable PROVING_TIMEOUT;
-
-    /// @notice The interval in L2 blocks at which checkpoints must be
-    ///         submitted on L2OutputOracle contract.
-    uint256 public immutable L2_ORACLE_SUBMISSION_INTERVAL;
-
-    /// @notice Address that has the ability to approve the challenge.
-    address public immutable SECURITY_COUNCIL;
-
     /// @notice Length of segment array for each turn.
     mapping(uint256 => uint256) public segmentsLengths;
 
@@ -80,6 +58,28 @@ contract Colosseum is Initializable, ISemver {
 
     /// @notice A mapping of deleted output index to the deleted output.
     mapping(uint256 => KromaTypes.CheckpointOutput) public deletedOutputs;
+
+    /// @notice Address of the L2OutputOracle.
+    IL2OutputOracle public l2Oracle;
+
+    /// @notice Address of the ZKProofVerifier.
+    IZKProofVerifier public zkProofVerifier;
+
+    /// @notice Address that has the ability to approve the challenge.
+    ISecurityCouncil public securityCouncil;
+
+    /// @notice The period seconds for which challenges can be created per each output.
+    uint256 public creationPeriodSeconds;
+
+    /// @notice Timeout seconds for the bisection.
+    uint256 public bisectionTimeout;
+
+    /// @notice Timeout seconds for the proving.
+    uint256 public provingTimeout;
+
+    /// @notice The interval in L2 blocks at which checkpoints must be
+    ///         submitted on L2OutputOracle contract.
+    uint256 public l2OracleSubmissionInterval;
 
     /// @notice Emitted when the challenge is created.
     /// @param outputIndex Index of the L2 checkpoint output.
@@ -197,36 +197,40 @@ contract Colosseum is Initializable, ISemver {
     string public constant version = "2.1.0";
 
     /// @notice Constructs the Colosseum contract.
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializer
     /// @param _l2Oracle              Address of the L2OutputOracle contract.
     /// @param _zkProofVerifier       Address of the ZKProofVerifier contract.
+    /// @param _securityCouncil       Address of security council.
     /// @param _submissionInterval    Interval in blocks at which checkpoints must be submitted.
     /// @param _creationPeriodSeconds Seconds The period seconds for which challenges can be created per each output.
     /// @param _bisectionTimeout      Timeout seconds for the bisection.
     /// @param _provingTimeout        Timeout seconds for the proving.
     /// @param _segmentsLengths       Lengths of segments.
-    /// @param _securityCouncil       Address of security council.
-    constructor(
-        L2OutputOracle _l2Oracle,
-        ZKProofVerifier _zkProofVerifier,
+    function initialize(
+        IL2OutputOracle _l2Oracle,
+        IZKProofVerifier _zkProofVerifier,
+        ISecurityCouncil _securityCouncil,
         uint256 _submissionInterval,
         uint256 _creationPeriodSeconds,
         uint256 _bisectionTimeout,
         uint256 _provingTimeout,
-        uint256[] memory _segmentsLengths,
-        address _securityCouncil
-    ) {
-        L2_ORACLE = _l2Oracle;
-        ZK_PROOF_VERIFIER = _zkProofVerifier;
-        CREATION_PERIOD_SECONDS = _creationPeriodSeconds;
-        BISECTION_TIMEOUT = _bisectionTimeout;
-        PROVING_TIMEOUT = _provingTimeout;
-        L2_ORACLE_SUBMISSION_INTERVAL = _submissionInterval;
-        SECURITY_COUNCIL = _securityCouncil;
-        initialize(_segmentsLengths);
-    }
+        uint256[] memory _segmentsLengths
+    )
+        public
+        reinitializer(2)
+    {
+        l2Oracle = IL2OutputOracle(_l2Oracle);
+        zkProofVerifier = IZKProofVerifier(_zkProofVerifier);
+        securityCouncil = ISecurityCouncil(_securityCouncil);
+        l2OracleSubmissionInterval = _submissionInterval;
+        creationPeriodSeconds = _creationPeriodSeconds;
+        bisectionTimeout = _bisectionTimeout;
+        provingTimeout = _provingTimeout;
 
-    /// @notice Initializer.
-    function initialize(uint256[] memory _segmentsLengths) public initializer {
         // _segmentsLengths length should be an even number in order to let challenger submit
         // invalidity proof at the last turn.
         if (_segmentsLengths.length % 2 != 0) revert InvalidSegmentsLength();
@@ -241,7 +245,63 @@ contract Colosseum is Initializable, ISemver {
             }
         }
 
-        if (sum != L2_ORACLE_SUBMISSION_INTERVAL) revert InvalidSegmentsLength();
+        if (sum != l2OracleSubmissionInterval) revert InvalidSegmentsLength();
+    }
+
+    /// @notice Getter for the l2OutputOracle address.
+    ///         Public getter is legacy and will be removed in the future. Use `l2Oracle` instead.
+    /// @return Address of the l2OutputOracle.
+    /// @custom:legacy
+    function L2_ORACLE() external view returns (IL2OutputOracle) {
+        return l2Oracle;
+    }
+
+    /// @notice Getter for the zkProofVerifier address.
+    ///         Public getter is legacy and will be removed in the future. Use `zkProofVerifier` instead.
+    /// @return Address of the zkProofVerifier.
+    /// @custom:legacy
+    function ZK_PROOF_VERIFIER() external view returns (IZKProofVerifier) {
+        return zkProofVerifier;
+    }
+
+    /// @notice Getter for the securityCouncil address.
+    ///         Public getter is legacy and will be removed in the future. Use `securityCouncil` instead.
+    /// @return Address of the securityCouncil.
+    /// @custom:legacy
+    function SECURITY_COUNCIL() external view returns (ISecurityCouncil) {
+        return securityCouncil;
+    }
+
+    /// @notice Getter for the creationPeriodSeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `creationPeriodSeconds` instead.
+    /// @return The period seconds for which challenges can be created per each output.
+    /// @custom:legacy
+    function CREATION_PERIOD_SECONDS() external view returns (uint256) {
+        return creationPeriodSeconds;
+    }
+
+    /// @notice Getter for the bisectionTimeout.
+    ///         Public getter is legacy and will be removed in the future. Use `bisectionTimeout` instead.
+    /// @return Timeout seconds for the bisection.
+    /// @custom:legacy
+    function BISECTION_TIMEOUT() external view returns (uint256) {
+        return bisectionTimeout;
+    }
+
+    /// @notice Getter for the provingTimeout.
+    ///         Public getter is legacy and will be removed in the future. Use `provingTimeout` instead.
+    /// @return Timeout seconds for the proving.
+    /// @custom:legacy
+    function PROVING_TIMEOUT() external view returns (uint256) {
+        return provingTimeout;
+    }
+
+    /// @notice Getter for the l2OracleSubmissionInterval.
+    ///         Public getter is legacy and will be removed in the future. Use `l2OracleSubmissionInterval` instead.
+    /// @return The interval in L2 blocks at which checkpoints must be submitted on L2OutputOracle contract.
+    /// @custom:legacy
+    function L2_ORACLE_SUBMISSION_INTERVAL() external view returns (uint256) {
+        return l2OracleSubmissionInterval;
     }
 
     /// @notice Creates a challenge against an invalid output.
@@ -260,7 +320,7 @@ contract Colosseum is Initializable, ISemver {
         if (_outputIndex == 0) revert NotAllowedGenesisOutput();
 
         // Only the validators whose status is active can create challenge.
-        if (!L2_ORACLE.VALIDATOR_MANAGER().isActive(msg.sender)) {
+        if (!l2Oracle.VALIDATOR_MANAGER().isActive(msg.sender)) {
             revert ImproperValidatorStatus();
         }
 
@@ -274,9 +334,9 @@ contract Colosseum is Initializable, ISemver {
             _challengerTimeout(_outputIndex, msg.sender);
         }
 
-        KromaTypes.CheckpointOutput memory targetOutput = L2_ORACLE.getL2Output(_outputIndex);
+        KromaTypes.CheckpointOutput memory targetOutput = l2Oracle.getL2Output(_outputIndex);
 
-        if (targetOutput.timestamp + CREATION_PERIOD_SECONDS < block.timestamp) {
+        if (targetOutput.timestamp + creationPeriodSeconds < block.timestamp) {
             revert CreationPeriodPassed();
         }
 
@@ -289,7 +349,7 @@ contract Colosseum is Initializable, ISemver {
             if (blockhash(_l1BlockNumber) != _l1BlockHash) revert L1Reorged();
         }
 
-        KromaTypes.CheckpointOutput memory prevOutput = L2_ORACLE.getL2Output(_outputIndex - 1);
+        KromaTypes.CheckpointOutput memory prevOutput = l2Oracle.getL2Output(_outputIndex - 1);
 
         // If the previous output has been deleted, the first segment will not be compared with the previous output.
         if (prevOutput.outputRoot == DELETED_OUTPUT_ROOT) {
@@ -299,13 +359,10 @@ contract Colosseum is Initializable, ISemver {
         }
 
         // Bond validator KRO to reserve slashing amount.
-        L2_ORACLE.VALIDATOR_MANAGER().bondValidatorKro(msg.sender);
+        l2Oracle.VALIDATOR_MANAGER().bondValidatorKro(msg.sender);
 
         _updateSegments(
-            challenge,
-            _segments,
-            targetOutput.l2BlockNumber - L2_ORACLE_SUBMISSION_INTERVAL,
-            L2_ORACLE_SUBMISSION_INTERVAL
+            challenge, _segments, targetOutput.l2BlockNumber - l2OracleSubmissionInterval, l2OracleSubmissionInterval
         );
         challenge.turn = TURN_INIT;
         challenge.asserter = targetOutput.submitter;
@@ -413,12 +470,11 @@ contract Colosseum is Initializable, ISemver {
         _checkSecurityCouncil();
         _checkOutputNotFinalized(_outputIndex);
 
-        if (L2_ORACLE.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
+        if (l2Oracle.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
             revert OutputNotDeleted();
         }
         if (_outputRoot != deletedOutputs[_outputIndex].outputRoot) revert InvalidOutputGiven();
-        if (_challenger != L2_ORACLE.getSubmitter(_outputIndex) || _asserter != deletedOutputs[_outputIndex].submitter)
-        {
+        if (_challenger != l2Oracle.getSubmitter(_outputIndex) || _asserter != deletedOutputs[_outputIndex].submitter) {
             revert InvalidAddressGiven();
         }
         if (!verifiedPublicInputs[_publicInputHash]) revert InvalidPublicInputHash();
@@ -427,12 +483,12 @@ contract Colosseum is Initializable, ISemver {
         delete deletedOutputs[_outputIndex];
 
         // Rollback output root.
-        L2_ORACLE.replaceL2Output(_outputIndex, _outputRoot, _asserter);
+        l2Oracle.replaceL2Output(_outputIndex, _outputRoot, _asserter);
 
         // Revert slash asserter.
-        L2_ORACLE.VALIDATOR_MANAGER().revertSlash(_outputIndex, _asserter);
+        l2Oracle.VALIDATOR_MANAGER().revertSlash(_outputIndex, _asserter);
         // Slash challenger.
-        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, _asserter, _challenger);
+        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, _asserter, _challenger);
 
         emit ChallengeDismissed(_outputIndex, _challenger, block.timestamp);
     }
@@ -445,27 +501,27 @@ contract Colosseum is Initializable, ISemver {
         _checkOutputNotFinalized(_outputIndex);
 
         // Check if the output is deleted.
-        KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
+        KromaTypes.CheckpointOutput memory output = l2Oracle.getL2Output(_outputIndex);
         if (output.outputRoot == DELETED_OUTPUT_ROOT) revert OutputAlreadyDeleted();
 
         // Delete output root.
-        L2_ORACLE.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, SECURITY_COUNCIL);
+        l2Oracle.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, address(securityCouncil));
 
         // Slash the asserter's asset and move it to pending challenge reward for the output.
-        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, SECURITY_COUNCIL, output.submitter);
+        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, address(securityCouncil), output.submitter);
 
         emit OutputForceDeleted(_outputIndex, output.submitter, block.timestamp);
     }
 
     /// @notice Reverts if the caller is not security council.
     function _checkSecurityCouncil() internal view {
-        if (msg.sender != SECURITY_COUNCIL) revert NotAllowedCaller();
+        if (msg.sender != address(securityCouncil)) revert NotAllowedCaller();
     }
 
     /// @notice Reverts if the output of given index is already finalized.
     /// @param _outputIndex Index of the L2 checkpoint output.
     function _checkOutputNotFinalized(uint256 _outputIndex) internal view {
-        if (L2_ORACLE.isFinalized(_outputIndex)) revert OutputAlreadyFinalized();
+        if (l2Oracle.isFinalized(_outputIndex)) revert OutputAlreadyFinalized();
     }
 
     /// @notice Reverts if the given segments are invalid.
@@ -509,9 +565,9 @@ contract Colosseum is Initializable, ISemver {
     /// @param _challenge The challenge data to update.
     function _updateTimeout(KromaTypes.Challenge storage _challenge) private {
         if (!_isAbleToBisect(_challenge)) {
-            _challenge.timeoutAt = uint64(block.timestamp + PROVING_TIMEOUT);
+            _challenge.timeoutAt = uint64(block.timestamp + provingTimeout);
         } else {
-            _challenge.timeoutAt = uint64(block.timestamp + BISECTION_TIMEOUT);
+            _challenge.timeoutAt = uint64(block.timestamp + bisectionTimeout);
         }
     }
 
@@ -540,15 +596,14 @@ contract Colosseum is Initializable, ISemver {
         if (!_isAbleToBisect(challenge)) dstSegment = challenge.segments[_pos + 1];
 
         // Verify ZK proof.
-        bytes32 publicInputHash =
-            ZK_PROOF_VERIFIER.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
+        bytes32 publicInputHash = zkProofVerifier.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
         if (verifiedPublicInputs[publicInputHash]) revert AlreadyVerifiedPublicInput();
 
         emit Proven(_outputIndex, msg.sender, block.timestamp);
 
         // Scope to call the security council, to avoid stack too deep.
         {
-            KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(_outputIndex);
+            KromaTypes.CheckpointOutput memory output = l2Oracle.getL2Output(_outputIndex);
 
             bytes memory callbackData = abi.encodeWithSelector(
                 this.dismissChallenge.selector,
@@ -560,19 +615,19 @@ contract Colosseum is Initializable, ISemver {
             );
 
             // Request outputRoot validation to security council
-            SecurityCouncil(SECURITY_COUNCIL).requestValidation(output.outputRoot, output.l2BlockNumber, callbackData);
+            securityCouncil.requestValidation(output.outputRoot, output.l2BlockNumber, callbackData);
 
             deletedOutputs[_outputIndex] = output;
         }
 
         // Slash the asseter's asset and move it to pending challenge reward for the output.
-        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, msg.sender, challenge.asserter);
+        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, msg.sender, challenge.asserter);
 
         verifiedPublicInputs[publicInputHash] = true;
         delete challenges[_outputIndex][msg.sender];
 
         // Delete output root.
-        L2_ORACLE.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, msg.sender);
+        l2Oracle.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, msg.sender);
     }
 
     /// @notice Cancels the challenge if the output root to be challenged has already been deleted.
@@ -591,7 +646,7 @@ contract Colosseum is Initializable, ISemver {
         private
         returns (bool)
     {
-        if (L2_ORACLE.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
+        if (l2Oracle.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
             return false;
         }
 
@@ -605,7 +660,7 @@ contract Colosseum is Initializable, ISemver {
         delete challenges[_outputIndex][msg.sender];
         emit ChallengeCanceled(_outputIndex, msg.sender, block.timestamp);
 
-        L2_ORACLE.VALIDATOR_MANAGER().unbondValidatorKro(msg.sender);
+        l2Oracle.VALIDATOR_MANAGER().unbondValidatorKro(msg.sender);
 
         return true;
     }
@@ -618,7 +673,7 @@ contract Colosseum is Initializable, ISemver {
         delete challenges[_outputIndex][_challenger];
         emit ChallengerTimedOut(_outputIndex, _challenger, block.timestamp);
 
-        L2_ORACLE.VALIDATOR_MANAGER().slash(_outputIndex, L2_ORACLE.getSubmitter(_outputIndex), _challenger);
+        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, l2Oracle.getSubmitter(_outputIndex), _challenger);
     }
 
     /// @notice Returns the number of L2 blocks for the next turn.
@@ -656,7 +711,7 @@ contract Colosseum is Initializable, ISemver {
 
             // If the asserter times out and the challenger does not prove fault,
             // the challenger is assumed to have timed out.
-            if (block.timestamp > _challenge.timeoutAt + PROVING_TIMEOUT) {
+            if (block.timestamp > _challenge.timeoutAt + provingTimeout) {
                 return ChallengeStatus.CHALLENGER_TIMEOUT;
             }
 
@@ -701,6 +756,6 @@ contract Colosseum is Initializable, ISemver {
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @return Whether current timestamp is in challenge creation period.
     function isInCreationPeriod(uint256 _outputIndex) external view returns (bool) {
-        return L2_ORACLE.getL2Output(_outputIndex).timestamp + CREATION_PERIOD_SECONDS >= block.timestamp;
+        return l2Oracle.getL2Output(_outputIndex).timestamp + creationPeriodSeconds >= block.timestamp;
     }
 }

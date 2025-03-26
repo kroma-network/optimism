@@ -40,5 +40,40 @@
     "offset": 0,
     "slot": "4",
     "type": "uint256"
+  },
+  {
+    "bytes": "20",
+    "label": "validatorManager",
+    "offset": 0,
+    "slot": "5",
+    "type": "contract IValidatorManager"
+  },
+  {
+    "bytes": "20",
+    "label": "colosseum",
+    "offset": 0,
+    "slot": "6",
+    "type": "address"
+  },
+  {
+    "bytes": "32",
+    "label": "submissionInterval",
+    "offset": 0,
+    "slot": "7",
+    "type": "uint256"
+  },
+  {
+    "bytes": "32",
+    "label": "l2BlockTime",
+    "offset": 0,
+    "slot": "8",
+    "type": "uint256"
+  },
+  {
+    "bytes": "32",
+    "label": "finalizationPeriodSeconds",
+    "offset": 0,
+    "slot": "9",
+    "type": "uint256"
   }
 ]

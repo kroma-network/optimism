@@ -14,6 +14,7 @@ import { Process } from "scripts/libraries/Process.sol";
 abstract contract Deployer is Script, Artifacts {
     DeployConfig public constant cfg =
         DeployConfig(address(uint160(uint256(keccak256(abi.encode("optimism.deployconfig"))))));
+    string public constant saltMixer = "salt mixer";
 
     /// @notice Sets up the artifacts contract.
     function setUp() public virtual override {

@@ -782,6 +782,75 @@ type FaultProofDeployConfig struct {
 	RespectedGameType uint32 `json:"respectedGameType"`
 }
 
+type KromaFaultProofDeployConfig struct {
+	// [Kroma: START]
+	// The initial value of the validator reward scalar
+	ValidatorRewardScalar uint64 `json:"validatorRewardScalar"`
+	// ValidatorManagerTrustedValidator represents the address of the trusted validator.
+	ValidatorManagerTrustedValidator common.Address `json:"validatorManagerTrustedValidator"`
+	// ValidatorManagerMinRegisterAmount is the amount of the minimum register amount.
+	ValidatorManagerMinRegisterAmount *hexutil.Big `json:"validatorManagerMinRegisterAmount"`
+	// ValidatorManagerMinActivateAmount is the amount of the minimum activation amount.
+	ValidatorManagerMinActivateAmount *hexutil.Big `json:"validatorManagerMinActivateAmount"`
+	// ValidatorManagerMptFirstOutputIndex is the first output index after the MPT transition.
+	// Only TrustedValidator is allowed to submit output. Challenges for this outputIndex are also restricted.
+	ValidatorManagerMptFirstOutputIndex *hexutil.Big `json:"validatorManagerMptFirstOutputIndex"`
+	// ValidatorManagerCommissionChangeDelaySeconds is the delay to finalize the commission rate change in seconds.
+	ValidatorManagerCommissionChangeDelaySeconds uint64 `json:"validatorManagerCommissionChangeDelaySeconds"`
+	// ValidatorManagerRoundDurationSeconds is the duration of one submission round in seconds.
+	ValidatorManagerRoundDurationSeconds uint64 `json:"validatorManagerRoundDurationSeconds"`
+	// ValidatorManagerSoftJailPeriodSeconds is the duration of jail period in seconds in output non-submissions penalty.
+	ValidatorManagerSoftJailPeriodSeconds uint64 `json:"validatorManagerSoftJailPeriodSeconds"`
+	// ValidatorManagerHardJailPeriodSeconds is the duration of jail period in seconds in slashing penalty.
+	ValidatorManagerHardJailPeriodSeconds uint64 `json:"validatorManagerHardJailPeriodSeconds"`
+	// ValidatorManagerJailThreshold is the threshold of output non-submission to be jailed.
+	ValidatorManagerJailThreshold uint64 `json:"validatorManagerJailThreshold"`
+	// ValidatorManagerMaxFinalizations is the max number of output finalizations when distributing
+	// reward.
+	ValidatorManagerMaxFinalizations uint64 `json:"validatorManagerMaxFinalizations"`
+	// ValidatorManagerBaseReward is the amount of the base reward in hex value.
+	ValidatorManagerBaseReward *hexutil.Big `json:"validatorManagerBaseReward"`
+
+	// AssetManagerKgh represents the address of the KGH NFT contract.
+	AssetManagerKgh common.Address `json:"assetManagerKgh"`
+	// AssetManagerVault represents the address of the validator reward vault.
+	AssetManagerVault common.Address `json:"assetManagerVault"`
+	// AssetManagerMinDelegationPeriod is the duration of minimum delegation period in seconds.
+	AssetManagerMinDelegationPeriod uint64 `json:"assetManagerMinDelegationPeriod"`
+	// AssetManagerBondAmount is the bond amount.
+	AssetManagerBondAmount *hexutil.Big `json:"assetManagerBondAmount"`
+
+	ColosseumCreationPeriodSeconds uint64      `json:"colosseumCreationPeriodSeconds"`
+	ColosseumBisectionTimeout      uint64      `json:"colosseumBisectionTimeout"`
+	ColosseumProvingTimeout        uint64      `json:"colosseumProvingTimeout"`
+	ColosseumSegmentsLengths       []uint64    `json:"colosseumSegmentsLengths"`
+	ColosseumDummyHash             common.Hash `json:"colosseumDummyHash"`
+	ColosseumMaxTxs                uint64      `json:"colosseumMaxTxs"`
+
+	// Owner of the SecurityCouncil
+	SecurityCouncilOwners []common.Address `json:"securityCouncilOwners"`
+	// The initial value of the voting delay(unit:block)
+	GovernorVotingDelayBlocks uint64 `json:"governorVotingDelayBlocks"`
+	// The initial value of the voting period(unit:block)
+	GovernorVotingPeriodBlocks uint64 `json:"governorVotingPeriodBlocks"`
+	// The initial value of the proposal threshold(unit:token)
+	GovernorProposalThreshold uint64 `json:"governorProposalThreshold"`
+	// The initial value of the votes quorum fraction(unit:percent)
+	GovernorVotesQuorumFractionPercent uint64 `json:"governorVotesQuorumFractionPercent"`
+	// The latency value of the proposal executing(unit:second)
+	TimeLockMinDelaySeconds uint64 `json:"timeLockMinDelaySeconds"`
+	// The initial value of the L2 voting period(unit:block)
+	L2GovernorVotingPeriodBlocks uint64 `json:"l2GovernorVotingPeriodBlocks"`
+	// The latency value of the L2 proposal executing(unit:second)
+	L2TimeLockMinDelaySeconds uint64 `json:"l2TimeLockMinDelaySeconds"`
+
+	// ZKProofVerifierSP1Verifier is the address of the SP1VerifierGateway contract.
+	ZKProofVerifierSP1Verifier common.Address `json:"zkProofVerifierSP1Verifier"`
+	// ZKProofVerifierVKey is the verification key for the zkVM program.
+	ZKProofVerifierVKey common.Hash `json:"zkProofVerifierVKey"`
+	// [Kroma: END]
+}
+
 func (d *FaultProofDeployConfig) Check(log log.Logger) error {
 	if d.ProofMaturityDelaySeconds == 0 {
 		log.Warn("ProofMaturityDelaySeconds is 0")
@@ -893,6 +962,7 @@ type DeployConfig struct {
 	SuperchainL1DeployConfig
 	OutputOracleDeployConfig
 	FaultProofDeployConfig
+	KromaFaultProofDeployConfig
 
 	// Post-L1-deployment L2 configs
 	L1DependenciesConfig
@@ -1065,6 +1135,30 @@ type L1Deployments struct {
 	ProtocolVersionsProxy             common.Address `json:"ProtocolVersionsProxy"`
 	DataAvailabilityChallenge         common.Address `json:"DataAvailabilityChallenge"`
 	DataAvailabilityChallengeProxy    common.Address `json:"DataAvailabilityChallengeProxy"`
+
+	// [Kroma: START]
+	Colosseum                 common.Address `json:"Colosseum"`
+	ColosseumProxy            common.Address `json:"ColosseumProxy"`
+	L1GovernanceToken         common.Address `json:"L1GovernanceToken"`
+	L1GovernanceTokenProxy    common.Address `json:"L1GovernanceTokenProxy"`
+	L1MintManager             common.Address `json:"L1MintManager"`
+	Poseidon2                 common.Address `json:"Poseidon2"`
+	SecurityCouncil           common.Address `json:"SecurityCouncil"`
+	SecurityCouncilProxy      common.Address `json:"SecurityCouncilProxy"`
+	SecurityCouncilToken      common.Address `json:"SecurityCouncilToken"`
+	SecurityCouncilTokenProxy common.Address `json:"SecurityCouncilTokenProxy"`
+	TimeLock                  common.Address `json:"TimeLock"`
+	TimeLockProxy             common.Address `json:"TimeLockProxy"`
+	UpgradeGovernor           common.Address `json:"UpgradeGovernor"`
+	UpgradeGovernorProxy      common.Address `json:"UpgradeGovernorProxy"`
+	AssetManager              common.Address `json:"AssetManager"`
+	AssetManagerProxy         common.Address `json:"AssetManagerProxy"`
+	ValidatorManager          common.Address `json:"ValidatorManager"`
+	ValidatorManagerProxy     common.Address `json:"ValidatorManagerProxy"`
+	ZKMerkleTrie              common.Address `json:"ZKMerkleTrie"`
+	ZKProofVerifier           common.Address `json:"ZKProofVerifier"`
+	ZKProofVerifierProxy      common.Address `json:"ZKProofVerifierProxy"`
+	// [Kroma: END]
 }
 
 // GetName will return the name of the contract given an address.

@@ -1,42 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "_assetToken",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC721",
-        "name": "_kgh",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_securityCouncil",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_validatorRewardVault",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IValidatorManager",
-        "name": "_validatorManager",
-        "type": "address"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_minDelegationPeriod",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_bondAmount",
-        "type": "uint128"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -165,6 +129,32 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "assetToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bondAmount",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
       }
     ],
     "stateMutability": "view",
@@ -553,6 +543,75 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "_assetToken",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC721",
+        "name": "_kgh",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_securityCouncil",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_validatorRewardVault",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IValidatorManager",
+        "name": "_validatorManager",
+        "type": "address"
+      },
+      {
+        "internalType": "uint128",
+        "name": "_minDelegationPeriod",
+        "type": "uint128"
+      },
+      {
+        "internalType": "uint128",
+        "name": "_bondAmount",
+        "type": "uint128"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "kgh",
+    "outputs": [
+      {
+        "internalType": "contract IERC721",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minDelegationPeriod",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -668,6 +727,19 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "securityCouncil",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -834,6 +906,32 @@
   },
   {
     "inputs": [],
+    "name": "validatorManager",
+    "outputs": [
+      {
+        "internalType": "contract IValidatorManager",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "validatorRewardVault",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "version",
     "outputs": [
       {
@@ -880,6 +978,19 @@
       }
     ],
     "name": "Deposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
     "type": "event"
   },
   {

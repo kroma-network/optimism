@@ -28,7 +28,8 @@ FORKS = ["delta", "ecotone", "fjord", "granite", "holocene"]
 
 # Global environment variables
 DEVNET_NO_BUILD = os.getenv('DEVNET_NO_BUILD') == "true"
-DEVNET_L2OO = os.getenv('DEVNET_L2OO') == "true"
+# DEVNET_L2OO = os.getenv('DEVNET_L2OO') == "true"
+DEVNET_L2OO = True
 DEVNET_ALTDA = os.getenv('DEVNET_ALTDA') == "true"
 GENERIC_ALTDA = os.getenv('GENERIC_ALTDA') == "true"
 

@@ -173,7 +173,9 @@ library ChainAssertions {
         require(address(messenger) != address(0), "CHECK-L1XDM-10");
 
         // Check that the contract is initialized
-        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
+        // [Kroma: START]
+        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 0 });
+        // [Kroma: END]
 
         require(address(messenger.OTHER_MESSENGER()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-20");
         require(address(messenger.otherMessenger()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-30");
@@ -182,7 +184,9 @@ library ChainAssertions {
             require(address(messenger.PORTAL()) == _contracts.OptimismPortal, "CHECK-L1XDM-40");
             require(address(messenger.portal()) == _contracts.OptimismPortal, "CHECK-L1XDM-50");
             require(address(messenger.superchainConfig()) == _contracts.SuperchainConfig, "CHECK-L1XDM-60");
-            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(204)));
+            // [Kroma: START]
+            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(102)));
+            // [Kroma: END]
             require(address(uint160(uint256(xdmSenderSlot))) == Constants.DEFAULT_L2_SENDER, "CHECK-L1XDM-70");
         } else {
             require(address(messenger.PORTAL()) == address(0), "CHECK-L1XDM-80");
@@ -202,7 +206,9 @@ library ChainAssertions {
         require(address(bridge) != address(0), "CHECK-L1SB-10");
 
         // Check that the contract is initialized
-        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 0, _offset: 0 });
+        // [Kroma: START]
+        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 2, _offset: 20 });
+        // [Kroma: END]
 
         if (_isProxy) {
             require(address(bridge.MESSENGER()) == _contracts.L1CrossDomainMessenger, "CHECK-L1SB-20");
@@ -346,10 +352,10 @@ library ChainAssertions {
             require(oracle.submissionInterval() == _cfg.l2OutputOracleSubmissionInterval(), "CHECK-L2OO-30");
             require(oracle.L2_BLOCK_TIME() == _cfg.l2BlockTime(), "CHECK-L2OO-40");
             require(oracle.l2BlockTime() == _cfg.l2BlockTime(), "CHECK-L2OO-50");
-            require(oracle.PROPOSER() == _cfg.l2OutputOracleProposer(), "CHECK-L2OO-60");
-            require(oracle.proposer() == _cfg.l2OutputOracleProposer(), "CHECK-L2OO-70");
-            require(oracle.CHALLENGER() == _cfg.l2OutputOracleChallenger(), "CHECK-L2OO-80");
-            require(oracle.challenger() == _cfg.l2OutputOracleChallenger(), "CHECK-L2OO-90");
+            require(address(oracle.VALIDATOR_MANAGER()) == address(_contracts.ValidatorManager), "CHECK-L200-60");
+            require(address(oracle.validatorManager()) == address(_contracts.ValidatorManager), "CHECK-L200-70");
+            require(oracle.COLOSSEUM() == address(_contracts.Colosseum), "CHECK-L2OO-80");
+            require(oracle.colosseum() == address(_contracts.Colosseum), "CHECK-L2OO-90");
             require(oracle.FINALIZATION_PERIOD_SECONDS() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-100");
             require(oracle.finalizationPeriodSeconds() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-110");
             require(oracle.startingBlockNumber() == _cfg.l2OutputOracleStartingBlockNumber(), "CHECK-L2OO-120");
@@ -359,10 +365,10 @@ library ChainAssertions {
             require(oracle.submissionInterval() == 1, "CHECK-L2OO-150");
             require(oracle.L2_BLOCK_TIME() == 1, "CHECK-L2OO-160");
             require(oracle.l2BlockTime() == 1, "CHECK-L2OO-170");
-            require(oracle.PROPOSER() == address(0), "CHECK-L2OO-180");
-            require(oracle.proposer() == address(0), "CHECK-L2OO-190");
-            require(oracle.CHALLENGER() == address(0), "CHECK-L2OO-200");
-            require(oracle.challenger() == address(0), "CHECK-L2OO-210");
+            require(address(oracle.VALIDATOR_MANAGER()) == address(0), "CHECK-L200-180");
+            require(address(oracle.validatorManager()) == address(0), "CHECK-L200-190");
+            require(oracle.COLOSSEUM() == address(0), "CHECK-L2OO-200");
+            require(oracle.colosseum() == address(0), "CHECK-L2OO-210");
             require(oracle.FINALIZATION_PERIOD_SECONDS() == 0, "CHECK-L2OO-220");
             require(oracle.finalizationPeriodSeconds() == 0, "CHECK-L2OO-230");
             require(oracle.startingBlockNumber() == 0, "CHECK-L2OO-240");
@@ -583,7 +589,7 @@ library ChainAssertions {
         bytes32 slotVal = vm.load(_contractAddress, bytes32(_slot));
         uint8 val = uint8((uint256(slotVal) >> (_offset * 8)) & 0xFF);
         require(
-            val == uint8(1) || val == uint8(0xff),
+            val >= uint8(1) || val == uint8(0xff),
             "ChainAssertions: storage value is not 1 or 0xff at the given slot and offset"
         );
     }

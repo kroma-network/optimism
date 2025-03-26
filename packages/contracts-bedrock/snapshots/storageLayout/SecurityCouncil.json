@@ -42,11 +42,18 @@
     "type": "mapping(uint256 => struct KromaTypes.MultiSigConfirmation)"
   },
   {
-    "bytes": "96",
-    "label": "spacer_53_0_96",
+    "bytes": "20",
+    "label": "governor",
     "offset": 0,
     "slot": "53",
-    "type": "uint256[3]"
+    "type": "contract IUpgradeGovernor"
+  },
+  {
+    "bytes": "64",
+    "label": "spacer_54_0_64",
+    "offset": 0,
+    "slot": "54",
+    "type": "uint256[2]"
   },
   {
     "bytes": "32",
@@ -61,5 +68,12 @@
     "offset": 0,
     "slot": "57",
     "type": "mapping(uint256 => bool)"
+  },
+  {
+    "bytes": "20",
+    "label": "colosseum",
+    "offset": 0,
+    "slot": "58",
+    "type": "address"
   }
 ]

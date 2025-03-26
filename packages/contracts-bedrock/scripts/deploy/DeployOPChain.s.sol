@@ -35,6 +35,9 @@ import { IL1ERC721Bridge } from "interfaces/L1/IL1ERC721Bridge.sol";
 import { IL1StandardBridge } from "interfaces/L1/IL1StandardBridge.sol";
 import { IOptimismMintableERC20Factory } from "interfaces/universal/IOptimismMintableERC20Factory.sol";
 
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+
 contract DeployOPChainInput is BaseDeployIO {
     address internal _opChainProxyAdminOwner;
     address internal _systemConfigOwner;
@@ -59,6 +62,41 @@ contract DeployOPChainInput is BaseDeployIO {
     Duration internal _disputeClockExtension;
     Duration internal _disputeMaxClockDuration;
     bool internal _allowCustomDisputeParameters;
+
+    // [Kroma: START]
+    /// @notice Deploy configs for AssetManager.
+    IERC721 internal _kgh;
+    address internal _vault;
+    uint128 internal _minDelegationPeriod;
+    uint128 internal _bondAmount;
+
+    /// @notice Deploy configs for Colosseum.
+    IL2OutputOracle internal _l2OutputOracle;
+    uint256 internal _submissionInterval;
+    uint256 internal _creationPeriodSeconds;
+    uint256 internal _bisectionTimeout;
+    uint256 internal _provingTimeout;
+    uint256[] internal _segmentsLengths;
+
+    /// @notice Deploy configs for SecurityCouncil.
+    uint256 internal _timeLockMinDelaySeconds;
+    /// @notice Deploy configs for UpgradeGovernor.
+    uint256 internal _initialVotingDelay;
+    uint256 internal _initialVotingPeriod;
+    uint256 internal _initialProposalThreshold;
+    uint256 internal _votesQuorumFraction;
+    /// @notice Deploy configs for ValidatorManager.
+    address internal _trustedValidator;
+    uint128 internal _minRegisterAmount;
+    uint128 internal _minActivateAmount;
+    uint128 internal _commissionChangeDelaySeconds;
+    uint128 internal _roundDurationSeconds;
+    uint128 internal _softJailPeriodSeconds;
+    uint128 internal _hardJailPeriodSeconds;
+    uint128 internal _jailThreshold;
+    uint128 internal _maxFinalizations;
+    uint128 internal _baseReward;
+    // [Kroma: END]
 
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "DeployOPChainInput: cannot set zero address");
@@ -215,6 +253,108 @@ contract DeployOPChainInput is BaseDeployIO {
     function allowCustomDisputeParameters() public view returns (bool) {
         return _allowCustomDisputeParameters;
     }
+
+    // [Kroma: START]
+    function kgh() public view returns (IERC721) {
+        return _kgh;
+    }
+
+    function vault() public view returns (address) {
+        return _vault;
+    }
+
+    function minDelegationPeriod() public view returns (uint128) {
+        return _minDelegationPeriod;
+    }
+
+    function bondAmount() public view returns (uint128) {
+        return _bondAmount;
+    }
+
+    function l2OutputOracle() public view returns (IL2OutputOracle) {
+        return _l2OutputOracle;
+    }
+
+    function submissionInterval() public view returns (uint256) {
+        return _submissionInterval;
+    }
+
+    function creationPeriodSeconds() public view returns (uint256) {
+        return _creationPeriodSeconds;
+    }
+
+    function bisectionTimeout() public view returns (uint256) {
+        return _bisectionTimeout;
+    }
+
+    function provingTimeout() public view returns (uint256) {
+        return _provingTimeout;
+    }
+
+    function segmentsLengths() public view returns (uint256[] memory) {
+        return _segmentsLengths;
+    }
+
+    function timeLockMinDelaySeconds() public view returns (uint256) {
+        return _timeLockMinDelaySeconds;
+    }
+
+    function initialVotingDelay() public view returns (uint256) {
+        return _initialVotingDelay;
+    }
+
+    function initialVotingPeriod() public view returns (uint256) {
+        return _initialVotingPeriod;
+    }
+
+    function initialProposalThreshold() public view returns (uint256) {
+        return _initialProposalThreshold;
+    }
+
+    function votesQuorumFraction() public view returns (uint256) {
+        return _votesQuorumFraction;
+    }
+
+    function trustedValidator() public view returns (address) {
+        return _trustedValidator;
+    }
+
+    function minRegisterAmount() public view returns (uint128) {
+        return _minRegisterAmount;
+    }
+
+    function minActivateAmount() public view returns (uint128) {
+        return _minActivateAmount;
+    }
+
+    function commissionChangeDelaySeconds() public view returns (uint128) {
+        return _commissionChangeDelaySeconds;
+    }
+
+    function roundDurationSeconds() public view returns (uint128) {
+        return _roundDurationSeconds;
+    }
+
+    function softJailPeriodSeconds() public view returns (uint128) {
+        return _softJailPeriodSeconds;
+    }
+
+    function hardJailPeriodSeconds() public view returns (uint128) {
+        return _hardJailPeriodSeconds;
+    }
+
+    function jailThreshold() public view returns (uint128) {
+        return _jailThreshold;
+    }
+
+    function maxFinalizations() public view returns (uint128) {
+        return _maxFinalizations;
+    }
+
+    function baseReward() public view returns (uint128) {
+        return _baseReward;
+    }
+    // [Kroma: END]
 }
 
 contract DeployOPChainOutput is BaseDeployIO {
@@ -369,7 +509,34 @@ contract DeployOPChain is Script {
             disputeMaxGameDepth: _doi.disputeMaxGameDepth(),
             disputeSplitDepth: _doi.disputeSplitDepth(),
             disputeClockExtension: _doi.disputeClockExtension(),
-            disputeMaxClockDuration: _doi.disputeMaxClockDuration()
+            disputeMaxClockDuration: _doi.disputeMaxClockDuration(),
+            // [Kroma: START]
+            kgh: _doi.kgh(),
+            vault: _doi.vault(),
+            minDelegationPeriod: _doi.minDelegationPeriod(),
+            bondAmount: _doi.bondAmount(),
+            l2OutputOracle: _doi.l2OutputOracle(),
+            submissionInterval: _doi.submissionInterval(),
+            creationPeriodSeconds: _doi.creationPeriodSeconds(),
+            bisectionTimeout: _doi.bisectionTimeout(),
+            provingTimeout: _doi.provingTimeout(),
+            segmentsLengths: _doi.segmentsLengths(),
+            timeLockMinDelaySeconds: _doi.timeLockMinDelaySeconds(),
+            initialVotingDelay: _doi.initialVotingDelay(),
+            initialVotingPeriod: _doi.initialVotingPeriod(),
+            initialProposalThreshold: _doi.initialProposalThreshold(),
+            votesQuorumFraction: _doi.votesQuorumFraction(),
+            trustedValidator: _doi.trustedValidator(),
+            minRegisterAmount: _doi.minRegisterAmount(),
+            minActivateAmount: _doi.minActivateAmount(),
+            commissionChangeDelaySeconds: _doi.commissionChangeDelaySeconds(),
+            roundDurationSeconds: _doi.roundDurationSeconds(),
+            softJailPeriodSeconds: _doi.softJailPeriodSeconds(),
+            hardJailPeriodSeconds: _doi.hardJailPeriodSeconds(),
+            jailThreshold: _doi.jailThreshold(),
+            maxFinalizations: _doi.maxFinalizations(),
+            baseReward: _doi.baseReward()
+            // [Kroma: END]
         });
 
         vm.broadcast(msg.sender);

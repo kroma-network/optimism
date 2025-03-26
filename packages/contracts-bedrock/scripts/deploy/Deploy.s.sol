@@ -26,8 +26,12 @@ import {
 
 // Contracts
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
+import { AssetManager } from "src/L1/AssetManager.sol";
+import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
+import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 // Libraries
+import { Blueprint } from "src/libraries/Blueprint.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "scripts/libraries/Types.sol";
 import { Duration } from "src/dispute/lib/LibUDT.sol";
@@ -52,6 +56,9 @@ import { IDelayedWETH } from "interfaces/dispute/IDelayedWETH.sol";
 import { IAnchorStateRegistry } from "interfaces/dispute/IAnchorStateRegistry.sol";
 import { IMIPS } from "interfaces/cannon/IMIPS.sol";
 import { IPreimageOracle } from "interfaces/cannon/IPreimageOracle.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title Deploy
 /// @notice Script used to deploy a bedrock system. The entire system is deployed within the `run` function.
@@ -129,8 +136,18 @@ contract Deploy is Deployer {
             L1ERC721Bridge: getAddress("L1ERC721BridgeProxy"),
             ProtocolVersions: getAddress("ProtocolVersionsProxy"),
             SuperchainConfig: getAddress("SuperchainConfigProxy"),
-            OPContractsManager: getAddress("OPContractsManager")
+            OPContractsManager: getAddress("OPContractsManager"),
+            // [Kroma: START]
+            AssetManager: getAddress("AssetManagerProxy"),
+            Colosseum: getAddress("ColosseumProxy"),
+            SecurityCouncil: getAddress("SecurityCouncilProxy"),
+            SecurityCouncilToken: getAddress("SecurityCouncilTokenProxy"),
+            TimeLock: getAddress("TimeLockProxy"),
+            UpgradeGovernor: getAddress("UpgradeGovernorProxy"),
+            ValidatorManager: getAddress("ValidatorManagerProxy"),
+            ZkProofVerifier: getAddress("ZkProofVerifierProxy")
         });
+        // [Kroma: END]
     }
 
     /// @notice Returns the impl addresses, not reverting if any are unset.
@@ -150,8 +167,18 @@ contract Deploy is Deployer {
             L1ERC721Bridge: getAddress("L1ERC721Bridge"),
             ProtocolVersions: getAddress("ProtocolVersions"),
             SuperchainConfig: getAddress("SuperchainConfig"),
-            OPContractsManager: getAddress("OPContractsManager")
+            OPContractsManager: getAddress("OPContractsManager"),
+            // [Kroma: START]
+            AssetManager: getAddress("AssetManager"),
+            Colosseum: getAddress("Colosseum"),
+            SecurityCouncil: getAddress("SecurityCouncil"),
+            SecurityCouncilToken: getAddress("SecurityCouncilToken"),
+            TimeLock: getAddress("TimeLock"),
+            UpgradeGovernor: getAddress("UpgradeGovernor"),
+            ValidatorManager: getAddress("ValidatorManager"),
+            ZkProofVerifier: getAddress("ZkProofVerifier")
         });
+        // [Kroma: END]
     }
 
     ////////////////////////////////////////////////////////////////
@@ -320,6 +347,10 @@ contract Deploy is Deployer {
         if (_isInterop) {
             di = DeployImplementations(new DeployImplementationsInterop());
         }
+        // [Kroma: START]
+        dii.set(dii.sp1Verifier.selector, cfg.zkProofVerifierSP1Verifier());
+        dii.set(dii.vKey.selector, cfg.zkProofVerifierVKey());
+        // [Kroma: END]
         di.run(dii, dio);
 
         // Temporary patch for legacy system
@@ -340,6 +371,18 @@ contract Deploy is Deployer {
         save("DelayedWETH", address(dio.delayedWETHImpl()));
         save("PreimageOracle", address(dio.preimageOracleSingleton()));
         save("Mips", address(dio.mipsSingleton()));
+
+        // [Kroma: START]
+        save("AssetManager", address(dio.assetManagerImpl()));
+        save("Colosseum", address(dio.colosseumImpl()));
+        save("SecurityCouncil", address(dio.securityCouncilImpl()));
+        save("SecurityCouncilToken", address(dio.securityCouncilTokenImpl()));
+        save("TimeLock", address(dio.timeLockImpl()));
+        save("UpgradeGovernor", address(dio.upgradeGovernorImpl()));
+        save("ValidatorManager", address(dio.validatorManagerImpl()));
+        save("ZKProofVerifier", address(dio.zkProofVerifierImpl()));
+        // [Kroma: END]
+
         save("OPContractsManager", address(dio.opcm()));
 
         Types.ContractSet memory contracts = _impls();
@@ -378,7 +421,7 @@ contract Deploy is Deployer {
         address superchainConfigProxy = mustGetAddress("SuperchainConfigProxy");
         OPContractsManager opcm = OPContractsManager(mustGetAddress("OPContractsManager"));
 
-        OPContractsManager.DeployInput memory deployInput = getDeployInput();
+        OPContractsManager.DeployInput memory deployInput = getDeployInput(opcm);
         OPContractsManager.DeployOutput memory deployOutput = opcm.deploy(deployInput);
 
         // Save all deploy outputs from the OPCM, in the order they are declared in the DeployOutput struct
@@ -397,6 +440,18 @@ contract Deploy is Deployer {
         save("AnchorStateRegistry", address(deployOutput.anchorStateRegistryImpl));
         save("PermissionedDisputeGame", address(deployOutput.permissionedDisputeGame));
         save("OptimismPortalProxy", address(deployOutput.optimismPortalProxy));
+
+        // [Kroma: START]
+        save("AssetManagerProxy", address(deployOutput.assetManagerProxy));
+        save("ColosseumProxy", address(deployOutput.colosseumProxy));
+        save("SecurityCouncilProxy", address(deployOutput.securityCouncilProxy));
+        save("SecurityCouncilTokenProxy", address(deployOutput.securityCouncilTokenProxy));
+        save("TimeLockProxy", address(deployOutput.timeLockProxy));
+        save("UpgradeGovernorProxy", address(deployOutput.upgradeGovernorProxy));
+        save("ValidatorManagerProxy", address(deployOutput.validatorManagerProxy));
+        save("ZkProofVerifierProxy", address(deployOutput.zkProofVerifierProxy));
+        save("KromaGovernanceTokenProxy", address(deployOutput.kromaGovernanceTokenProxy));
+        // [Kroma: END]
 
         // Check if the permissionless game implementation is already set
         IDisputeGameFactory factory = IDisputeGameFactory(mustGetAddress("DisputeGameFactoryProxy"));
@@ -467,6 +522,29 @@ contract Deploy is Deployer {
         );
         require(EIP1967Helper.getAdmin(address(proxy)) == _proxyOwner);
         addr_ = address(proxy);
+    }
+
+    /// @notice Calaulate deterministic ERC1967Proxy contract address with a specified owner.
+    /// @param _name The name of the proxy contract to be deployed.
+    /// @param _proxyOwner The address of the owner of the proxy contract.
+    /// @return addr_ The address of the deployed proxy contract.
+    function calculateERC1967ProxyWithOwner(
+        string memory _name,
+        address _proxyOwner
+    )
+        public
+        view
+        returns (address addr_)
+    {
+        bytes32 salt = keccak256(abi.encode(_implSalt(), _name));
+
+        bytes32 bytecodeHash = keccak256(
+            abi.encodePacked(
+                vm.getCode("Proxy"),
+                DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (_proxyOwner)))
+            )
+        );
+        addr_ = vm.computeCreate2Address(salt, bytecodeHash);
     }
 
     /// @notice Deploy the DataAvailabilityChallengeProxy
@@ -605,6 +683,8 @@ contract Deploy is Deployer {
         console.log("Upgrading and initializing L2OutputOracle proxy");
         address l2OutputOracleProxy = mustGetAddress("L2OutputOracleProxy");
         address l2OutputOracle = mustGetAddress("L2OutputOracle");
+        address validatorManagerProxy = mustGetAddress("ValidatorManagerProxy");
+        address colosseumProxy = mustGetAddress("ColosseumProxy");
 
         IProxyAdmin proxyAdmin = IProxyAdmin(payable(mustGetAddress("ProxyAdmin")));
         proxyAdmin.upgradeAndCall({
@@ -613,12 +693,12 @@ contract Deploy is Deployer {
             _data: abi.encodeCall(
                 IL2OutputOracle.initialize,
                 (
+                    validatorManagerProxy,
+                    colosseumProxy,
                     cfg.l2OutputOracleSubmissionInterval(),
                     cfg.l2BlockTime(),
                     cfg.l2OutputOracleStartingBlockNumber(),
                     cfg.l2OutputOracleStartingTimestamp(),
-                    cfg.l2OutputOracleProposer(),
-                    cfg.l2OutputOracleChallenger(),
                     cfg.finalizationPeriodSeconds()
                 )
             )
@@ -969,7 +1049,7 @@ contract Deploy is Deployer {
     }
 
     /// @notice Get the DeployInput struct to use for testing
-    function getDeployInput() public view returns (OPContractsManager.DeployInput memory) {
+    function getDeployInput(OPContractsManager opcm) public view returns (OPContractsManager.DeployInput memory) {
         OutputRoot memory testOutputRoot = OutputRoot({
             root: Hash.wrap(cfg.faultGameGenesisOutputRoot()),
             l2BlockNumber: cfg.faultGameGenesisBlock()
@@ -988,7 +1068,15 @@ contract Deploy is Deployer {
             IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.FAST, outputRoot: testOutputRoot });
         startingAnchorRoots[4] =
             IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.ALPHABET, outputRoot: testOutputRoot });
-        string memory saltMixer = "salt mixer";
+
+        // [Kroma: START]
+        // At this point, the contracts have not been deployed yet,
+        // but their deterministic deployment addresses are precomputed and injected.
+        address proxyAdmin = _computeProxyAdmin(opcm, address(opcm));
+
+        address l2OutputOracleProxy = calculateERC1967ProxyWithOwner("L2OutputOracleProxy", proxyAdmin);
+        // [Kroma: END]
+
         return OPContractsManager.DeployInput({
             roles: OPContractsManager.Roles({
                 opChainProxyAdminOwner: msg.sender,
@@ -1009,8 +1097,41 @@ contract Deploy is Deployer {
             disputeMaxGameDepth: cfg.faultGameMaxDepth(),
             disputeSplitDepth: cfg.faultGameSplitDepth(),
             disputeClockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
-            disputeMaxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration()))
+            disputeMaxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
+            // [Kroma: START]
+            kgh: IERC721(cfg.assetManagerKgh()),
+            vault: cfg.assetManagerVault(),
+            minDelegationPeriod: cfg.assetManagerMinDelegationPeriod(),
+            bondAmount: cfg.assetManagerBondAmount(),
+            l2OutputOracle: IL2OutputOracle(l2OutputOracleProxy),
+            submissionInterval: cfg.l2OutputOracleSubmissionInterval(),
+            creationPeriodSeconds: cfg.colosseumCreationPeriodSeconds(),
+            bisectionTimeout: cfg.colosseumBisectionTimeout(),
+            provingTimeout: cfg.colosseumProvingTimeout(),
+            segmentsLengths: cfg.getColosseumSegmentsLengths(),
+            timeLockMinDelaySeconds: cfg.timeLockMinDelaySeconds(),
+            initialVotingDelay: cfg.governorVotingDelayBlocks(),
+            initialVotingPeriod: cfg.governorVotingPeriodBlocks(),
+            initialProposalThreshold: cfg.governorProposalThreshold(),
+            votesQuorumFraction: cfg.governorVotesQuorumFractionPercent(),
+            trustedValidator: cfg.validatorManagerTrustedValidator(),
+            minRegisterAmount: cfg.validatorManagerMinRegisterAmount(),
+            minActivateAmount: cfg.validatorManagerMinActivateAmount(),
+            commissionChangeDelaySeconds: cfg.validatorManagerCommissionChangeDelaySeconds(),
+            roundDurationSeconds: cfg.validatorManagerRoundDurationSeconds(),
+            softJailPeriodSeconds: cfg.validatorManagerSoftJailPeriodSeconds(),
+            hardJailPeriodSeconds: cfg.validatorManagerHardJailPeriodSeconds(),
+            jailThreshold: cfg.validatorManagerJailThreshold(),
+            maxFinalizations: cfg.validatorManagerMaxFinalizations(),
+            baseReward: cfg.validatorManagerBaseReward()
         });
+        // [Kroma: END]
+    }
+
+    function _computeProxyAdmin(OPContractsManager opcm, address owner) internal view returns (address) {
+        return opcm.computeDeployProxy(
+            cfg.l2ChainID(), owner, saltMixer, "ProxyAdmin", opcm.blueprints().proxyAdmin, address(opcm)
+        );
     }
 
     /// @notice Reset the initialized value on a proxy contract so that it can be initialized again

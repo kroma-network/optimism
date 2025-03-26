@@ -1,42 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "contract IValidatorManager",
-        "name": "_validatorManager",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_colosseum",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_submissionInterval",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_l2BlockTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_startingBlockNumber",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_startingTimestamp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_finalizationPeriodSeconds",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -106,6 +70,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "colosseum",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -114,6 +91,19 @@
       }
     ],
     "name": "computeL2Timestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "finalizationPeriodSeconds",
     "outputs": [
       {
         "internalType": "uint256",
@@ -266,6 +256,26 @@
   {
     "inputs": [
       {
+        "internalType": "contract IValidatorManager",
+        "name": "_validatorManager",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_colosseum",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_submissionInterval",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_l2BlockTime",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256",
         "name": "_startingBlockNumber",
         "type": "uint256"
@@ -273,6 +283,11 @@
       {
         "internalType": "uint256",
         "name": "_startingTimestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_finalizationPeriodSeconds",
         "type": "uint256"
       }
     ],
@@ -295,6 +310,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2BlockTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -441,6 +469,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "submissionInterval",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -466,6 +507,19 @@
     "name": "submitL2Output",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "validatorManager",
+    "outputs": [
+      {
+        "internalType": "contract IValidatorManager",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

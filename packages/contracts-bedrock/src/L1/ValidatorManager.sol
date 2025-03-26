@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-// Contracts
-import { AssetManager } from "src/L1/AssetManager.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-
 // Libraries
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Atan2 } from "src/libraries/Atan2.sol";
 import { BalancedWeightTree } from "src/libraries/BalancedWeightTree.sol";
@@ -14,13 +11,18 @@ import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Uint128Math } from "src/libraries/Uint128Math.sol";
 
 // Interfaces
+import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
+
+// Contracts
+import { UnstructuredInitializable  } from "src/universal/UnstructuredInitializable.sol";
 
 /// @custom:proxied
 /// @title ValidatorManager
 /// @notice The ValidatorManager manages validator set and determines the next validator who can
 ///         submit the checkpoint output to L2OutputOracle.
-contract ValidatorManager is ISemver {
+contract ValidatorManager is ISemver, UnstructuredInitializable {
     using BalancedWeightTree for BalancedWeightTree.Tree;
     using Uint128Math for uint128;
     using Math for uint256;
@@ -51,7 +53,7 @@ contract ValidatorManager is ISemver {
         ACTIVE
     }
 
-    /// @notice Constructs the constructor parameters of ValidatorManager contract.
+    /// @notice Constructs the initialization parameters of ValidatorManager contract.
     /// @custom:field _l2Oracle                     Address of the L2OutputOracle contract.
     /// @custom:field _assetManager                 Address of the AssetManager contract.
     /// @custom:field _trustedValidator             Address of the trusted validator.
@@ -68,9 +70,9 @@ contract ValidatorManager is ISemver {
     /// @custom:field _baseReward                   Base reward for the validator.
     /// @custom:field _minRegisterAmount            Minimum amount to register as a validator.
     /// @custom:field _minActivateAmount            Minimum amount to activate a validator.
-    struct ConstructorParams {
-        L2OutputOracle _l2Oracle;
-        AssetManager _assetManager;
+    struct InitializationParams {
+        IL2OutputOracle _l2Oracle;
+        IAssetManager _assetManager;
         address _trustedValidator;
         uint128 _commissionChangeDelaySeconds;
         uint128 _roundDurationSeconds;
@@ -107,47 +109,6 @@ contract ValidatorManager is ISemver {
     /// @notice The denominator for the boosted reward.
     uint128 public constant BOOSTED_REWARD_DENOM = 100;
 
-    /// @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
-    L2OutputOracle public immutable L2_ORACLE;
-
-    /// @notice The address of AssetManager contract. Can be updated via upgrade.
-    AssetManager public immutable ASSET_MANAGER;
-
-    /// @notice The address of the trusted validator.
-    address public immutable TRUSTED_VALIDATOR;
-
-    /// @notice Minimum amount to register as a validator. It should be equal or more than
-    ///         ASSET_MANAGER.BOND_AMOUNT.
-    uint128 public immutable MIN_REGISTER_AMOUNT;
-
-    /// @notice Minimum amount to activate a validator and add it to the validator tree.
-    ///         Note that only the active validators can submit outputs.
-    uint128 public immutable MIN_ACTIVATE_AMOUNT;
-
-    /// @notice The delay to finalize the commission rate change of the validator (in seconds).
-    uint128 public immutable COMMISSION_CHANGE_DELAY_SECONDS;
-
-    /// @notice The duration of a submission round for one output (in seconds).
-    ///         Note that there are two submission rounds for an output: PRIORITY ROUND and PUBLIC
-    ///         ROUND.
-    uint128 public immutable ROUND_DURATION_SECONDS;
-
-    /// @notice The minimum duration to get out of jail in output non-submissions penalty (in seconds).
-    uint128 public immutable SOFT_JAIL_PERIOD_SECONDS;
-
-    /// @notice The maximum duration to get out of jail in slashing penalty (in seconds).
-    uint128 public immutable HARD_JAIL_PERIOD_SECONDS;
-
-    /// @notice Maximum allowed number of output non-submissions in priority round before the
-    ///         validator goes to jail.
-    uint128 public immutable JAIL_THRESHOLD;
-
-    /// @notice The max number of outputs to be finalized at once when distributing rewards.
-    uint128 public immutable MAX_OUTPUT_FINALIZATIONS;
-
-    /// @notice Amount of base reward for the validator.
-    uint128 public immutable BASE_REWARD;
-
     /// @notice Address of the next validator with priority for submitting output.
     address internal _nextPriorityValidator;
 
@@ -162,6 +123,47 @@ contract ValidatorManager is ISemver {
 
     /// @notice A mapping of output index challenged successfully to pending challenge rewards.
     mapping(uint256 => uint128) internal _pendingChallengeReward;
+
+    /// @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
+    IL2OutputOracle public l2Oracle;
+
+    /// @notice The address of AssetManager contract. Can be updated via upgrade.
+    IAssetManager public assetManager;
+
+    /// @notice The address of the trusted validator.
+    address public trustedValidator;
+
+    /// @notice Minimum amount to register as a validator. It should be equal or more than
+    ///         ASSET_MANAGER.BOND_AMOUNT.
+    uint128 public minRegisterAmount;
+
+    /// @notice Minimum amount to activate a validator and add it to the validator tree.
+    ///         Note that only the active validators can submit outputs.
+    uint128 public minActiveAmount;
+
+    /// @notice The delay to finalize the commission rate change of the validator (in seconds).
+    uint128 public commissionChangeDelaySeconds;
+
+    /// @notice The duration of a submission round for one output (in seconds).
+    ///         Note that there are two submission rounds for an output: PRIORITY ROUND and PUBLIC
+    ///         ROUND.
+    uint128 public roundDurationSeconds;
+
+    /// @notice The minimum duration to get out of jail in output non-submissions penalty (in seconds).
+    uint128 public softJailPeriodSeconds;
+
+    /// @notice The maximum duration to get out of jail in slashing penalty (in seconds).
+    uint128 public hardJailPeriodSeconds;
+
+    /// @notice Maximum allowed number of output non-submissions in priority round before the
+    ///         validator goes to jail.
+    uint128 public jailThreshold;
+
+    /// @notice The max number of outputs to be finalized at once when distributing rewards.
+    uint128 public maxOutputFinalizations;
+
+    /// @notice Amount of base reward for the validator.
+    uint128 public baseReward;
 
     /// @notice Emitted when registers as a validator.
     /// @param validator      Address of the validator.
@@ -240,8 +242,8 @@ contract ValidatorManager is ISemver {
     /// @notice Reverts when caller is not allowed.
     error NotAllowedCaller();
 
-    /// @notice Reverts when constructor parameters are invalid.
-    error InvalidConstructorParams();
+    /// @notice Reverts when initialization parameters are invalid.
+    error InvalidInitializationParams();
 
     /// @notice Reverts when the status of validator is improper.
     error ImproperValidatorStatus();
@@ -269,19 +271,19 @@ contract ValidatorManager is ISemver {
 
     /// @notice A modifier that only allows L2OutputOracle contract to call.
     modifier onlyL2OutputOracle() {
-        if (msg.sender != address(L2_ORACLE)) revert NotAllowedCaller();
+        if (msg.sender != address(l2Oracle)) revert NotAllowedCaller();
         _;
     }
 
     /// @notice A modifier that only allows Colosseum contract to call.
     modifier onlyColosseum() {
-        if (msg.sender != L2_ORACLE.COLOSSEUM()) revert NotAllowedCaller();
+        if (msg.sender != l2Oracle.COLOSSEUM()) revert NotAllowedCaller();
         _;
     }
 
     /// @notice A modifier that only allows AssetManager contract to call.
     modifier onlyAssetManager() {
-        if (msg.sender != address(ASSET_MANAGER)) revert NotAllowedCaller();
+        if (msg.sender != address(assetManager)) revert NotAllowedCaller();
         _;
     }
 
@@ -290,25 +292,126 @@ contract ValidatorManager is ISemver {
     string public constant version = "1.1.0";
 
     /// @notice Constructs the ValidatorManager contract.
-    /// @param _constructorParams The constructor parameters.
-    constructor(ConstructorParams memory _constructorParams) {
-        if (_constructorParams._minRegisterAmount > _constructorParams._minActivateAmount) {
-            revert InvalidConstructorParams();
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializer.
+    /// @param _initializationParams The initialization parameters.
+    function initialize(InitializationParams memory _initializationParams) public initializer {
+        if (_initializationParams._minRegisterAmount > _initializationParams._minActivateAmount) {
+            revert InvalidInitializationParams();
         }
 
-        L2_ORACLE = _constructorParams._l2Oracle;
-        ASSET_MANAGER = _constructorParams._assetManager;
-        TRUSTED_VALIDATOR = _constructorParams._trustedValidator;
-        MIN_REGISTER_AMOUNT = _constructorParams._minRegisterAmount;
-        MIN_ACTIVATE_AMOUNT = _constructorParams._minActivateAmount;
-        COMMISSION_CHANGE_DELAY_SECONDS = _constructorParams._commissionChangeDelaySeconds;
+        l2Oracle = _initializationParams._l2Oracle;
+        assetManager = _initializationParams._assetManager;
+        trustedValidator = _initializationParams._trustedValidator;
+        minRegisterAmount = _initializationParams._minRegisterAmount;
+        minActiveAmount = _initializationParams._minActivateAmount;
+        commissionChangeDelaySeconds = _initializationParams._commissionChangeDelaySeconds;
         // Note that this value MUST be (SUBMISSION_INTERVAL * L2_BLOCK_TIME) / 2.
-        ROUND_DURATION_SECONDS = _constructorParams._roundDurationSeconds;
-        SOFT_JAIL_PERIOD_SECONDS = _constructorParams._softJailPeriodSeconds;
-        HARD_JAIL_PERIOD_SECONDS = _constructorParams._hardJailPeriodSeconds;
-        JAIL_THRESHOLD = _constructorParams._jailThreshold;
-        MAX_OUTPUT_FINALIZATIONS = _constructorParams._maxOutputFinalizations;
-        BASE_REWARD = _constructorParams._baseReward;
+        roundDurationSeconds = _initializationParams._roundDurationSeconds;
+        softJailPeriodSeconds = _initializationParams._softJailPeriodSeconds;
+        hardJailPeriodSeconds = _initializationParams._hardJailPeriodSeconds;
+        jailThreshold = _initializationParams._jailThreshold;
+        maxOutputFinalizations = _initializationParams._maxOutputFinalizations;
+        baseReward = _initializationParams._baseReward;
+    }
+
+    /// @notice Getter for the l2Oracle address.
+    ///         Public getter is legacy and will be removed in the future. Use `l2Oracle` instead.
+    /// @return Address of the L2OutputOracle contract.
+    /// @custom:legacy
+    function L2_ORACLE() external view returns (IL2OutputOracle) {
+        return l2Oracle;
+    }
+
+    /// @notice Getter for the assetManager address.
+    ///         Public getter is legacy and will be removed in the future. Use `assetManager` instead.
+    /// @return The address of AssetManager contract.
+    /// @custom:legacy
+    function ASSET_MANAGER() external view returns (IAssetManager) {
+        return assetManager;
+    }
+
+    /// @notice Getter for the trustedValidator.
+    ///         Public getter is legacy and will be removed in the future. Use `trustedValidator` instead.
+    /// @return The address of the trusted validator.
+    /// @custom:legacy
+    function TRUSTED_VALIDATOR() external view returns (address) {
+        return trustedValidator;
+    }
+
+    /// @notice Getter for the minRegisterAmount.
+    ///         Public getter is legacy and will be removed in the future. Use `minRegisterAmount` instead.
+    /// @return Minimum amount to register as a validator.
+    /// @custom:legacy
+    function MIN_REGISTER_AMOUNT() external view returns (uint128) {
+        return minRegisterAmount;
+    }
+
+    /// @notice Getter for the minActiveAmount.
+    ///         Public getter is legacy and will be removed in the future. Use `minActiveAmount` instead.
+    /// @return Minimum amount to activate a validator and add it to the validator tree.
+    /// @custom:legacy
+    function MIN_ACTIVATE_AMOUNT() external view returns (uint128) {
+        return minActiveAmount;
+    }
+
+    /// @notice Getter for the commissionChangeDelaySeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `commissionChangeDelaySeconds` instead.
+    /// @return The delay to finalize the commission rate change of the validator (in seconds).
+    /// @custom:legacy
+    function COMMISSION_CHANGE_DELAY_SECONDS() external view returns (uint128) {
+        return commissionChangeDelaySeconds;
+    }
+
+    /// @notice Getter for the roundDurationSeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `roundDurationSeconds` instead.
+    /// @return The duration of a submission round for one output (in seconds).
+    /// @custom:legacy
+    function ROUND_DURATION_SECONDS() external view returns (uint128) {
+        return roundDurationSeconds;
+    }
+
+    /// @notice Getter for the softJailPeriodSeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `softJailPeriodSeconds` instead.
+    /// @return The minimum duration to get out of jail in output non-submissions penalty (in seconds).
+    /// @custom:legacy
+    function SOFT_JAIL_PERIOD_SECONDS() external view returns (uint128) {
+        return softJailPeriodSeconds;
+    }
+
+    /// @notice Getter for the hardJailPeriodSeconds.
+    ///         Public getter is legacy and will be removed in the future. Use `hardJailPeriodSeconds` instead.
+    /// @return The maximum duration to get out of jail in slashing penalty (in seconds).
+    /// @custom:legacy
+    function HARD_JAIL_PERIOD_SECONDS() external view returns (uint128) {
+        return hardJailPeriodSeconds;
+    }
+
+    /// @notice Getter for the jailThreshold.
+    ///         Public getter is legacy and will be removed in the future. Use `jailThreshold` instead.
+    /// @return Maximum allowed number of output non-submissions in priority round before the validator goes to jail.
+    /// @custom:legacy
+    function JAIL_THRESHOLD() external view returns (uint128) {
+        return jailThreshold;
+    }
+
+    /// @notice Getter for the maxOutputFinalizations.
+    ///         Public getter is legacy and will be removed in the future. Use `maxOutputFinalizations` instead.
+    /// @return The max number of outputs to be finalized at once when distributing rewards.
+    /// @custom:legacy
+    function MAX_OUTPUT_FINALIZATIONS() external view returns (uint128) {
+        return maxOutputFinalizations;
+    }
+
+    /// @notice Getter for the baseReward.
+    ///         Public getter is legacy and will be removed in the future. Use `baseReward` instead.
+    /// @return Amount of base reward for the validator.
+    /// @custom:legacy
+    function BASE_REWARD() external view returns (uint128) {
+        return baseReward;
     }
 
     /// @notice Registers as a validator with assets at least MIN_REGISTER_AMOUNT. The validator with
@@ -320,16 +423,16 @@ contract ValidatorManager is ISemver {
     function registerValidator(uint128 assets, uint8 commissionRate, address withdrawAccount) external {
         if (msg.sender.code.length > 0 || msg.sender != tx.origin) revert NotAllowedCaller();
         if (getStatus(msg.sender) != ValidatorStatus.NONE) revert ImproperValidatorStatus();
-        if (assets < MIN_REGISTER_AMOUNT) revert InsufficientAsset();
+        if (assets < minRegisterAmount) revert InsufficientAsset();
         if (commissionRate > COMMISSION_RATE_DENOM) revert MaxCommissionRateExceeded();
 
         Validator storage validatorInfo = _validatorInfo[msg.sender];
         validatorInfo.isInitiated = true;
         validatorInfo.commissionRate = commissionRate;
 
-        ASSET_MANAGER.depositToRegister(msg.sender, assets, withdrawAccount);
+        assetManager.depositToRegister(msg.sender, assets, withdrawAccount);
 
-        bool ready = assets >= MIN_ACTIVATE_AMOUNT;
+        bool ready = assets >= minActiveAmount;
         if (ready) {
             _activateValidator(msg.sender);
         }
@@ -365,8 +468,8 @@ contract ValidatorManager is ISemver {
         _distributeReward();
 
         // Bond validator KRO to reserve slashing amount.
-        address submitter = L2_ORACLE.getSubmitter(outputIndex);
-        ASSET_MANAGER.bondValidatorKro(submitter);
+        address submitter = l2Oracle.getSubmitter(outputIndex);
+        assetManager.bondValidatorKro(submitter);
 
         if (submitter == _nextPriorityValidator) {
             _resetNoSubmissionCount(submitter);
@@ -407,7 +510,7 @@ contract ValidatorManager is ISemver {
         }
 
         uint128 canFinalizeAt = canFinalizeCommissionChangeAt(msg.sender);
-        if (canFinalizeAt == COMMISSION_CHANGE_DELAY_SECONDS) revert NotInitiatedCommissionChange();
+        if (canFinalizeAt == commissionChangeDelaySeconds) revert NotInitiatedCommissionChange();
         if (block.timestamp < canFinalizeAt) revert NotElapsedCommissionChangeDelay();
 
         Validator storage validatorInfo = _validatorInfo[msg.sender];
@@ -441,14 +544,14 @@ contract ValidatorManager is ISemver {
     ///         contract.
     /// @param validator Address of the validator.
     function bondValidatorKro(address validator) external onlyColosseum {
-        ASSET_MANAGER.bondValidatorKro(validator);
+        assetManager.bondValidatorKro(validator);
     }
 
     /// @notice Call ASSET_MANAGER.unbondValidatorKro(). This function is only called by the
     ///         Colosseum contract.
     /// @param validator Address of the validator.
     function unbondValidatorKro(address validator) external onlyColosseum {
-        ASSET_MANAGER.unbondValidatorKro(validator);
+        assetManager.unbondValidatorKro(validator);
     }
 
     /// @notice Slash KRO from the vault of the challenge loser and move the slashing asset to
@@ -460,20 +563,20 @@ contract ValidatorManager is ISemver {
     /// @param winner      Address of the challenge winner.
     /// @param loser       Address of the challenge loser.
     function slash(uint256 outputIndex, address winner, address loser) external onlyColosseum {
-        uint128 challengeReward = ASSET_MANAGER.decreaseBalanceWithChallenge(loser);
+        uint128 challengeReward = assetManager.decreaseBalanceWithChallenge(loser);
 
         emit Slashed(outputIndex, loser, challengeReward);
 
         _sendToJail(loser, false);
 
-        if (L2_ORACLE.nextFinalizeOutputIndex() <= outputIndex) {
+        if (l2Oracle.nextFinalizeOutputIndex() <= outputIndex) {
             // If output is not rewarded yet, add slashing asset to the pending challenge reward.
             unchecked {
                 _pendingChallengeReward[outputIndex] += challengeReward;
             }
         } else {
             // If output is already rewarded, add slashing asset to the winner's asset directly.
-            challengeReward = ASSET_MANAGER.increaseBalanceWithChallenge(winner, challengeReward);
+            challengeReward = assetManager.increaseBalanceWithChallenge(winner, challengeReward);
             updateValidatorTree(winner, false);
 
             emit ChallengeRewardDistributed(outputIndex, winner, challengeReward);
@@ -484,7 +587,7 @@ contract ValidatorManager is ISemver {
     /// @param outputIndex The index of output challenged.
     /// @param loser       Address of the challenge loser.
     function revertSlash(uint256 outputIndex, address loser) external onlyColosseum {
-        uint128 challengeReward = ASSET_MANAGER.revertDecreaseBalanceWithChallenge(loser);
+        uint128 challengeReward = assetManager.revertDecreaseBalanceWithChallenge(loser);
         unchecked {
             _pendingChallengeReward[outputIndex] -= challengeReward;
         }
@@ -493,7 +596,7 @@ contract ValidatorManager is ISemver {
 
         if (inJail(loser)) {
             // Revert jail expiration timestamp of the original loser.
-            uint128 expiresAt = _jail[loser] - HARD_JAIL_PERIOD_SECONDS;
+            uint128 expiresAt = _jail[loser] - hardJailPeriodSeconds;
             if (block.timestamp < expiresAt) {
                 _jail[loser] = expiresAt;
 
@@ -567,7 +670,7 @@ contract ValidatorManager is ISemver {
         if (tryRemove && (status == ValidatorStatus.EXITED || status == ValidatorStatus.INACTIVE)) {
             if (_validatorTree.remove(validator)) emit ValidatorStopped(validator, block.timestamp);
         } else if (status >= ValidatorStatus.INACTIVE) {
-            _validatorTree.update(validator, uint120(ASSET_MANAGER.reflectiveWeight(validator)));
+            _validatorTree.update(validator, uint120(assetManager.reflectiveWeight(validator)));
         }
     }
 
@@ -576,18 +679,18 @@ contract ValidatorManager is ISemver {
     ///         round.
     function nextValidator() public view returns (address) {
         if (_nextPriorityValidator != address(0)) {
-            uint256 l2Timestamp = L2_ORACLE.nextOutputMinL2Timestamp();
+            uint256 l2Timestamp = l2Oracle.nextOutputMinL2Timestamp();
             if (block.timestamp >= l2Timestamp) {
                 uint256 elapsed = block.timestamp - l2Timestamp;
                 // If the current time exceeds one round time, it is a public round.
-                if (elapsed > ROUND_DURATION_SECONDS) {
+                if (elapsed > roundDurationSeconds) {
                     return KromaConstants.VALIDATOR_PUBLIC_ROUND_ADDRESS;
                 }
             }
 
             return _nextPriorityValidator;
         } else {
-            return TRUSTED_VALIDATOR;
+            return trustedValidator;
         }
     }
 
@@ -599,13 +702,13 @@ contract ValidatorManager is ISemver {
             return ValidatorStatus.NONE;
         }
 
-        if (ASSET_MANAGER.totalValidatorKro(validator) < MIN_REGISTER_AMOUNT) {
+        if (assetManager.totalValidatorKro(validator) < minRegisterAmount) {
             return ValidatorStatus.EXITED;
         }
 
         bool activated = _validatorTree.nodeMap[validator] > 0;
 
-        if (ASSET_MANAGER.reflectiveWeight(validator) < MIN_ACTIVATE_AMOUNT) {
+        if (assetManager.reflectiveWeight(validator) < minActiveAmount) {
             if (!activated) {
                 return ValidatorStatus.REGISTERED;
             }
@@ -644,7 +747,7 @@ contract ValidatorManager is ISemver {
     /// @param validator Address of the validator.
     /// @return When commission change of given validator can be finalized.
     function canFinalizeCommissionChangeAt(address validator) public view returns (uint128) {
-        return _validatorInfo[validator].commissionChangeInitiatedAt + COMMISSION_CHANGE_DELAY_SECONDS;
+        return _validatorInfo[validator].commissionChangeInitiatedAt + commissionChangeDelaySeconds;
     }
 
     /// @notice Returns the total weight of activated validators.
@@ -656,7 +759,7 @@ contract ValidatorManager is ISemver {
     /// @notice Private function to activate a validator and adds the validator to validator tree.
     /// @param validator Address of the validator.
     function _activateValidator(address validator) private {
-        _validatorTree.insert(validator, uint120(ASSET_MANAGER.reflectiveWeight(validator)));
+        _validatorTree.insert(validator, uint120(assetManager.reflectiveWeight(validator)));
 
         emit ValidatorActivated(validator, block.timestamp);
     }
@@ -665,25 +768,25 @@ contract ValidatorManager is ISemver {
     ///         submitters.
     /// @return Whether the reward distribution is done at least once or not.
     function _distributeReward() private returns (bool) {
-        uint256 outputIndex = L2_ORACLE.nextFinalizeOutputIndex();
-        uint256 latestOutputIndex = L2_ORACLE.latestOutputIndex();
+        uint256 outputIndex = l2Oracle.nextFinalizeOutputIndex();
+        uint256 latestOutputIndex = l2Oracle.latestOutputIndex();
 
         uint128 finalizedOutputNum = 0;
         address submitter;
 
-        while (finalizedOutputNum < MAX_OUTPUT_FINALIZATIONS && outputIndex <= latestOutputIndex) {
-            if (L2_ORACLE.isFinalized(outputIndex)) {
-                submitter = L2_ORACLE.getSubmitter(outputIndex);
+        while (finalizedOutputNum < maxOutputFinalizations && outputIndex <= latestOutputIndex) {
+            if (l2Oracle.isFinalized(outputIndex)) {
+                submitter = l2Oracle.getSubmitter(outputIndex);
 
-                (uint128 baseReward, uint128 boostedReward, uint128 validatorReward) = _calculateReward(submitter);
+                (uint128 _baseReward, uint128 _boostedReward, uint128 _validatorReward) = _calculateReward(submitter);
 
-                ASSET_MANAGER.increaseBalanceWithReward(submitter, baseReward, boostedReward, validatorReward);
+                assetManager.increaseBalanceWithReward(submitter, _baseReward, _boostedReward, _validatorReward);
 
-                emit RewardDistributed(outputIndex, submitter, validatorReward, baseReward, boostedReward);
+                emit RewardDistributed(outputIndex, submitter, _validatorReward, _baseReward, _boostedReward);
 
                 uint128 challengeReward = _pendingChallengeReward[outputIndex];
                 if (challengeReward > 0) {
-                    challengeReward = ASSET_MANAGER.increaseBalanceWithChallenge(submitter, challengeReward);
+                    challengeReward = assetManager.increaseBalanceWithChallenge(submitter, challengeReward);
                     delete _pendingChallengeReward[outputIndex];
 
                     emit ChallengeRewardDistributed(outputIndex, submitter, challengeReward);
@@ -701,7 +804,7 @@ contract ValidatorManager is ISemver {
         }
 
         if (finalizedOutputNum > 0) {
-            L2_ORACLE.setNextFinalizeOutputIndex(outputIndex);
+            l2Oracle.setNextFinalizeOutputIndex(outputIndex);
 
             return true;
         }
@@ -713,8 +816,8 @@ contract ValidatorManager is ISemver {
     /// @param validator Address of the validator.
     /// @return The boosted reward with the number of KGH.
     function _getBoostedReward(address validator) internal view returns (uint128) {
-        uint128 numKgh = ASSET_MANAGER.totalKghNum(validator);
-        uint128 coefficient = BASE_REWARD.mulDiv(BOOSTED_REWARD_NUMERATOR, BOOSTED_REWARD_DENOM);
+        uint128 numKgh = assetManager.totalKghNum(validator);
+        uint128 coefficient = baseReward.mulDiv(BOOSTED_REWARD_NUMERATOR, BOOSTED_REWARD_DENOM);
         return uint128(Atan2.atan2(numKgh, 100).mulDiv(coefficient, 1 << 40));
     }
 
@@ -724,29 +827,29 @@ contract ValidatorManager is ISemver {
     /// @return The amount of boosted reward.
     /// @return The amount of reward from commission and base reward for the validator.
     function _calculateReward(address validator) internal view returns (uint128, uint128, uint128) {
-        if (validator == ASSET_MANAGER.SECURITY_COUNCIL()) {
-            return (0, 0, BASE_REWARD);
+        if (validator == assetManager.SECURITY_COUNCIL()) {
+            return (0, 0, baseReward);
         }
 
         uint128 commissionRate = _validatorInfo[validator].commissionRate;
-        uint128 boostedReward = _getBoostedReward(validator);
-        uint128 baseReward;
-        uint128 validatorReward;
+        uint128 _boostedReward = _getBoostedReward(validator);
+        uint128 _baseReward;
+        uint128 _validatorReward;
 
         unchecked {
-            validatorReward = (BASE_REWARD + boostedReward).mulDiv(commissionRate, COMMISSION_RATE_DENOM);
-            baseReward = BASE_REWARD.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
-            boostedReward = boostedReward.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
+            _validatorReward = (baseReward + _boostedReward).mulDiv(commissionRate, COMMISSION_RATE_DENOM);
+            _baseReward = baseReward.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
+            _boostedReward = _boostedReward.mulDiv(COMMISSION_RATE_DENOM - commissionRate, COMMISSION_RATE_DENOM);
 
-            uint128 validatorKro = ASSET_MANAGER.totalValidatorKro(validator);
-            uint128 totalKro = ASSET_MANAGER.totalKroAssets(validator);
-            uint128 validatorBaseReward = baseReward.mulDiv(validatorKro, totalKro + validatorKro);
+            uint128 validatorKro = assetManager.totalValidatorKro(validator);
+            uint128 totalKro = assetManager.totalKroAssets(validator);
+            uint128 validatorBaseReward = _baseReward.mulDiv(validatorKro, totalKro + validatorKro);
             // Exclude the base reward for the validator from total base reward given to KRO delegators.
-            baseReward -= validatorBaseReward;
-            validatorReward += validatorBaseReward;
+            _baseReward -= validatorBaseReward;
+            _validatorReward += validatorBaseReward;
         }
 
-        return (baseReward, boostedReward, validatorReward);
+        return (_baseReward, _boostedReward, _validatorReward);
     }
 
     /// @notice Updates next priority validator address. Validators with more delegation tokens have
@@ -754,10 +857,10 @@ contract ValidatorManager is ISemver {
     ///         last finalized output root.
     function _updatePriorityValidator() private {
         uint120 weightSum = activatedValidatorTotalWeight();
-        uint256 nextFinalizeOutputIndex = L2_ORACLE.nextFinalizeOutputIndex();
+        uint256 nextFinalizeOutputIndex = l2Oracle.nextFinalizeOutputIndex();
 
         if (weightSum > 0 && nextFinalizeOutputIndex > 0) {
-            KromaTypes.CheckpointOutput memory output = L2_ORACLE.getL2Output(nextFinalizeOutputIndex - 1);
+            KromaTypes.CheckpointOutput memory output = l2Oracle.getL2Output(nextFinalizeOutputIndex - 1);
 
             uint120 weight = uint120(
                 uint256(
@@ -785,7 +888,7 @@ contract ValidatorManager is ISemver {
     function _tryJail() private {
         if (_nextPriorityValidator == address(0)) return;
 
-        if (_validatorInfo[_nextPriorityValidator].noSubmissionCount >= JAIL_THRESHOLD) {
+        if (_validatorInfo[_nextPriorityValidator].noSubmissionCount >= jailThreshold) {
             _sendToJail(_nextPriorityValidator, true);
         } else {
             unchecked {
@@ -798,7 +901,7 @@ contract ValidatorManager is ISemver {
     /// @param validator Address of the validator.
     /// @param isSoft    Whether the jail is soft or hard.
     function _sendToJail(address validator, bool isSoft) private {
-        uint128 jailSeconds = isSoft ? SOFT_JAIL_PERIOD_SECONDS : HARD_JAIL_PERIOD_SECONDS;
+        uint128 jailSeconds = isSoft ? softJailPeriodSeconds : hardJailPeriodSeconds;
         uint128 expiresAt = _jail[validator].max(uint128(block.timestamp)) + jailSeconds;
         _jail[validator] = expiresAt;
 

@@ -7,17 +7,18 @@ import { Colosseum } from "src/L1/Colosseum.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
 
 /// @custom:proxied
 /// @title SecurityCouncil
 /// @notice SecurityCouncil receives validation requests for specific output data,
 ///         and allows security council parties to validate & agree on transactions before execution.
 contract SecurityCouncil is TokenMultiSigWallet, ISemver {
-    /// @notice The address of the colosseum contract. Can be updated via upgrade.
-    address public immutable COLOSSEUM;
-
     /// @notice A mapping of outputs requested to be deleted.
     mapping(uint256 => bool) public outputsDeleteRequested;
+
+    /// @notice The address of the colosseum contract. Can be updated via upgrade.
+    address public colosseum;
 
     /// @notice Emitted when a validation request is submitted.
     /// @param transactionId Index of the submitted transaction.
@@ -32,7 +33,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
 
     /// @notice Disallow calls from anyone except Colosseum.
     modifier onlyColosseum() {
-        require(msg.sender == COLOSSEUM, "SecurityCouncil: only the colosseum contract can be a sender");
+        require(msg.sender == colosseum, "SecurityCouncil: only the colosseum contract can be a sender");
         _;
     }
 
@@ -41,10 +42,30 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
     string public constant version = "1.1.0";
 
     /// @notice Constructs the SecurityCouncil contract.
-    /// @param _colosseum Address of the Colosseum contract.
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializer
+    /// @param _colosseum The address of the Colosseum contract.
     /// @param _governor  Address of Governor contract.
-    constructor(address _colosseum, address payable _governor) TokenMultiSigWallet(_governor) {
-        COLOSSEUM = _colosseum;
+    function initialize(address _colosseum, address payable _governor) public reinitializer(2) {
+        __SecurityCouncil_init(_governor);
+        colosseum = _colosseum;
+    }
+
+    /// @notice Internal function for safe initializing.
+    /// @param _governor  Address of Governor contract.
+    function __SecurityCouncil_init(address payable _governor) internal onlyInitializing {
+        __TokenMultiSigWallet_init(_governor);
+    }
+
+    /// @notice Getter for the colosseum address.
+    ///         Public getter is legacy and will be removed in the future. Use `colosseum` instead.
+    /// @return Address of the colosseum.
+    /// @custom:legacy
+    function COLOSSEUM() external view returns (address) {
+        return colosseum;
     }
 
     /// @notice Allows the Colosseum to request for validate output data.
@@ -66,7 +87,7 @@ contract SecurityCouncil is TokenMultiSigWallet, ISemver {
             "SecurityCouncil: the output has already been requested to be deleted"
         );
         bytes memory message = abi.encodeWithSelector(Colosseum.forceDeleteOutput.selector, _outputIndex);
-        uint256 transactionId = submitTransaction(address(COLOSSEUM), 0, message);
+        uint256 transactionId = submitTransaction(address(colosseum), 0, message);
         // auto-confirmed by requester
         confirmTransaction(transactionId);
         outputsDeleteRequested[_outputIndex] = true;

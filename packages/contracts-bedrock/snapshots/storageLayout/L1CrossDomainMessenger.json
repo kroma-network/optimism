@@ -88,7 +88,7 @@
     "label": "portal",
     "offset": 0,
     "slot": "150",
-    "type": "contract IKromaPortal"
+    "type": "contract IOptimismPortal"
   },
   {
     "bytes": "20",
