@@ -16,13 +16,13 @@ import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
 // Contracts
-import { DynamicInitializable  } from "src/universal/DynamicInitializable .sol";
+import { UnstructuredInitializable  } from "src/universal/UnstructuredInitializable.sol";
 
 /// @custom:proxied
 /// @title ValidatorManager
 /// @notice The ValidatorManager manages validator set and determines the next validator who can
 ///         submit the checkpoint output to L2OutputOracle.
-contract ValidatorManager is ISemver, DynamicInitializable {
+contract ValidatorManager is ISemver, UnstructuredInitializable {
     using BalancedWeightTree for BalancedWeightTree.Tree;
     using Uint128Math for uint128;
     using Math for uint256;

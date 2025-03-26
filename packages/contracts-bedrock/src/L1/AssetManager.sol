@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { DynamicInitializable  } from "src/universal/DynamicInitializable .sol";
+import { UnstructuredInitializable  } from "src/universal/UnstructuredInitializable.sol";
 
 // Libraries
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -20,7 +20,7 @@ import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 /// @title AssetManager
 /// @notice AssetManager is a contract that handles (un)delegations of KRO and KGH, and the
 ///         distribution of rewards to the delegators and the validator.
-contract AssetManager is ISemver, IERC721Receiver, DynamicInitializable {
+contract AssetManager is ISemver, IERC721Receiver, UnstructuredInitializable {
     using SafeERC20 for IERC20;
     using Uint128Math for uint128;
 
