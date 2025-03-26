@@ -844,10 +844,6 @@ type KromaFaultProofDeployConfig struct {
 	// The latency value of the L2 proposal executing(unit:second)
 	L2TimeLockMinDelaySeconds uint64 `json:"l2TimeLockMinDelaySeconds"`
 
-	ZKVerifierHashScalar *hexutil.Big `json:"zkVerifierHashScalar"`
-	ZKVerifierM56Px      *hexutil.Big `json:"zkVerifierM56Px"`
-	ZKVerifierM56Py      *hexutil.Big `json:"zkVerifierM56Py"`
-
 	// ZKProofVerifierSP1Verifier is the address of the SP1VerifierGateway contract.
 	ZKProofVerifierSP1Verifier common.Address `json:"zkProofVerifierSP1Verifier"`
 	// ZKProofVerifierVKey is the verification key for the zkVM program.
@@ -1160,8 +1156,6 @@ type L1Deployments struct {
 	ValidatorManager          common.Address `json:"ValidatorManager"`
 	ValidatorManagerProxy     common.Address `json:"ValidatorManagerProxy"`
 	ZKMerkleTrie              common.Address `json:"ZKMerkleTrie"`
-	ZKVerifier                common.Address `json:"ZKVerifier"`
-	ZKVerifierProxy           common.Address `json:"ZKVerifierProxy"`
 	ZKProofVerifier           common.Address `json:"ZKProofVerifier"`
 	ZKProofVerifierProxy      common.Address `json:"ZKProofVerifierProxy"`
 	// [Kroma: END]
