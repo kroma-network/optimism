@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-/// @title DynamicInitializable
+/// @title UnstructuredInitializable
 /// @notice Proxy-safe initializer logic with version tracking, allowing initialization and reinitialization
 ///         using dynamically assigned storage slots. Designed for upgradeable contracts.
-abstract contract DynamicInitializable {
+abstract contract UnstructuredInitializable {
     /// @notice The storage slot that holds the initialized version of the contract.
-    /// @dev    Slot: `bytes32(uint256(keccak256("initializable.dynamic.initialized")) - 1)`
+    /// @dev    Slot: `bytes32(uint256(keccak256("unstructured.initializable.initialized")) - 1)`
     bytes32 internal constant _INITIALIZED_SLOT =
-        0xdce1487834563344805069907c71c21ed215aa325e782a45fba464598c724d5f;
+        0xb25dec660ce7a75ea4eb44c1b5224935800fab1a1f943d17d507a18ac7a572ed;
 
     /// @notice The storage slot that tracks whether the contract is in the middle of initializing.
-    /// @dev    Slot: `bytes32(uint256(keccak256("initializable.dynamic.initializing")) - 1)`
+    /// @dev    Slot: `bytes32(uint256(keccak256("unstructured.initializable.initializing")) - 1)`
     bytes32 internal constant _INITIALIZING_SLOT =
-        0xa087681743c4d5a51783217156afb13546a4b1765274fae6966078bdcc8caa91;
+        0xd16b04d7a8aa3daae4087064b34e44bdfbd8a7259d9f2873842472ff4fff712a;
 
     /// @notice Emitted whenever the contract is initialized or reinitialized.
     /// @param version The version number that was initialized.

@@ -5,10 +5,10 @@ pragma solidity 0.8.15;
 import "forge-std/Test.sol";
 
 // Contracts
-import {DynamicInitializable} from "src/universal/DynamicInitializable .sol";
+import {UnstructuredInitializable} from "src/universal/UnstructuredInitializable.sol";
 
-/// @dev A simple contract that inherits DynamicInitializable .sol for testing.
-contract TestContract is DynamicInitializable {
+/// @dev A simple contract that inherits UnstructuredInitializable for testing.
+contract TestContract is UnstructuredInitializable {
     uint256 public value;
 
     function initialize(uint256 _value) external initializer {
@@ -30,7 +30,7 @@ contract TestContract is DynamicInitializable {
 }
 
 /// @dev A contract to verify _INITIALIZING_SLOT state during initialization.
-contract InitInspector is DynamicInitializable {
+contract InitInspector is UnstructuredInitializable {
     address public callerDuringInit;
     bool public seenInitializing;
 
@@ -44,14 +44,14 @@ contract InitInspector is DynamicInitializable {
     }
 }
 
-contract DynamicInitializableTest is Test {
+contract UnstructuredInitializableTest is Test {
     TestContract internal testContract;
 
     // Expected slot values
     bytes32 internal constant EXPECTED_INITIALIZED_SLOT =
-        0xdce1487834563344805069907c71c21ed215aa325e782a45fba464598c724d5f;
+        0xb25dec660ce7a75ea4eb44c1b5224935800fab1a1f943d17d507a18ac7a572ed;
     bytes32 internal constant EXPECTED_INITIALIZING_SLOT =
-        0xa087681743c4d5a51783217156afb13546a4b1765274fae6966078bdcc8caa91;
+        0xd16b04d7a8aa3daae4087064b34e44bdfbd8a7259d9f2873842472ff4fff712a;
 
     function setUp() public {
         testContract = new TestContract();
