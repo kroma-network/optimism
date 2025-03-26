@@ -35,23 +35,9 @@
     "type": "mapping(uint256 => uint128)"
   },
   {
-    "bytes": "1",
-    "label": "_initialized",
-    "offset": 0,
-    "slot": "7",
-    "type": "uint8"
-  },
-  {
-    "bytes": "1",
-    "label": "_initializing",
-    "offset": 1,
-    "slot": "7",
-    "type": "bool"
-  },
-  {
     "bytes": "20",
     "label": "l2Oracle",
-    "offset": 2,
+    "offset": 0,
     "slot": "7",
     "type": "contract IL2OutputOracle"
   },

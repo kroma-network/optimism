@@ -7,23 +7,9 @@
     "type": "mapping(address => struct AssetManager.Vault)"
   },
   {
-    "bytes": "1",
-    "label": "_initialized",
-    "offset": 0,
-    "slot": "1",
-    "type": "uint8"
-  },
-  {
-    "bytes": "1",
-    "label": "_initializing",
-    "offset": 1,
-    "slot": "1",
-    "type": "bool"
-  },
-  {
     "bytes": "20",
     "label": "assetToken",
-    "offset": 2,
+    "offset": 0,
     "slot": "1",
     "type": "contract IERC20"
   },
