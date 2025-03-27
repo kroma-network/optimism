@@ -16,6 +16,7 @@ import { IProxyAdmin } from "interfaces/universal/IProxyAdmin.sol";
 import { IProxy } from "interfaces/universal/IProxy.sol";
 import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IColosseum } from "interfaces/L1/IColosseum.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
@@ -27,19 +28,30 @@ import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 /// @title KromaDeployer
-/// @notice Library for deploying and initializing all Kroma L1 contracts.
-/// @dev Called from top-level deployment script (e.g. Deploy.s.sol).
+/// @notice Deploys and initializes all contracts related to the Kroma L1 system.
+///         This includes both implementation contracts and proxies.
+/// @dev Used as a library from top-level deploy scripts like `deploy.s.sol`.
 library KromaDeployer {
-    /// @notice Deploys all implementation contracts.
-    function deployImpls(
+    /// @notice Deploys all Kroma L1 contracts as proxy patterns and sets initial logic/ownership.
+    /// @param deployProxy Function used to deploy EIP-1967 proxy instances.
+    /// @param deployImpl Function used to deploy logic (implementation) contracts.
+    /// @param proxyAdmin The ProxyAdmin contract managing upgrade rights.
+    /// @param input Struct containing deployment and initialization parameters.
+    /// @param vm Forge's cheatcode interface for broadcast control.
+    /// @return output Struct containing all deployed proxy contract addresses.
+    function deployAll(
+        function(string memory) returns (address) deployProxy,
         function(string memory, bytes memory) returns (address) deployImpl,
-        KromaDeployInput memory input
+        IProxyAdmin proxyAdmin,
+        KromaDeployInput memory input,
+        Vm vm
     )
         internal
         returns (KromaDeployOutput memory output)
     {
-        console.log("   > Deploying all implementation contracts");
+        console.log("[Kroma Deploy] Deploying implementations...");
 
+        // ========== Implementation Contracts ========== //
         output.assetManagerImpl = IAssetManager(deployImpl("AssetManager", abi.encode()));
         output.colosseumImpl = IColosseum(deployImpl("Colosseum", abi.encode()));
         output.securityCouncilImpl = ISecurityCouncil(deployImpl("SecurityCouncil", abi.encode()));
@@ -47,6 +59,7 @@ library KromaDeployer {
         output.timeLockImpl = ITimeLock(payable(deployImpl("TimeLock", abi.encode())));
         output.upgradeGovernorImpl = IUpgradeGovernor(payable(deployImpl("UpgradeGovernor", abi.encode())));
         output.validatorManagerImpl = IValidatorManager(deployImpl("ValidatorManager", abi.encode()));
+
         output.zkProofVerifierImpl = IZKProofVerifier(
             deployImpl(
                 "ZKProofVerifier",
@@ -59,18 +72,7 @@ library KromaDeployer {
             )
         );
 
-        return output;
-    }
-
-    /// @notice Deploys all proxy contracts.
-    function deployProxies(
-        function(string memory) returns (address) deployProxy,
-        KromaDeployOutput memory output
-    )
-        internal
-        returns (KromaDeployOutput memory)
-    {
-        console.log("   > [Proxy] Deploying proxy contracts");
+        console.log("[Kroma Deploy] Deploying proxies...");
 
         output.assetManagerProxy = IAssetManager(payable(deployProxy("AssetManagerProxy")));
         output.colosseumProxy = IColosseum(payable(deployProxy("ColosseumProxy")));
@@ -82,63 +84,54 @@ library KromaDeployer {
         output.zkProofVerifierProxy = IZKProofVerifier(payable(deployProxy("ZKProofVerifierProxy")));
         output.kromaGovernanceTokenProxy = IKromaGovernanceToken(payable(deployProxy("KromaGovernanceTokenProxy")));
 
-        console.log("    > All proxy contracts deployed");
-        return output;
-    }
+        console.log("[Kroma Deploy] Proxies deployed.");
 
-    /// @notice Upgrades and initializes all proxy contracts with their implementations.
-    function upgradeAndInitializeProxies(
-        IProxyAdmin proxyAdmin,
-        KromaDeployInput memory input,
-        function(string memory) view returns (address payable) mustGetAddress,
-        Vm vm
-    )
-        internal
-    {
-        console.log("   > [Upgrade] Initializing and upgrading proxies");
+        // ========== Proxy Upgrade & Initialization ========== //
+        console.log("[Kroma Deploy] Upgrading and initializing proxies...");
 
-        vm.startBroadcast(msg.sender);
+        vm.startBroadcast();
 
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("AssetManagerProxy")),
-            mustGetAddress("AssetManager"),
-            KromaInitializers.encodeAssetManagerInitializer(input, mustGetAddress)
+            payable(address(output.assetManagerProxy)),
+            address(output.assetManagerImpl),
+            KromaInitializers.encodeAssetManagerInitializer(input, output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("ColosseumProxy")),
-            mustGetAddress("Colosseum"),
-            KromaInitializers.encodeColosseumInitializer(input, mustGetAddress)
+            payable(address(output.colosseumProxy)),
+            address(output.colosseumImpl),
+            KromaInitializers.encodeColosseumInitializer(input, output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("SecurityCouncilProxy")),
-            mustGetAddress("SecurityCouncil"),
-            KromaInitializers.encodeSecurityCouncilInitializer(mustGetAddress)
+            payable(address(output.securityCouncilProxy)),
+            address(output.securityCouncilImpl),
+            KromaInitializers.encodeSecurityCouncilInitializer(output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("SecurityCouncilTokenProxy")),
-            mustGetAddress("SecurityCouncilToken"),
-            KromaInitializers.encodeSecurityCouncilTokenInitializer(mustGetAddress)
+            payable(address(output.securityCouncilTokenProxy)),
+            address(output.securityCouncilTokenImpl),
+            KromaInitializers.encodeSecurityCouncilTokenInitializer(output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("TimeLockProxy")),
-            mustGetAddress("TimeLock"),
-            KromaInitializers.encodeTimeLockInitializer(input, mustGetAddress)
+            payable(address(output.timeLockProxy)),
+            address(output.timeLockImpl),
+            KromaInitializers.encodeTimeLockInitializer(input, output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("UpgradeGovernorProxy")),
-            mustGetAddress("UpgradeGovernor"),
-            KromaInitializers.encodeUpgradeGovernorInitializer(input, mustGetAddress)
+            payable(address(output.upgradeGovernorProxy)),
+            address(output.upgradeGovernorImpl),
+            KromaInitializers.encodeUpgradeGovernorInitializer(input, output)
         );
         proxyAdmin.upgradeAndCall(
-            payable(mustGetAddress("ValidatorManagerProxy")),
-            mustGetAddress("ValidatorManager"),
-            KromaInitializers.encodeValidatorManagerInitializer(input, mustGetAddress)
+            payable(address(output.validatorManagerProxy)),
+            address(output.validatorManagerImpl),
+            KromaInitializers.encodeValidatorManagerInitializer(input, output)
         );
-
-        proxyAdmin.upgrade(payable(mustGetAddress("ZKProofVerifierProxy")), mustGetAddress("ZKProofVerifier"));
+        proxyAdmin.upgrade(payable(address(output.zkProofVerifierProxy)), address(output.zkProofVerifierImpl));
 
         vm.stopBroadcast();
 
-        console.log("    > All proxies upgraded and initialized");
+        console.log("[Kroma Deploy] All contracts deployed, initialized, and verified successfully.");
+
+        return output;
     }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 // Interfaces
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IColosseum } from "interfaces/L1/IColosseum.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
@@ -21,7 +21,7 @@ struct KromaDeployInput {
     uint128 minDelegationPeriod;
     uint128 bondAmount;
     // Colosseum
-    IKromaL2OutputOracle l2OutputOracle;
+    IL2OutputOracle l2OutputOracle;
     uint256 submissionInterval;
     uint256 creationPeriodSeconds;
     uint256 bisectionTimeout;
