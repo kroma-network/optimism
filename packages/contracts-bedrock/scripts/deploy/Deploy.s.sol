@@ -23,6 +23,11 @@ import {
     DeployImplementationsInterop,
     DeployImplementationsOutput
 } from "scripts/deploy/DeployImplementations.s.sol";
+import { KromaInitializers } from "scripts/deploy/kroma/KromaInitializers.sol";
+import { KromaDeployer } from "scripts/deploy/kroma/KromaDeployer.sol";
+import { KromaConfigBuilder } from "scripts/deploy/kroma/KromaConfigBuilder.sol";
+import { KromaDeployInput, KromaDeployOutput } from "scripts/deploy/kroma/KromaDeployTypes.sol";
+import { KromaPostDeployAssertions, KromaChainAssertions } from "scripts/deploy/kroma/KromaChainAssertions.sol";
 
 // Contracts
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
@@ -221,6 +226,44 @@ contract Deploy is Deployer {
             );
             vm.stopPrank();
         } else {
+            // [Kroma: START]
+
+            // Step 1: Build the deployment input for the Kroma system.
+            // This uses values from the global deployment config (cfg).
+            KromaDeployInput memory kromaInput = KromaConfigBuilder.fromConfig(cfg);
+
+            // Step 2: Precompute the deterministic address of the L2OutputOracle proxy.
+            // This proxy address is injected into the deployment input because it is used as a constructor
+            // parameter in some Kroma contracts before the actual deployment occurs.
+            kromaInput.l2OutputOracle =
+                IL2OutputOracle(calculateERC1967ProxyWithOwner("L2OutputOracleProxy", mustGetAddress("ProxyAdmin")));
+
+            // Step 3: Deploy and initialize all Kroma L1 contracts (both implementations and proxies).
+            // - deployImpl: function to deploy logic (implementation) contracts
+            // - deployProxy: function to deploy ERC1967 proxy contracts
+            // - proxyAdmin: the ProxyAdmin responsible for managing upgrades
+            // - input: the deployment input configuration
+            // - vm: Forge cheatcode interface used for broadcasting
+            KromaDeployOutput memory kromaOutput = KromaDeployer.deployAll({
+                deployProxy: deployERC1967Proxy,
+                deployImpl: deployImpl,
+                proxyAdmin: IProxyAdmin(payable(mustGetAddress("ProxyAdmin"))),
+                input: kromaInput,
+                vm: vm
+            });
+
+            // Step 4a: Run post-deployment assertions on the implementation contracts.
+            // These assertions verify that the implementation contracts were deployed correctly and are uninitialized.
+            // isProxy = false
+            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, false);
+
+            // Step 4b: Run post-deployment assertions on the proxy contracts.
+            // These assertions ensure that the proxies were properly upgraded and initialized.
+            // isProxy = true
+            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, true);
+
+            // [Kroma: END]
+
             // The L2OutputOracle is not deployed by the OPCM, we deploy the proxy and initialize it here.
             deployERC1967Proxy("L2OutputOracleProxy");
             initializeL2OutputOracle();
@@ -547,6 +590,18 @@ contract Deploy is Deployer {
             })
         );
         addr_ = address(dac);
+    }
+
+    /// @notice Deploys an implementation contract using CREATE1 with the given name and constructor arguments.
+    /// @dev This function wraps `DeployUtils.create1` and adds labeling for improved traceability in debugging.
+    /// @param _name The name of the contract being deployed.
+    /// @param _data ABI-encoded constructor arguments for the contract.
+    /// @return impl The address of the deployed implementation contract.
+    function deployImpl(string memory _name, bytes memory _data) public returns (address impl) {
+        vm.startBroadcast(msg.sender);
+        impl = DeployUtils.create1({ _name: _name, _args: _data });
+        vm.stopBroadcast();
+        vm.label(impl, string.concat(_name, "Impl"));
     }
 
     ////////////////////////////////////////////////////////////////
