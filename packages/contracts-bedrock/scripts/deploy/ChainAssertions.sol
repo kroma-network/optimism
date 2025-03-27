@@ -352,14 +352,10 @@ library ChainAssertions {
             require(oracle.submissionInterval() == _cfg.l2OutputOracleSubmissionInterval(), "CHECK-L2OO-30");
             require(oracle.L2_BLOCK_TIME() == _cfg.l2BlockTime(), "CHECK-L2OO-40");
             require(oracle.l2BlockTime() == _cfg.l2BlockTime(), "CHECK-L2OO-50");
-            require(address(oracle.VALIDATOR_MANAGER()) == address(_contracts.ValidatorManager), "CHECK-L200-60");
-            require(address(oracle.validatorManager()) == address(_contracts.ValidatorManager), "CHECK-L200-70");
-            require(oracle.COLOSSEUM() == address(_contracts.Colosseum), "CHECK-L2OO-80");
-            require(oracle.colosseum() == address(_contracts.Colosseum), "CHECK-L2OO-90");
-            require(oracle.FINALIZATION_PERIOD_SECONDS() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-100");
-            require(oracle.finalizationPeriodSeconds() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-110");
-            require(oracle.startingBlockNumber() == _cfg.l2OutputOracleStartingBlockNumber(), "CHECK-L2OO-120");
-            require(oracle.startingTimestamp() == _l2OutputOracleStartingTimestamp, "CHECK-L2OO-130");
+            require(oracle.FINALIZATION_PERIOD_SECONDS() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-60");
+            require(oracle.finalizationPeriodSeconds() == _cfg.finalizationPeriodSeconds(), "CHECK-L2OO-70");
+            require(oracle.startingBlockNumber() == _cfg.l2OutputOracleStartingBlockNumber(), "CHECK-L2OO-80");
+            require(oracle.startingTimestamp() == _l2OutputOracleStartingTimestamp, "CHECK-L2OO-90");
         } else {
             require(oracle.SUBMISSION_INTERVAL() == 1, "CHECK-L2OO-140");
             require(oracle.submissionInterval() == 1, "CHECK-L2OO-150");

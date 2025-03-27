@@ -52,7 +52,6 @@ import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
 import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
 import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
-import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 // See DeploySuperchain.s.sol for detailed comments on the script architecture used here.
 contract DeployImplementationsInput is BaseDeployIO {
@@ -63,12 +62,6 @@ contract DeployImplementationsInput is BaseDeployIO {
     uint256 internal _proofMaturityDelaySeconds;
     uint256 internal _disputeGameFinalityDelaySeconds;
     uint256 internal _mipsVersion;
-
-    // [Kroma: START]
-    /// @notice Deploy configs for ZKProofVerifier.
-    ISP1Verifier internal _sp1Verifier;
-    bytes32 internal _vKey;
-    // [Kroma: END]
 
     // This is used in opcm to signal which version of the L1 smart contracts is deployed.
     // It takes the format of `op-contracts/v*.*.*`.
@@ -112,17 +105,11 @@ contract DeployImplementationsInput is BaseDeployIO {
         require(_addr != address(0), "DeployImplementationsInput: cannot set zero address");
         if (_sel == this.superchainConfigProxy.selector) _superchainConfigProxy = ISuperchainConfig(_addr);
         else if (_sel == this.protocolVersionsProxy.selector) _protocolVersionsProxy = IProtocolVersions(_addr);
-        // [Kroma: START]
-        else if (_sel == this.sp1Verifier.selector) _sp1Verifier = ISP1Verifier(_addr);
-        // [Kroma: END]
         else revert("DeployImplementationsInput: unknown selector");
     }
 
     function set(bytes4 _sel, bytes32 _value) public {
         if (_sel == this.salt.selector) _salt = _value;
-        // [Kroma: START]
-        else if (_sel == this.vKey.selector) _vKey = _value;
-        // [Kroma: END]
         else revert("DeployImplementationsInput: unknown selector");
     }
 
@@ -183,17 +170,6 @@ contract DeployImplementationsInput is BaseDeployIO {
         require(address(_protocolVersionsProxy) != address(0), "DeployImplementationsInput: not set");
         return _protocolVersionsProxy;
     }
-
-    function sp1Verifier() public view returns (ISP1Verifier) {
-        require(address(_sp1Verifier) != address(0), "DeployImplementationsInput: sp1Verifier not set");
-        return _sp1Verifier;
-    }
-
-    function vKey() public view returns (bytes32) {
-        require(_vKey != bytes32(0), "DeployImplementationsInput: vKey not set");
-        return _vKey;
-    }
-    // [Kroma: END]
 }
 
 contract DeployImplementationsOutput is BaseDeployIO {
@@ -208,18 +184,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
     IL1StandardBridge internal _l1StandardBridgeImpl;
     IOptimismMintableERC20Factory internal _optimismMintableERC20FactoryImpl;
     IDisputeGameFactory internal _disputeGameFactoryImpl;
-
-    // [Kroma: START]
-    IAssetManager internal _assetManagerImpl;
-    IColosseum internal _colosseumImpl;
-    IL2OutputOracle internal _l2OutputOracleImpl;
-    ISecurityCouncil internal _securityCouncilImpl;
-    ISecurityCouncilToken internal _securityCouncilTokenImpl;
-    ITimeLock internal _timeLockImpl;
-    IUpgradeGovernor internal _upgradeGovernorImpl;
-    IValidatorManager internal _validatorManagerImpl;
-    IZKProofVerifier internal _zkProofVerifierImpl;
-    // [Kroma: END]
 
     function set(bytes4 _sel, address _addr) public {
         require(_addr != address(0), "DeployImplementationsOutput: cannot set zero address");
@@ -236,17 +200,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
         else if (_sel == this.l1StandardBridgeImpl.selector) _l1StandardBridgeImpl = IL1StandardBridge(payable(_addr));
         else if (_sel == this.optimismMintableERC20FactoryImpl.selector) _optimismMintableERC20FactoryImpl = IOptimismMintableERC20Factory(_addr);
         else if (_sel == this.disputeGameFactoryImpl.selector) _disputeGameFactoryImpl = IDisputeGameFactory(_addr);
-        // [Kroma: START]
-        else if (_sel == this.assetManagerImpl.selector) _assetManagerImpl = IAssetManager(_addr);
-        else if (_sel == this.colosseumImpl.selector) _colosseumImpl = IColosseum(_addr);
-        else if (_sel == this.l2OutputOracleImpl.selector) _l2OutputOracleImpl = IL2OutputOracle(_addr);
-        else if (_sel == this.securityCouncilImpl.selector) _securityCouncilImpl = ISecurityCouncil(_addr);
-        else if (_sel == this.securityCouncilTokenImpl.selector) _securityCouncilTokenImpl = ISecurityCouncilToken(_addr);
-        else if (_sel == this.timeLockImpl.selector) _timeLockImpl = ITimeLock(payable(_addr));
-        else if (_sel == this.upgradeGovernorImpl.selector) _upgradeGovernorImpl = IUpgradeGovernor(payable(_addr));
-        else if (_sel == this.validatorManagerImpl.selector) _validatorManagerImpl = IValidatorManager(_addr);
-        else if (_sel == this.zkProofVerifierImpl.selector) _zkProofVerifierImpl = IZKProofVerifier(_addr);
-        // [Kroma: END]
         else revert("DeployImplementationsOutput: unknown selector");
         // forgefmt: disable-end
     }
@@ -271,18 +224,7 @@ contract DeployImplementationsOutput is BaseDeployIO {
             address(this.disputeGameFactoryImpl())
         );
 
-        address[] memory addrs3 = Solarray.addresses(
-            address(this.assetManagerImpl()),
-            address(this.colosseumImpl()),
-            address(this.securityCouncilImpl()),
-            address(this.securityCouncilTokenImpl()),
-            address(this.timeLockImpl()),
-            address(this.upgradeGovernorImpl()),
-            address(this.validatorManagerImpl()),
-            address(this.zkProofVerifierImpl())
-        );
-
-        DeployUtils.assertValidContractAddresses(Solarray.extend(Solarray.extend(addrs1, addrs2), addrs3));
+        DeployUtils.assertValidContractAddresses(Solarray.extend(addrs1, addrs2));
 
         assertValidDeploy(_dii);
     }
@@ -342,58 +284,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
         return _disputeGameFactoryImpl;
     }
 
-    // [Kroma: START]
-    function assetManagerImpl() public view returns (IAssetManager) {
-        require(address(_assetManagerImpl) != address(0), "DeployImplementationsOutput: assetManagerImpl not set");
-        return _assetManagerImpl;
-    }
-
-    function colosseumImpl() public view returns (IColosseum) {
-        require(address(_colosseumImpl) != address(0), "DeployImplementationsOutput: colosseumImpl not set");
-        return _colosseumImpl;
-    }
-
-    function l2OutputOracleImpl() public view returns (IL2OutputOracle) {
-        require(address(_l2OutputOracleImpl) != address(0), "DeployImplementationsOutput: l2OutputOracleImpl not set");
-        return _l2OutputOracleImpl;
-    }
-
-    function securityCouncilImpl() public view returns (ISecurityCouncil) {
-        require(address(_securityCouncilImpl) != address(0), "DeployImplementationsOutput: securityCouncilImpl not set");
-        return _securityCouncilImpl;
-    }
-
-    function securityCouncilTokenImpl() public view returns (ISecurityCouncilToken) {
-        require(
-            address(_securityCouncilTokenImpl) != address(0),
-            "DeployImplementationsOutput: securityCouncilTokenImpl not set"
-        );
-        return _securityCouncilTokenImpl;
-    }
-
-    function timeLockImpl() public view returns (ITimeLock) {
-        require(address(_timeLockImpl) != address(0), "DeployImplementationsOutput: timeLockImpl not set");
-        return _timeLockImpl;
-    }
-
-    function upgradeGovernorImpl() public view returns (IUpgradeGovernor) {
-        require(address(_upgradeGovernorImpl) != address(0), "DeployImplementationsOutput: upgradeGovernorImpl not set");
-        return _upgradeGovernorImpl;
-    }
-
-    function validatorManagerImpl() public view returns (IValidatorManager) {
-        require(
-            address(_validatorManagerImpl) != address(0), "DeployImplementationsOutput: validatorManagerImpl not set"
-        );
-        return _validatorManagerImpl;
-    }
-
-    function zkProofVerifierImpl() public view returns (IZKProofVerifier) {
-        require(address(_zkProofVerifierImpl) != address(0), "DeployImplementationsOutput: zkProofVerifierImpl not set");
-        return _zkProofVerifierImpl;
-    }
-    // [Kroma: END]
-
     // -------- Deployment Assertions --------
     function assertValidDeploy(DeployImplementationsInput _dii) public view {
         assertValidDelayedWETHImpl(_dii);
@@ -407,16 +297,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
         assertValidOptimismPortalImpl(_dii);
         assertValidPreimageOracleSingleton(_dii);
         assertValidSystemConfigImpl(_dii);
-        // [Kroma: START]
-        assertValidAssetManager(_dii);
-        assertValidColosseum(_dii);
-        assertValidSecurityCouncil(_dii);
-        assertValidSecurityCouncilToken(_dii);
-        assertValidTimeLock(_dii);
-        assertValidUpgradeGovernor(_dii);
-        assertValidValidatorManager(_dii);
-        assertValidZKProofVerifier(_dii);
-        // [Kroma: END]
     }
 
     function assertValidOpcm(DeployImplementationsInput _dii) internal view {
@@ -554,130 +434,6 @@ contract DeployImplementationsOutput is BaseDeployIO {
 
         require(address(factory.owner()) == address(0), "DG-10");
     }
-
-    // [Kroma: START]
-    function assertValidAssetManager(DeployImplementationsInput) public view {
-        IAssetManager assetManager = assetManagerImpl();
-        uint256 slot = uint256(keccak256("initializable.dynamic.initialized")) - 1;
-        DeployUtils.assertInitialized({ _contractAddress: address(assetManager), _slot: slot, _offset: 0 });
-
-        require(address(assetManager.ASSET_TOKEN()) == address(0), "ASSETMGR-10");
-        require(address(assetManager.assetToken()) == address(0), "ASSETMGR-20");
-        require(address(assetManager.KGH()) == address(0), "ASSETMGR-30");
-        require(address(assetManager.kgh()) == address(0), "ASSETMGR-40");
-        require(address(assetManager.SECURITY_COUNCIL()) == address(0), "ASSETMGR-50");
-        require(address(assetManager.securityCouncil()) == address(0), "ASSETMGR-60");
-        require(address(assetManager.VALIDATOR_REWARD_VAULT()) == address(0), "ASSETMGR-70");
-        require(address(assetManager.validatorRewardVault()) == address(0), "ASSETMGR-80");
-        require(address(assetManager.VALIDATOR_MANAGER()) == address(0), "ASSETMGR-90");
-        require(address(assetManager.validatorManager()) == address(0), "ASSETMGR-100");
-        require(assetManager.MIN_DELEGATION_PERIOD() == 0, "ASSETMGR-110");
-        require(assetManager.minDelegationPeriod() == 0, "ASSETMGR-120");
-        require(assetManager.BOND_AMOUNT() == 0, "ASSETMGR-130");
-        require(assetManager.bondAmount() == 0, "ASSETMGR-140");
-    }
-
-    function assertValidColosseum(DeployImplementationsInput) public view {
-        IColosseum colosseum = colosseumImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(colosseum), _slot: 0, _offset: 0 });
-
-        require(address(colosseum.L2_ORACLE()) == address(0), "COLOSSEUM-10");
-        require(address(colosseum.l2Oracle()) == address(0), "COLOSSEUM-20");
-        require(address(colosseum.ZK_PROOF_VERIFIER()) == address(0), "COLOSSEUM-30");
-        require(address(colosseum.zkProofVerifier()) == address(0), "COLOSSEUM-40");
-        require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == 0, "COLOSSEUM-50");
-        require(colosseum.l2OracleSubmissionInterval() == 0, "COLOSSEUM-60");
-        require(colosseum.CREATION_PERIOD_SECONDS() == 0, "COLOSSEUM-70");
-        require(colosseum.creationPeriodSeconds() == 0, "COLOSSEUM-80");
-        require(colosseum.BISECTION_TIMEOUT() == 0, "COLOSSEUM-90");
-        require(colosseum.bisectionTimeout() == 0, "COLOSSEUM-100");
-        require(colosseum.PROVING_TIMEOUT() == 0, "COLOSSEUM-110");
-        require(colosseum.provingTimeout() == 0, "COLOSSEUM-120");
-        require(colosseum.segmentsLengths(0) == 0, "COLOSSEUM-130");
-        require(address(colosseum.SECURITY_COUNCIL()) == address(0), "COLOSSEUM-140");
-        require(address(colosseum.securityCouncil()) == address(0), "COLOSSEUM-150");
-    }
-
-    function assertValidSecurityCouncil(DeployImplementationsInput) public view {
-        ISecurityCouncil securityCouncil = securityCouncilImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(securityCouncil), _slot: 0, _offset: 0 });
-
-        require(securityCouncil.COLOSSEUM() == address(0), "SC-10");
-        require(securityCouncil.colosseum() == address(0), "SC-20");
-        require(address(securityCouncil.GOVERNOR()) == address(0), "SC-30");
-        require(address(securityCouncil.governor()) == address(0), "SC-40");
-    }
-
-    function assertValidSecurityCouncilToken(DeployImplementationsInput) public view {
-        ISecurityCouncilToken securityCouncilToken = securityCouncilTokenImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(securityCouncilToken), _slot: 0, _offset: 0 });
-
-        require(address(securityCouncilToken.owner()) == address(0), "SCT-10");
-    }
-
-    function assertValidTimeLock(DeployImplementationsInput) public view {
-        ITimeLock timeLock = timeLockImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(timeLock), _slot: 0, _offset: 0 });
-
-        require(timeLock.getMinDelay() == 0, "TL-10");
-    }
-
-    function assertValidUpgradeGovernor(DeployImplementationsInput) public view {
-        IUpgradeGovernor upgradeGovernor = upgradeGovernorImpl();
-
-        DeployUtils.assertInitialized({ _contractAddress: address(upgradeGovernor), _slot: 0, _offset: 0 });
-
-        require(address(upgradeGovernor.token()) == address(0), "UG-10");
-        require(address(upgradeGovernor.timelock()) == address(0), "UG-20");
-        require(upgradeGovernor.votingDelay() == 0, "UG-30");
-        require(upgradeGovernor.votingPeriod() == 0, "UG-40");
-        require(upgradeGovernor.proposalThreshold() == 0, "UG-50");
-        require(upgradeGovernor.quorumNumerator() == 0, "UG-60");
-    }
-
-    function assertValidValidatorManager(DeployImplementationsInput) public view {
-        IValidatorManager validatorManager = validatorManagerImpl();
-
-        uint256 slot = uint256(keccak256("initializable.dynamic.initialized")) - 1;
-        DeployUtils.assertInitialized({ _contractAddress: address(validatorManager), _slot: slot, _offset: 0 });
-
-        require(address(validatorManager.L2_ORACLE()) == address(0), "VM-10");
-        require(address(validatorManager.l2Oracle()) == address(0), "VM-20");
-        require(address(validatorManager.ASSET_MANAGER()) == address(0), "VM-30");
-        require(address(validatorManager.assetManager()) == address(0), "VM-40");
-        require(validatorManager.TRUSTED_VALIDATOR() == address(0), "VM-50");
-        require(validatorManager.trustedValidator() == address(0), "VM-60");
-        require(validatorManager.COMMISSION_CHANGE_DELAY_SECONDS() == 0, "VM-70");
-        require(validatorManager.commissionChangeDelaySeconds() == 0, "VM-80");
-        require(validatorManager.ROUND_DURATION_SECONDS() == 0, "VM-90");
-        require(validatorManager.roundDurationSeconds() == 0, "VM-100");
-        require(validatorManager.SOFT_JAIL_PERIOD_SECONDS() == 0, "VM-110");
-        require(validatorManager.softJailPeriodSeconds() == 0, "VM-120");
-        require(validatorManager.HARD_JAIL_PERIOD_SECONDS() == 0, "VM-130");
-        require(validatorManager.hardJailPeriodSeconds() == 0, "VM-140");
-        require(validatorManager.JAIL_THRESHOLD() == 0, "VM-150");
-        require(validatorManager.jailThreshold() == 0, "VM-160");
-        require(validatorManager.MAX_OUTPUT_FINALIZATIONS() == 0, "VM-170");
-        require(validatorManager.maxOutputFinalizations() == 0, "VM-180");
-        require(validatorManager.BASE_REWARD() == 0, "VM-190");
-        require(validatorManager.baseReward() == 0, "VM-200");
-        require(validatorManager.MIN_REGISTER_AMOUNT() == 0, "VM-210");
-        require(validatorManager.minRegisterAmount() == 0, "VM-220");
-        require(validatorManager.MIN_ACTIVATE_AMOUNT() == 0, "VM-230");
-        require(validatorManager.minActiveAmount() == 0, "VM-240");
-    }
-
-    function assertValidZKProofVerifier(DeployImplementationsInput _dii) public view {
-        IZKProofVerifier zkProofVerifier = zkProofVerifierImpl();
-
-        require(address(zkProofVerifier.sp1Verifier()) == address(_dii.sp1Verifier()), "ZKP-10");
-        require(zkProofVerifier.zkVmProgramVKey() == _dii.vKey(), "ZKP-20");
-    }
-    // [Kroma: END]
 }
 
 contract DeployImplementations is Script {
@@ -697,17 +453,6 @@ contract DeployImplementations is Script {
         deployPreimageOracleSingleton(_dii, _dio);
         deployMipsSingleton(_dii, _dio);
         deployDisputeGameFactoryImpl(_dii, _dio);
-
-        // [Kroma: START]
-        deployAssetManagerImpl(_dii, _dio);
-        deployColosseumImpl(_dii, _dio);
-        deploySecurityCouncilImpl(_dii, _dio);
-        deploySecurityCouncilTokenImpl(_dii, _dio);
-        deployTimeLockImpl(_dii, _dio);
-        deployUpgradeGovernorImpl(_dii, _dio);
-        deployValidatorManagerImpl(_dii, _dio);
-        deployZKProofVerifierImpl(_dii, _dio);
-        // [Kroma: END]
 
         // Deploy the OP Contracts Manager with the new implementations set.
         deployOPContractsManager(_dii, _dio);
@@ -741,18 +486,8 @@ contract DeployImplementations is Script {
             l1StandardBridgeImpl: address(_dio.l1StandardBridgeImpl()),
             disputeGameFactoryImpl: address(_dio.disputeGameFactoryImpl()),
             delayedWETHImpl: address(_dio.delayedWETHImpl()),
-            mipsImpl: address(_dio.mipsSingleton()),
-            // [Kroma: START]
-            assetManagerImpl: address(_dio.assetManagerImpl()),
-            colosseumImpl: address(_dio.colosseumImpl()),
-            securityCouncilImpl: address(_dio.securityCouncilImpl()),
-            securityCouncilTokenImpl: address(_dio.securityCouncilTokenImpl()),
-            timeLockImpl: address(_dio.timeLockImpl()),
-            upgradeGovernorImpl: address(_dio.upgradeGovernorImpl()),
-            validatorManagerImpl: address(_dio.validatorManagerImpl()),
-            zkProofVerifierImpl: address(_dio.zkProofVerifierImpl())
+            mipsImpl: address(_dio.mipsSingleton())
         });
-        // [Kroma: END]
 
         vm.broadcast(msg.sender);
         opcm_ = new OPContractsManager(
@@ -1130,225 +865,6 @@ contract DeployImplementations is Script {
         _dio.set(_dio.disputeGameFactoryImpl.selector, address(impl));
     }
 
-    // [Kroma: START]
-    function deployAssetManagerImpl(DeployImplementationsInput _dii, DeployImplementationsOutput _dio) public virtual {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "assetManager";
-        IAssetManager impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IAssetManager(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = IAssetManager(
-                DeployUtils.create1({
-                    _name: "AssetManager",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(IAssetManager.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "AssetManagerImpl");
-        _dio.set(_dio.assetManagerImpl.selector, address(impl));
-    }
-
-    function deployColosseumImpl(DeployImplementationsInput _dii, DeployImplementationsOutput _dio) public virtual {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "colosseum";
-        IColosseum impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IColosseum(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = IColosseum(
-                DeployUtils.create1({
-                    _name: "Colosseum",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(IColosseum.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "ColosseumImpl");
-        _dio.set(_dio.colosseumImpl.selector, address(impl));
-    }
-
-    function deploySecurityCouncilImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "security_council";
-        ISecurityCouncil impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = ISecurityCouncil(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = ISecurityCouncil(
-                DeployUtils.create1({
-                    _name: "SecurityCouncil",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(ISecurityCouncil.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "SecurityCouncilImpl");
-        _dio.set(_dio.securityCouncilImpl.selector, address(impl));
-    }
-
-    function deploySecurityCouncilTokenImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "security_council_token";
-        ISecurityCouncilToken impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = ISecurityCouncilToken(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = ISecurityCouncilToken(
-                DeployUtils.create1({
-                    _name: "SecurityCouncilToken",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(ISecurityCouncilToken.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "SecurityCouncilTokenImpl");
-        _dio.set(_dio.securityCouncilTokenImpl.selector, address(impl));
-    }
-
-    function deployTimeLockImpl(DeployImplementationsInput _dii, DeployImplementationsOutput _dio) public virtual {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "time_lock";
-        ITimeLock impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = ITimeLock(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = ITimeLock(
-                DeployUtils.create1({
-                    _name: "TimeLock",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(ITimeLock.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "TimeLockImpl");
-        _dio.set(_dio.timeLockImpl.selector, address(impl));
-    }
-
-    function deployUpgradeGovernorImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "upgrade_governor";
-        IUpgradeGovernor impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IUpgradeGovernor(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = IUpgradeGovernor(
-                DeployUtils.create1({
-                    _name: "UpgradeGovernor",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(IUpgradeGovernor.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "UpgradeGovernorImpl");
-        _dio.set(_dio.upgradeGovernorImpl.selector, address(impl));
-    }
-
-    function deployValidatorManagerImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "validator_manager";
-        IValidatorManager impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IValidatorManager(payable(existingImplementation));
-        } else {
-            vm.broadcast(msg.sender);
-            impl = IValidatorManager(
-                DeployUtils.create1({
-                    _name: "ValidatorManager",
-                    _args: DeployUtils.encodeConstructor(abi.encodeCall(IValidatorManager.__constructor__, ()))
-                })
-            );
-        }
-
-        vm.label(address(impl), "ValidatorManagerImpl");
-        _dio.set(_dio.validatorManagerImpl.selector, address(impl));
-    }
-
-    function deployZKProofVerifierImpl(
-        DeployImplementationsInput _dii,
-        DeployImplementationsOutput _dio
-    )
-        public
-        virtual
-    {
-        string memory release = _dii.l1ContractsRelease();
-        string memory stdVerToml = _dii.standardVersionsToml();
-        string memory contractName = "zk_proof_verifier";
-        IZKProofVerifier impl;
-
-        address existingImplementation = getReleaseAddress(release, contractName, stdVerToml);
-        if (existingImplementation != address(0)) {
-            impl = IZKProofVerifier(payable(existingImplementation));
-        } else {
-            vm.startBroadcast(msg.sender);
-            impl = IZKProofVerifier(
-                DeployUtils.create1({
-                    _name: "ZKProofVerifier",
-                    _args: DeployUtils.encodeConstructor(
-                        abi.encodeCall(IZKProofVerifier.__constructor__, (_dii.sp1Verifier(), _dii.vKey()))
-                    )
-                })
-            );
-            vm.stopBroadcast();
-        }
-
-        vm.label(address(impl), "ZKProofVerifierImpl");
-        _dio.set(_dio.zkProofVerifierImpl.selector, address(impl));
-    }
-    // [Kroma: END]
-
     // -------- Utilities --------
 
     function etchIOContracts() public returns (DeployImplementationsInput dii_, DeployImplementationsOutput dio_) {
@@ -1470,18 +986,8 @@ contract DeployImplementationsInterop is DeployImplementations {
             l1StandardBridgeImpl: address(_dio.l1StandardBridgeImpl()),
             disputeGameFactoryImpl: address(_dio.disputeGameFactoryImpl()),
             delayedWETHImpl: address(_dio.delayedWETHImpl()),
-            mipsImpl: address(_dio.mipsSingleton()),
-            // [Kroma: START]
-            assetManagerImpl: address(_dio.assetManagerImpl()),
-            colosseumImpl: address(_dio.colosseumImpl()),
-            securityCouncilImpl: address(_dio.securityCouncilImpl()),
-            securityCouncilTokenImpl: address(_dio.securityCouncilTokenImpl()),
-            timeLockImpl: address(_dio.timeLockImpl()),
-            upgradeGovernorImpl: address(_dio.upgradeGovernorImpl()),
-            validatorManagerImpl: address(_dio.validatorManagerImpl()),
-            zkProofVerifierImpl: address(_dio.zkProofVerifierImpl())
+            mipsImpl: address(_dio.mipsSingleton())
         });
-        // [Kroma: END]
 
         vm.broadcast(msg.sender);
         opcm_ = new OPContractsManagerInterop(
