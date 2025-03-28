@@ -16,7 +16,7 @@ import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
 // Contracts
-import { UnstructuredInitializable  } from "src/universal/UnstructuredInitializable.sol";
+import { UnstructuredInitializable } from "src/universal/UnstructuredInitializable.sol";
 
 /// @custom:proxied
 /// @title ValidatorManager
