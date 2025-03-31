@@ -23,20 +23,11 @@ import {
     DeployImplementationsInterop,
     DeployImplementationsOutput
 } from "scripts/deploy/DeployImplementations.s.sol";
-import { KromaInitializers } from "scripts/deploy/kroma/KromaInitializers.sol";
-import { KromaDeployer } from "scripts/deploy/kroma/KromaDeployer.sol";
-import { KromaConfigBuilder } from "scripts/deploy/kroma/KromaConfigBuilder.sol";
-import { KromaDeployInput, KromaDeployOutput } from "scripts/deploy/kroma/KromaDeployTypes.sol";
-import { KromaPostDeployAssertions, KromaChainAssertions } from "scripts/deploy/kroma/KromaChainAssertions.sol";
 
 // Contracts
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
-import { AssetManager } from "src/L1/AssetManager.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
 
 // Libraries
-import { Blueprint } from "src/libraries/Blueprint.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "scripts/libraries/Types.sol";
 import { Duration } from "src/dispute/lib/LibUDT.sol";
@@ -61,9 +52,6 @@ import { IDelayedWETH } from "interfaces/dispute/IDelayedWETH.sol";
 import { IAnchorStateRegistry } from "interfaces/dispute/IAnchorStateRegistry.sol";
 import { IMIPS } from "interfaces/cannon/IMIPS.sol";
 import { IPreimageOracle } from "interfaces/cannon/IPreimageOracle.sol";
-import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title Deploy
 /// @notice Script used to deploy a bedrock system. The entire system is deployed within the `run` function.
@@ -233,44 +221,6 @@ contract Deploy is Deployer {
             );
             vm.stopPrank();
         } else {
-            // [Kroma: START]
-
-            // Step 1: Build the deployment input for the Kroma system.
-            // This uses values from the global deployment config (cfg).
-            KromaDeployInput memory kromaInput = KromaConfigBuilder.fromConfig(cfg);
-
-            // Step 2: Precompute the deterministic address of the L2OutputOracle proxy.
-            // This proxy address is injected into the deployment input because it is used as a constructor
-            // parameter in some Kroma contracts before the actual deployment occurs.
-            kromaInput.l2OutputOracle =
-                IL2OutputOracle(calculateERC1967ProxyWithOwner("L2OutputOracleProxy", mustGetAddress("ProxyAdmin")));
-
-            // Step 3: Deploy and initialize all Kroma L1 contracts (both implementations and proxies).
-            // - deployImpl: function to deploy logic (implementation) contracts
-            // - deployProxy: function to deploy ERC1967 proxy contracts
-            // - proxyAdmin: the ProxyAdmin responsible for managing upgrades
-            // - input: the deployment input configuration
-            // - vm: Forge cheatcode interface used for broadcasting
-            KromaDeployOutput memory kromaOutput = KromaDeployer.deployAll({
-                deployProxy: deployERC1967Proxy,
-                deployImpl: deployImpl,
-                proxyAdmin: IProxyAdmin(payable(mustGetAddress("ProxyAdmin"))),
-                input: kromaInput,
-                vm: vm
-            });
-
-            // Step 4a: Run post-deployment assertions on the implementation contracts.
-            // These assertions verify that the implementation contracts were deployed correctly and are uninitialized.
-            // isProxy = false
-            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, false);
-
-            // Step 4b: Run post-deployment assertions on the proxy contracts.
-            // These assertions ensure that the proxies were properly upgraded and initialized.
-            // isProxy = true
-            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, true);
-
-            // [Kroma: END]
-
             // The L2OutputOracle is not deployed by the OPCM, we deploy the proxy and initialize it here.
             deployERC1967Proxy("L2OutputOracleProxy");
             initializeL2OutputOracle();
@@ -519,29 +469,6 @@ contract Deploy is Deployer {
         addr_ = address(proxy);
     }
 
-    /// @notice Calaulate deterministic ERC1967Proxy contract address with a specified owner.
-    /// @param _name The name of the proxy contract to be deployed.
-    /// @param _proxyOwner The address of the owner of the proxy contract.
-    /// @return addr_ The address of the deployed proxy contract.
-    function calculateERC1967ProxyWithOwner(
-        string memory _name,
-        address _proxyOwner
-    )
-        public
-        view
-        returns (address addr_)
-    {
-        bytes32 salt = keccak256(abi.encode(_implSalt(), _name));
-
-        bytes32 bytecodeHash = keccak256(
-            abi.encodePacked(
-                vm.getCode("Proxy"),
-                DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (_proxyOwner)))
-            )
-        );
-        addr_ = vm.computeCreate2Address(salt, bytecodeHash);
-    }
-
     /// @notice Deploy the DataAvailabilityChallengeProxy
     function deployDataAvailabilityChallengeProxy() public broadcast returns (address addr_) {
         address proxyAdmin = mustGetAddress("ProxyAdmin");
@@ -621,18 +548,6 @@ contract Deploy is Deployer {
         addr_ = address(dac);
     }
 
-    /// @notice Deploys an implementation contract using CREATE1 with the given name and constructor arguments.
-    /// @dev This function wraps `DeployUtils.create1` and adds labeling for improved traceability in debugging.
-    /// @param _name The name of the contract being deployed.
-    /// @param _data ABI-encoded constructor arguments for the contract.
-    /// @return impl The address of the deployed implementation contract.
-    function deployImpl(string memory _name, bytes memory _data) public returns (address impl) {
-        vm.startBroadcast(msg.sender);
-        impl = DeployUtils.create1({ _name: _name, _args: _data });
-        vm.stopBroadcast();
-        vm.label(impl, string.concat(_name, "Impl"));
-    }
-
     ////////////////////////////////////////////////////////////////
     //                    Initialize Functions                    //
     ////////////////////////////////////////////////////////////////
@@ -690,8 +605,6 @@ contract Deploy is Deployer {
         console.log("Upgrading and initializing L2OutputOracle proxy");
         address l2OutputOracleProxy = mustGetAddress("L2OutputOracleProxy");
         address l2OutputOracle = mustGetAddress("L2OutputOracle");
-        address validatorManagerProxy = mustGetAddress("ValidatorManagerProxy");
-        address colosseumProxy = mustGetAddress("ColosseumProxy");
 
         IProxyAdmin proxyAdmin = IProxyAdmin(payable(mustGetAddress("ProxyAdmin")));
         proxyAdmin.upgradeAndCall({
@@ -700,8 +613,8 @@ contract Deploy is Deployer {
             _data: abi.encodeCall(
                 IL2OutputOracle.initialize,
                 (
-                    validatorManagerProxy,
-                    colosseumProxy,
+                    address(0),
+                    address(0),
                     cfg.l2OutputOracleSubmissionInterval(),
                     cfg.l2BlockTime(),
                     cfg.l2OutputOracleStartingBlockNumber(),

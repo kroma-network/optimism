@@ -56,7 +56,7 @@ library KromaChainAssertions {
     function assertValidAssetManager(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -104,7 +104,7 @@ library KromaChainAssertions {
     function assertValidColosseum(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -151,9 +151,9 @@ library KromaChainAssertions {
     }
 
     function assertValidSecurityCouncil(
-        KromaDeployInput memory input,
+        KromaDeployInput memory,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -178,9 +178,9 @@ library KromaChainAssertions {
     }
 
     function assertValidSecurityCouncilToken(
-        KromaDeployInput memory input,
+        KromaDeployInput memory,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -201,7 +201,7 @@ library KromaChainAssertions {
     function assertValidTimeLock(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -222,7 +222,7 @@ library KromaChainAssertions {
     function assertValidUpgradeGovernor(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -253,7 +253,7 @@ library KromaChainAssertions {
     function assertValidValidatorManager(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal
@@ -321,7 +321,7 @@ library KromaChainAssertions {
     function assertValidZKProofVerifier(
         KromaDeployInput memory input,
         KromaDeployOutput memory output,
-        DeployConfig _cfg,
+        DeployConfig,
         bool _isProxy
     )
         internal

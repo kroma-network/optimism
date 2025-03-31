@@ -28,30 +28,19 @@ import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 /// @title KromaDeployer
-/// @notice Deploys and initializes all contracts related to the Kroma L1 system.
-///         This includes both implementation contracts and proxies.
-/// @dev Used as a library from top-level deploy scripts like `deploy.s.sol`.
+/// @notice Library for deploying and initializing all Kroma L1 contracts.
+/// @dev Called from top-level deployment script (e.g. Deploy.s.sol).
 library KromaDeployer {
-    /// @notice Deploys all Kroma L1 contracts as proxy patterns and sets initial logic/ownership.
-    /// @param deployProxy Function used to deploy EIP-1967 proxy instances.
-    /// @param deployImpl Function used to deploy logic (implementation) contracts.
-    /// @param proxyAdmin The ProxyAdmin contract managing upgrade rights.
-    /// @param input Struct containing deployment and initialization parameters.
-    /// @param vm Forge's cheatcode interface for broadcast control.
-    /// @return output Struct containing all deployed proxy contract addresses.
-    function deployAll(
-        function(string memory) returns (address) deployProxy,
+    /// @notice Deploys all implementation contracts.
+    function deployImpls(
         function(string memory, bytes memory) returns (address) deployImpl,
-        IProxyAdmin proxyAdmin,
-        KromaDeployInput memory input,
-        Vm vm
+        KromaDeployInput memory input
     )
         internal
         returns (KromaDeployOutput memory output)
     {
-        console.log("[Kroma Deploy] Deploying implementations...");
+        console.log("   > Deploying all implementation contracts");
 
-        // ========== Implementation Contracts ========== //
         output.assetManagerImpl = IAssetManager(deployImpl("AssetManager", abi.encode()));
         output.colosseumImpl = IColosseum(deployImpl("Colosseum", abi.encode()));
         output.securityCouncilImpl = ISecurityCouncil(deployImpl("SecurityCouncil", abi.encode()));
@@ -59,7 +48,6 @@ library KromaDeployer {
         output.timeLockImpl = ITimeLock(payable(deployImpl("TimeLock", abi.encode())));
         output.upgradeGovernorImpl = IUpgradeGovernor(payable(deployImpl("UpgradeGovernor", abi.encode())));
         output.validatorManagerImpl = IValidatorManager(deployImpl("ValidatorManager", abi.encode()));
-
         output.zkProofVerifierImpl = IZKProofVerifier(
             deployImpl(
                 "ZKProofVerifier",
@@ -72,7 +60,18 @@ library KromaDeployer {
             )
         );
 
-        console.log("[Kroma Deploy] Deploying proxies...");
+        return output;
+    }
+
+    /// @notice Deploys all proxy contracts.
+    function deployProxies(
+        function(string memory) returns (address) deployProxy,
+        KromaDeployOutput memory output
+    )
+        internal
+        returns (KromaDeployOutput memory)
+    {
+        console.log("   > [Proxy] Deploying proxy contracts");
 
         output.assetManagerProxy = IAssetManager(payable(deployProxy("AssetManagerProxy")));
         output.colosseumProxy = IColosseum(payable(deployProxy("ColosseumProxy")));
@@ -84,54 +83,63 @@ library KromaDeployer {
         output.zkProofVerifierProxy = IZKProofVerifier(payable(deployProxy("ZKProofVerifierProxy")));
         output.kromaGovernanceTokenProxy = IKromaGovernanceToken(payable(deployProxy("KromaGovernanceTokenProxy")));
 
-        console.log("[Kroma Deploy] Proxies deployed.");
+        console.log("    > All proxy contracts deployed");
+        return output;
+    }
 
-        // ========== Proxy Upgrade & Initialization ========== //
-        console.log("[Kroma Deploy] Upgrading and initializing proxies...");
+    /// @notice Upgrades and initializes all proxy contracts with their implementations.
+    function upgradeAndInitializeProxies(
+        IProxyAdmin proxyAdmin,
+        KromaDeployInput memory input,
+        function(string memory) view returns (address payable) mustGetAddress,
+        Vm vm
+    )
+        internal
+    {
+        console.log("   > [Upgrade] Initializing and upgrading proxies");
 
-        vm.startBroadcast();
+        vm.startBroadcast(msg.sender);
 
         proxyAdmin.upgradeAndCall(
-            payable(address(output.assetManagerProxy)),
-            address(output.assetManagerImpl),
-            KromaInitializers.encodeAssetManagerInitializer(input, output)
+            payable(mustGetAddress("AssetManagerProxy")),
+            mustGetAddress("AssetManager"),
+            KromaInitializers.encodeAssetManagerInitializer(input, mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.colosseumProxy)),
-            address(output.colosseumImpl),
-            KromaInitializers.encodeColosseumInitializer(input, output)
+            payable(mustGetAddress("ColosseumProxy")),
+            mustGetAddress("Colosseum"),
+            KromaInitializers.encodeColosseumInitializer(input, mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.securityCouncilProxy)),
-            address(output.securityCouncilImpl),
-            KromaInitializers.encodeSecurityCouncilInitializer(output)
+            payable(mustGetAddress("SecurityCouncilProxy")),
+            mustGetAddress("SecurityCouncil"),
+            KromaInitializers.encodeSecurityCouncilInitializer(mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.securityCouncilTokenProxy)),
-            address(output.securityCouncilTokenImpl),
-            KromaInitializers.encodeSecurityCouncilTokenInitializer(output)
+            payable(mustGetAddress("SecurityCouncilTokenProxy")),
+            mustGetAddress("SecurityCouncilToken"),
+            KromaInitializers.encodeSecurityCouncilTokenInitializer(mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.timeLockProxy)),
-            address(output.timeLockImpl),
-            KromaInitializers.encodeTimeLockInitializer(input, output)
+            payable(mustGetAddress("TimeLockProxy")),
+            mustGetAddress("TimeLock"),
+            KromaInitializers.encodeTimeLockInitializer(input, mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.upgradeGovernorProxy)),
-            address(output.upgradeGovernorImpl),
-            KromaInitializers.encodeUpgradeGovernorInitializer(input, output)
+            payable(mustGetAddress("UpgradeGovernorProxy")),
+            mustGetAddress("UpgradeGovernor"),
+            KromaInitializers.encodeUpgradeGovernorInitializer(input, mustGetAddress)
         );
         proxyAdmin.upgradeAndCall(
-            payable(address(output.validatorManagerProxy)),
-            address(output.validatorManagerImpl),
-            KromaInitializers.encodeValidatorManagerInitializer(input, output)
+            payable(mustGetAddress("ValidatorManagerProxy")),
+            mustGetAddress("ValidatorManager"),
+            KromaInitializers.encodeValidatorManagerInitializer(input, mustGetAddress)
         );
-        proxyAdmin.upgrade(payable(address(output.zkProofVerifierProxy)), address(output.zkProofVerifierImpl));
+
+        proxyAdmin.upgrade(payable(mustGetAddress("ZKProofVerifierProxy")), mustGetAddress("ZKProofVerifier"));
 
         vm.stopBroadcast();
 
-        console.log("[Kroma Deploy] All contracts deployed, initialized, and verified successfully.");
-
-        return output;
+        console.log("    > All proxies upgraded and initialized");
     }
 }
