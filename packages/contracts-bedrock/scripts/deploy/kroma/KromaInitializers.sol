@@ -24,19 +24,19 @@ library KromaInitializers {
     /// @notice Encodes initializer data for the AssetManager contract.
     function encodeAssetManagerInitializer(
         KromaDeployInput memory input,
-        KromaDeployOutput memory output
+        function(string memory) view returns (address payable) mustGetAddress
     )
         internal
-        pure
+        view
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
             IAssetManager.initialize.selector,
-            output.kromaGovernanceTokenProxy,
+            mustGetAddress("KromaGovernanceTokenProxy"),
             input.kgh,
-            output.securityCouncilProxy,
+            mustGetAddress("SecurityCouncilProxy"),
             input.vault,
-            output.validatorManagerProxy,
+            mustGetAddress("ValidatorManagerProxy"),
             input.minDelegationPeriod,
             input.bondAmount
         );
@@ -45,17 +45,17 @@ library KromaInitializers {
     /// @notice Encodes initializer data for the Colosseum contract.
     function encodeColosseumInitializer(
         KromaDeployInput memory input,
-        KromaDeployOutput memory output
+        function(string memory) view returns (address payable) mustGetAddress
     )
         internal
-        pure
+        view
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
             IColosseum.initialize.selector,
             input.l2OutputOracle,
-            output.zkProofVerifierProxy,
-            output.securityCouncilProxy,
+            mustGetAddress("ZKProofVerifierProxy"),
+            mustGetAddress("SecurityCouncilProxy"),
             input.submissionInterval,
             input.creationPeriodSeconds,
             input.bisectionTimeout,
@@ -65,57 +65,63 @@ library KromaInitializers {
     }
 
     /// @notice Encodes initializer data for the SecurityCouncil contract.
-    function encodeSecurityCouncilInitializer(KromaDeployOutput memory output) internal pure returns (bytes memory) {
+    function encodeSecurityCouncilInitializer(
+        function(string memory) view returns (address payable) mustGetAddress
+    ) internal view returns (bytes memory) {
         return abi.encodeWithSelector(
-            SecurityCouncil.initialize.selector, output.colosseumProxy, output.upgradeGovernorProxy
+            SecurityCouncil.initialize.selector,
+            mustGetAddress("ColosseumProxy"),
+            mustGetAddress("UpgradeGovernorProxy")
         );
     }
 
     /// @notice Encodes initializer data for the SecurityCouncilToken contract.
-    function encodeSecurityCouncilTokenInitializer(KromaDeployOutput memory output)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return abi.encodeWithSelector(ISecurityCouncilToken.initialize.selector, output.upgradeGovernorProxy);
+    function encodeSecurityCouncilTokenInitializer(
+        function(string memory) view returns (address payable) mustGetAddress
+    ) internal view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            ISecurityCouncilToken.initialize.selector,
+            mustGetAddress("UpgradeGovernorProxy")
+        );
     }
 
     /// @notice Encodes initializer data for the TimeLock contract.
     function encodeTimeLockInitializer(
         KromaDeployInput memory input,
-        KromaDeployOutput memory output
+        function(string memory) view returns (address payable) mustGetAddress
     )
         internal
-        pure
+        view
         returns (bytes memory)
     {
         address[] memory proposers = new address[](1);
         address[] memory executors = new address[](1);
-        proposers[0] = address(output.upgradeGovernorProxy);
-        executors[0] = address(output.upgradeGovernorProxy);
+        address upgradeGovernorProxy = mustGetAddress("UpgradeGovernorProxy");
+        proposers[0] = upgradeGovernorProxy;
+        executors[0] = upgradeGovernorProxy;
 
         return abi.encodeWithSelector(
             ITimeLock.initialize.selector,
             input.timeLockMinDelaySeconds,
             proposers,
             executors,
-            address(output.upgradeGovernorProxy)
+            upgradeGovernorProxy
         );
     }
 
     /// @notice Encodes initializer data for the UpgradeGovernor contract.
     function encodeUpgradeGovernorInitializer(
         KromaDeployInput memory input,
-        KromaDeployOutput memory output
+        function(string memory) view returns (address payable) mustGetAddress
     )
         internal
-        pure
+        view
         returns (bytes memory)
     {
         return abi.encodeWithSelector(
             IUpgradeGovernor.initialize.selector,
-            output.securityCouncilTokenProxy,
-            output.timeLockProxy,
+            mustGetAddress("SecurityCouncilTokenProxy"),
+            mustGetAddress("TimeLockProxy"),
             input.initialVotingDelay,
             input.initialVotingPeriod,
             input.initialProposalThreshold,
@@ -126,15 +132,15 @@ library KromaInitializers {
     /// @notice Encodes initializer data for the ValidatorManager contract.
     function encodeValidatorManagerInitializer(
         KromaDeployInput memory input,
-        KromaDeployOutput memory output
+        function(string memory) view returns (address payable) mustGetAddress
     )
         internal
-        pure
+        view
         returns (bytes memory)
     {
         IValidatorManager.InitializationParams memory params = IValidatorManager.InitializationParams({
             _l2Oracle: input.l2OutputOracle,
-            _assetManager: IAssetManager(output.assetManagerProxy),
+            _assetManager: IAssetManager(mustGetAddress("AssetManagerProxy")),
             _trustedValidator: input.trustedValidator,
             _commissionChangeDelaySeconds: input.commissionChangeDelaySeconds,
             _roundDurationSeconds: input.roundDurationSeconds,

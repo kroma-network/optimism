@@ -109,7 +109,7 @@ contract Deploy is Deployer {
         );
         string memory json = StateDiff.encodeAccountAccesses(accesses);
         string memory statediffPath =
-            string.concat(vm.projectRoot(), "/snapshots/state-diff/", vm.toString(block.chainid), ".json");
+                            string.concat(vm.projectRoot(), "/snapshots/state-diff/", vm.toString(block.chainid), ".json");
         vm.writeJson({ json: json, path: statediffPath });
     }
 
@@ -213,7 +213,7 @@ contract Deploy is Deployer {
 
     /// @notice Internal function containing the deploy logic.
     function _run(bool _needsSuperchain) internal virtual {
-        console.log("start of L1 Deploy!");
+        console.log("start of L1 Deploy! ", address(this));
 
         // Set up the Superchain if needed.
         if (_needsSuperchain) {
@@ -233,53 +233,15 @@ contract Deploy is Deployer {
             );
             vm.stopPrank();
         } else {
-            // [Kroma: START]
-
-            // Step 1: Build the deployment input for the Kroma system.
-            // This uses values from the global deployment config (cfg).
-            KromaDeployInput memory kromaInput = KromaConfigBuilder.fromConfig(cfg);
-
-            // Step 2: Precompute the deterministic address of the L2OutputOracle proxy.
-            // This proxy address is injected into the deployment input because it is used as a constructor
-            // parameter in some Kroma contracts before the actual deployment occurs.
-            kromaInput.l2OutputOracle =
-                IL2OutputOracle(calculateERC1967ProxyWithOwner("L2OutputOracleProxy", mustGetAddress("ProxyAdmin")));
-
-            // Step 3: Deploy and initialize all Kroma L1 contracts (both implementations and proxies).
-            // - deployImpl: function to deploy logic (implementation) contracts
-            // - deployProxy: function to deploy ERC1967 proxy contracts
-            // - proxyAdmin: the ProxyAdmin responsible for managing upgrades
-            // - input: the deployment input configuration
-            // - vm: Forge cheatcode interface used for broadcasting
-            KromaDeployOutput memory kromaOutput = KromaDeployer.deployAll({
-                deployProxy: deployERC1967Proxy,
-                deployImpl: deployImpl,
-                proxyAdmin: IProxyAdmin(payable(mustGetAddress("ProxyAdmin"))),
-                input: kromaInput,
-                vm: vm
-            });
-
-            // Step 4a: Run post-deployment assertions on the implementation contracts.
-            // These assertions verify that the implementation contracts were deployed correctly and are uninitialized.
-            // isProxy = false
-            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, false);
-
-            // Step 4b: Run post-deployment assertions on the proxy contracts.
-            // These assertions ensure that the proxies were properly upgraded and initialized.
-            // isProxy = true
-            KromaPostDeployAssertions.runPostDeployAssertions(kromaInput, kromaOutput, cfg, true);
-
-            // [Kroma: END]
-
             // The L2OutputOracle is not deployed by the OPCM, we deploy the proxy and initialize it here.
-            deployERC1967Proxy("L2OutputOracleProxy");
-            initializeL2OutputOracle();
+            // deployERC1967Proxy("L2OutputOracleProxy");
+            // initializeL2OutputOracle();
 
             // The OptimismPortalProxy contract is used both with and without Fault Proofs enabled, and is deployed by
             // deployOPChain. If Fault Proofs are disabled, then we need to reinitialize the OptimismPortalProxy
             // as the legacy OptimismPortal.
-            resetInitializedProxy("OptimismPortal");
-            initializeOptimismPortal();
+            // resetInitializedProxy("OptimismPortal");
+            // initializeOptimismPortal();
         }
 
         if (cfg.useCustomGasToken()) {
@@ -502,9 +464,9 @@ contract Deploy is Deployer {
         string memory _name,
         address _proxyOwner
     )
-        public
-        broadcast
-        returns (address addr_)
+    public
+    broadcast
+    returns (address addr_)
     {
         IProxy proxy = IProxy(
             DeployUtils.create2AndSave({
@@ -527,9 +489,9 @@ contract Deploy is Deployer {
         string memory _name,
         address _proxyOwner
     )
-        public
-        view
-        returns (address addr_)
+    public
+    view
+    returns (address addr_)
     {
         bytes32 salt = keccak256(abi.encode(_implSalt(), _name));
 
@@ -666,14 +628,14 @@ contract Deploy is Deployer {
                     Constants.DEFAULT_RESOURCE_CONFIG(),
                     cfg.batchInboxAddress(),
                     ISystemConfig.Addresses({
-                        l1CrossDomainMessenger: mustGetAddress("L1CrossDomainMessengerProxy"),
-                        l1ERC721Bridge: mustGetAddress("L1ERC721BridgeProxy"),
-                        l1StandardBridge: mustGetAddress("L1StandardBridgeProxy"),
-                        disputeGameFactory: mustGetAddress("DisputeGameFactoryProxy"),
-                        optimismPortal: mustGetAddress("OptimismPortalProxy"),
-                        optimismMintableERC20Factory: mustGetAddress("OptimismMintableERC20FactoryProxy"),
-                        gasPayingToken: customGasTokenAddress
-                    })
+                    l1CrossDomainMessenger: mustGetAddress("L1CrossDomainMessengerProxy"),
+                    l1ERC721Bridge: mustGetAddress("L1ERC721BridgeProxy"),
+                    l1StandardBridge: mustGetAddress("L1StandardBridgeProxy"),
+                    disputeGameFactory: mustGetAddress("DisputeGameFactoryProxy"),
+                    optimismPortal: mustGetAddress("OptimismPortalProxy"),
+                    optimismMintableERC20Factory: mustGetAddress("OptimismMintableERC20FactoryProxy"),
+                    gasPayingToken: customGasTokenAddress
+                })
                 )
             )
         });
@@ -896,7 +858,7 @@ contract Deploy is Deployer {
             );
         }
         mipsAbsolutePrestate_ =
-            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
+                            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
         console.log(
             "[Cannon Dispute Game] Using devnet MIPS Absolute prestate: %s",
             vm.toString(Claim.unwrap(mipsAbsolutePrestate_))
@@ -914,7 +876,7 @@ contract Deploy is Deployer {
             );
         }
         mipsAbsolutePrestate_ =
-            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
+                            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
         console.log(
             "[MT-Cannon Dispute Game] Using devnet MIPS64 Absolute prestate: %s",
             vm.toString(Claim.unwrap(mipsAbsolutePrestate_))
@@ -931,17 +893,17 @@ contract Deploy is Deployer {
         _setFaultGameImplementation({
             _factory: factory,
             _params: IFaultDisputeGame.GameConstructorParams({
-                gameType: GameTypes.CANNON,
-                absolutePrestate: loadMipsAbsolutePrestate(),
-                maxGameDepth: cfg.faultGameMaxDepth(),
-                splitDepth: cfg.faultGameSplitDepth(),
-                clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
-                maxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
-                vm: IBigStepper(mustGetAddress("Mips")),
-                weth: weth,
-                anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
-                l2ChainId: cfg.l2ChainID()
-            })
+            gameType: GameTypes.CANNON,
+            absolutePrestate: loadMipsAbsolutePrestate(),
+            maxGameDepth: cfg.faultGameMaxDepth(),
+            splitDepth: cfg.faultGameSplitDepth(),
+            clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
+            maxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
+            vm: IBigStepper(mustGetAddress("Mips")),
+            weth: weth,
+            anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
+            l2ChainId: cfg.l2ChainID()
+        })
         });
     }
 
@@ -955,18 +917,18 @@ contract Deploy is Deployer {
         _setFaultGameImplementation({
             _factory: factory,
             _params: IFaultDisputeGame.GameConstructorParams({
-                gameType: GameTypes.ALPHABET,
-                absolutePrestate: outputAbsolutePrestate,
-                // The max depth for the alphabet trace is always 3. Add 1 because split depth is fully inclusive.
-                maxGameDepth: cfg.faultGameSplitDepth() + 3 + 1,
-                splitDepth: cfg.faultGameSplitDepth(),
-                clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
-                maxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
-                vm: IBigStepper(new AlphabetVM(outputAbsolutePrestate, IPreimageOracle(mustGetAddress("PreimageOracle")))),
-                weth: weth,
-                anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
-                l2ChainId: cfg.l2ChainID()
-            })
+            gameType: GameTypes.ALPHABET,
+            absolutePrestate: outputAbsolutePrestate,
+        // The max depth for the alphabet trace is always 3. Add 1 because split depth is fully inclusive.
+            maxGameDepth: cfg.faultGameSplitDepth() + 3 + 1,
+            splitDepth: cfg.faultGameSplitDepth(),
+            clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
+            maxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
+            vm: IBigStepper(new AlphabetVM(outputAbsolutePrestate, IPreimageOracle(mustGetAddress("PreimageOracle")))),
+            weth: weth,
+            anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
+            l2ChainId: cfg.l2ChainID()
+        })
         });
     }
 
@@ -991,18 +953,18 @@ contract Deploy is Deployer {
         _setFaultGameImplementation({
             _factory: factory,
             _params: IFaultDisputeGame.GameConstructorParams({
-                gameType: GameTypes.FAST,
-                absolutePrestate: outputAbsolutePrestate,
-                // The max depth for the alphabet trace is always 3. Add 1 because split depth is fully inclusive.
-                maxGameDepth: cfg.faultGameSplitDepth() + 3 + 1,
-                splitDepth: cfg.faultGameSplitDepth(),
-                clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
-                maxClockDuration: Duration.wrap(0), // Resolvable immediately
-                vm: IBigStepper(new AlphabetVM(outputAbsolutePrestate, fastOracle)),
-                weth: weth,
-                anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
-                l2ChainId: cfg.l2ChainID()
-            })
+            gameType: GameTypes.FAST,
+            absolutePrestate: outputAbsolutePrestate,
+        // The max depth for the alphabet trace is always 3. Add 1 because split depth is fully inclusive.
+            maxGameDepth: cfg.faultGameSplitDepth() + 3 + 1,
+            splitDepth: cfg.faultGameSplitDepth(),
+            clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
+            maxClockDuration: Duration.wrap(0), // Resolvable immediately
+            vm: IBigStepper(new AlphabetVM(outputAbsolutePrestate, fastOracle)),
+            weth: weth,
+            anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
+            l2ChainId: cfg.l2ChainID()
+        })
         });
     }
 
@@ -1011,7 +973,7 @@ contract Deploy is Deployer {
         IDisputeGameFactory _factory,
         IFaultDisputeGame.GameConstructorParams memory _params
     )
-        internal
+    internal
     {
         if (address(_factory.gameImpls(_params.gameType)) != address(0)) {
             console.log(
@@ -1062,29 +1024,29 @@ contract Deploy is Deployer {
             l2BlockNumber: cfg.faultGameGenesisBlock()
         });
         IAnchorStateRegistry.StartingAnchorRoot[] memory startingAnchorRoots =
-            new IAnchorStateRegistry.StartingAnchorRoot[](5);
+                    new IAnchorStateRegistry.StartingAnchorRoot[](5);
         startingAnchorRoots[0] =
-            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.CANNON, outputRoot: testOutputRoot });
+                            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.CANNON, outputRoot: testOutputRoot });
         startingAnchorRoots[1] = IAnchorStateRegistry.StartingAnchorRoot({
             gameType: GameTypes.PERMISSIONED_CANNON,
             outputRoot: testOutputRoot
         });
         startingAnchorRoots[2] =
-            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.ASTERISC, outputRoot: testOutputRoot });
+                            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.ASTERISC, outputRoot: testOutputRoot });
         startingAnchorRoots[3] =
-            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.FAST, outputRoot: testOutputRoot });
+                            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.FAST, outputRoot: testOutputRoot });
         startingAnchorRoots[4] =
-            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.ALPHABET, outputRoot: testOutputRoot });
+                            IAnchorStateRegistry.StartingAnchorRoot({ gameType: GameTypes.ALPHABET, outputRoot: testOutputRoot });
         string memory saltMixer = "salt mixer";
         return OPContractsManager.DeployInput({
             roles: OPContractsManager.Roles({
-                opChainProxyAdminOwner: msg.sender,
-                systemConfigOwner: cfg.finalSystemOwner(),
-                batcher: cfg.batchSenderAddress(),
-                unsafeBlockSigner: cfg.p2pSequencerAddress(),
-                proposer: cfg.l2OutputOracleProposer(),
-                challenger: cfg.l2OutputOracleChallenger()
-            }),
+            opChainProxyAdminOwner: msg.sender,
+            systemConfigOwner: cfg.finalSystemOwner(),
+            batcher: cfg.batchSenderAddress(),
+            unsafeBlockSigner: cfg.p2pSequencerAddress(),
+            proposer: cfg.l2OutputOracleProposer(),
+            challenger: cfg.l2OutputOracleChallenger()
+        }),
             basefeeScalar: cfg.basefeeScalar(),
             blobBasefeeScalar: cfg.blobbasefeeScalar(),
             l2ChainId: cfg.l2ChainID(),

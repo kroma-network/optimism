@@ -25,10 +25,17 @@ library DeployUtils {
     /// @param _args ABI-encoded constructor arguments.
     /// @return addr_ Address of the deployed contract.
     function create1(string memory _name, bytes memory _args) internal returns (address payable addr_) {
+        console.log("Creating contract:", _name);
+        console.log("Constructor args length:", _args.length);
+
         bytes memory bytecode = abi.encodePacked(vm.getCode(_name), _args);
+        console.log("Bytecode length:", bytecode.length);
+
         assembly {
             addr_ := create(0, add(bytecode, 0x20), mload(bytecode))
         }
+        console.log("Created address:", addr_);
+
         assertValidContractAddress(addr_);
     }
 

@@ -35,24 +35,6 @@ import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
 import { Solarray } from "scripts/libraries/Solarray.sol";
 import { BaseDeployIO } from "scripts/deploy/BaseDeployIO.sol";
 
-import { AssetManager } from "src/L1/AssetManager.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { SystemConfig } from "src/L1/SystemConfig.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IColosseum } from "interfaces/L1/IColosseum.sol";
-import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
-import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
-import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
-import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
-import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
-import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
-import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
-import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
-
 // See DeploySuperchain.s.sol for detailed comments on the script architecture used here.
 contract DeployImplementationsInput is BaseDeployIO {
     bytes32 internal _salt;

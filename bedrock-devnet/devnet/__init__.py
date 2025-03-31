@@ -147,8 +147,15 @@ def devnet_l1_allocs(paths):
       'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
     }, cwd=paths.contracts_bedrock_dir)
 
-    shutil.move(src=paths.forge_l1_dump_path, dst=paths.allocs_l1_path)
+    fqn = 'scripts/deploy/KromaDeploy.s.sol:KromaDeploy'
+    run_command([
+      'forge', 'script', fqn, "--sig", "runWithStateDump()", "--sender", "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+    ], env={
+      'DEPLOYMENT_OUTFILE': paths.l1_deployments_path,
+      'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
+    }, cwd=paths.contracts_bedrock_dir)
 
+    shutil.move(src=paths.forge_l1_dump_path, dst=paths.allocs_l1_path)
     shutil.copy(paths.l1_deployments_path, paths.addresses_json_path)
 
 
