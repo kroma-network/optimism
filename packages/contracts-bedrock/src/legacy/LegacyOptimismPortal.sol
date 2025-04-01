@@ -10,7 +10,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCall } from "src/libraries/SafeCall.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "src/libraries/Types.sol";
-import { KromaTypes } from "src/libraries/KromaTypes.sol";
 import { Hashing } from "src/libraries/Hashing.sol";
 import { SecureMerkleTrie } from "src/libraries/trie/SecureMerkleTrie.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
@@ -32,7 +31,7 @@ import {
 // Interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
-import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
@@ -43,7 +42,7 @@ import { IL1Block } from "interfaces/L2/IL1Block.sol";
 /// @notice The OptimismPortal is a low-level contract responsible for passing messages between L1
 ///         and L2. Messages sent directly to the OptimismPortal have no form of replayability.
 ///         Users are encouraged to use the L1CrossDomainMessenger for a higher-level interface.
-contract OptimismPortal is Initializable, ResourceMetering, ISemver {
+contract LegacyOptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @notice Allows for interactions with non standard ERC20 tokens.
     using SafeERC20 for IERC20;
 
@@ -87,7 +86,7 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
 
     /// @notice Contract of the L2OutputOracle.
     /// @custom:network-specific
-    IKromaL2OutputOracle public l2Oracle;
+    IL2OutputOracle public l2Oracle;
 
     /// @notice Contract of the SystemConfig.
     /// @custom:network-specific
@@ -147,15 +146,15 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     }
 
     /// @notice Semantic version.
-    /// @custom:semver 2.8.1-beta.5-kroma;
+    /// @custom:semver 2.8.1-beta.5
     function version() public pure virtual returns (string memory) {
-        return "2.8.1-beta.5-kroma";
+        return "2.8.1-beta.5";
     }
 
     /// @notice Constructs the OptimismPortal contract.
     constructor() {
         initialize({
-            _l2Oracle: IKromaL2OutputOracle(address(0)),
+            _l2Oracle: IL2OutputOracle(address(0)),
             _systemConfig: ISystemConfig(address(0)),
             _superchainConfig: ISuperchainConfig(address(0))
         });
@@ -166,7 +165,7 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @param _systemConfig Contract of the SystemConfig.
     /// @param _superchainConfig Contract of the SuperchainConfig.
     function initialize(
-        IKromaL2OutputOracle _l2Oracle,
+        IL2OutputOracle _l2Oracle,
         ISystemConfig _systemConfig,
         ISuperchainConfig _superchainConfig
     )
@@ -368,9 +367,9 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
             "OptimismPortal: proven withdrawal finalization period has not elapsed"
         );
 
-        // Grab the CheckpointOutput from the L2OutputOracle, will revert if the output that
+        // Grab the OutputProposal from the L2OutputOracle, will revert if the output that
         // corresponds to the given index has not been proposed yet.
-        KromaTypes.CheckpointOutput memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
+        Types.OutputProposal memory proposal = l2Oracle.getL2Output(provenWithdrawal.l2OutputIndex);
 
         // Check that the output root that was used to prove the withdrawal is the same as the
         // current output root for the given output index. An output root may change if it is

@@ -12,7 +12,7 @@ import { Uint128Math } from "src/libraries/Uint128Math.sol";
 
 // Interfaces
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 
 // Contracts
@@ -71,7 +71,7 @@ contract ValidatorManager is ISemver, UnstructuredInitializable {
     /// @custom:field _minRegisterAmount            Minimum amount to register as a validator.
     /// @custom:field _minActivateAmount            Minimum amount to activate a validator.
     struct InitializationParams {
-        IL2OutputOracle _l2Oracle;
+        IKromaL2OutputOracle _l2Oracle;
         IAssetManager _assetManager;
         address _trustedValidator;
         uint128 _commissionChangeDelaySeconds;
@@ -125,7 +125,7 @@ contract ValidatorManager is ISemver, UnstructuredInitializable {
     mapping(uint256 => uint128) internal _pendingChallengeReward;
 
     /// @notice Address of the L2OutputOracle contract. Can be updated via upgrade.
-    IL2OutputOracle public l2Oracle;
+    IKromaL2OutputOracle public l2Oracle;
 
     /// @notice The address of AssetManager contract. Can be updated via upgrade.
     IAssetManager public assetManager;
@@ -322,7 +322,7 @@ contract ValidatorManager is ISemver, UnstructuredInitializable {
     ///         Public getter is legacy and will be removed in the future. Use `l2Oracle` instead.
     /// @return Address of the L2OutputOracle contract.
     /// @custom:legacy
-    function L2_ORACLE() external view returns (IL2OutputOracle) {
+    function L2_ORACLE() external view returns (IKromaL2OutputOracle) {
         return l2Oracle;
     }
 

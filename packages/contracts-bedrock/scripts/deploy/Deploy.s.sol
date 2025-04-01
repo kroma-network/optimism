@@ -37,7 +37,7 @@ import { GameType, Claim, GameTypes, OutputRoot, Hash } from "src/dispute/lib/Ty
 // Interfaces
 import { IProxy } from "interfaces/universal/IProxy.sol";
 import { IProxyAdmin } from "interfaces/universal/IProxyAdmin.sol";
-import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
+import { ILegacyOptimismPortal as IOptimismPortal } from "interfaces/legacy/ILegacyOptimismPortal.sol";
 import { IOptimismPortal2 } from "interfaces/L1/IOptimismPortal2.sol";
 import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
@@ -497,9 +497,10 @@ contract Deploy is Deployer {
         addr_ = DeployUtils.create2AndSave({
             _save: this,
             _salt: _implSalt(),
-            _name: "OptimismPortal",
+            _name: "LegacyOptimismPortal",
             _args: DeployUtils.encodeConstructor(abi.encodeCall(IOptimismPortal.__constructor__, ()))
         });
+        save("OptimismPortal", addr_);
 
         // Override the `OptimismPortal` contract to the deployed implementation. This is necessary
         // to check the `OptimismPortal` implementation alongside dependent contracts, which
@@ -613,12 +614,12 @@ contract Deploy is Deployer {
             _data: abi.encodeCall(
                 IL2OutputOracle.initialize,
                 (
-                    address(0),
-                    address(0),
                     cfg.l2OutputOracleSubmissionInterval(),
                     cfg.l2BlockTime(),
                     cfg.l2OutputOracleStartingBlockNumber(),
                     cfg.l2OutputOracleStartingTimestamp(),
+                    cfg.l2OutputOracleProposer(),
+                    cfg.l2OutputOracleChallenger(),
                     cfg.finalizationPeriodSeconds()
                 )
             )

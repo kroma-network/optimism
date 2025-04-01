@@ -9,7 +9,7 @@ import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
 import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 
@@ -60,7 +60,7 @@ contract Colosseum is Initializable, ISemver {
     mapping(uint256 => KromaTypes.CheckpointOutput) public deletedOutputs;
 
     /// @notice Address of the L2OutputOracle.
-    IL2OutputOracle public l2Oracle;
+    IKromaL2OutputOracle public l2Oracle;
 
     /// @notice Address of the ZKProofVerifier.
     IZKProofVerifier public zkProofVerifier;
@@ -211,7 +211,7 @@ contract Colosseum is Initializable, ISemver {
     /// @param _provingTimeout        Timeout seconds for the proving.
     /// @param _segmentsLengths       Lengths of segments.
     function initialize(
-        IL2OutputOracle _l2Oracle,
+        IKromaL2OutputOracle _l2Oracle,
         IZKProofVerifier _zkProofVerifier,
         ISecurityCouncil _securityCouncil,
         uint256 _submissionInterval,
@@ -223,7 +223,7 @@ contract Colosseum is Initializable, ISemver {
         public
         reinitializer(2)
     {
-        l2Oracle = IL2OutputOracle(_l2Oracle);
+        l2Oracle = IKromaL2OutputOracle(_l2Oracle);
         zkProofVerifier = IZKProofVerifier(_zkProofVerifier);
         securityCouncil = ISecurityCouncil(_securityCouncil);
         l2OracleSubmissionInterval = _submissionInterval;
@@ -252,7 +252,7 @@ contract Colosseum is Initializable, ISemver {
     ///         Public getter is legacy and will be removed in the future. Use `l2Oracle` instead.
     /// @return Address of the l2OutputOracle.
     /// @custom:legacy
-    function L2_ORACLE() external view returns (IL2OutputOracle) {
+    function L2_ORACLE() external view returns (IKromaL2OutputOracle) {
         return l2Oracle;
     }
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 
 /// @title IValidatorManager
 /// @notice Interface for ValidatorManager contract.
@@ -17,7 +17,7 @@ interface IValidatorManager {
     }
 
     struct InitializationParams {
-        IL2OutputOracle _l2Oracle;
+        IKromaL2OutputOracle _l2Oracle;
         IAssetManager _assetManager;
         address _trustedValidator;
         uint128 _commissionChangeDelaySeconds;
@@ -73,7 +73,7 @@ interface IValidatorManager {
     function COMMISSION_RATE_DENOM() external view returns (uint128);
     function HARD_JAIL_PERIOD_SECONDS() external view returns (uint128);
     function JAIL_THRESHOLD() external view returns (uint128);
-    function L2_ORACLE() external view returns (IL2OutputOracle);
+    function L2_ORACLE() external view returns (IKromaL2OutputOracle);
     function MAX_OUTPUT_FINALIZATIONS() external view returns (uint128);
     function MIN_ACTIVATE_AMOUNT() external view returns (uint128);
     function MIN_REGISTER_AMOUNT() external view returns (uint128);
@@ -102,7 +102,7 @@ interface IValidatorManager {
     function isActive(address validator) external view returns (bool);
     function jailExpiresAt(address validator) external view returns (uint128);
     function jailThreshold() external view returns (uint128);
-    function l2Oracle() external view returns (IL2OutputOracle);
+    function l2Oracle() external view returns (IKromaL2OutputOracle);
     function maxOutputFinalizations() external view returns (uint128);
     function minActiveAmount() external view returns (uint128);
     function minRegisterAmount() external view returns (uint128);

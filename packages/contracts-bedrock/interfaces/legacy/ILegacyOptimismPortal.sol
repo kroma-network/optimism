@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import { Types } from "src/libraries/Types.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
-import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
+import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 
-interface IOptimismPortal {
+interface ILegacyOptimismPortal {
     error BadTarget();
     error CallPaused();
     error ContentLengthMismatch();
@@ -56,13 +56,13 @@ interface IOptimismPortal {
     function finalizedWithdrawals(bytes32) external view returns (bool);
     function guardian() external view returns (address);
     function initialize(
-        IKromaL2OutputOracle _l2Oracle,
+        IL2OutputOracle _l2Oracle,
         ISystemConfig _systemConfig,
         ISuperchainConfig _superchainConfig
     )
         external;
     function isOutputFinalized(uint256 _l2OutputIndex) external view returns (bool);
-    function l2Oracle() external view returns (IKromaL2OutputOracle);
+    function l2Oracle() external view returns (IL2OutputOracle);
     function l2Sender() external view returns (address);
     function minimumGasLimit(uint64 _byteCount) external pure returns (uint64);
     function params() external view returns (uint128 prevBaseFee, uint64 prevBoughtGas, uint64 prevBlockNum); // nosemgrep

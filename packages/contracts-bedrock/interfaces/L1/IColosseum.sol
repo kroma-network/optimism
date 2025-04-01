@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
 import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
@@ -51,7 +51,7 @@ interface IColosseum {
 
     function BISECTION_TIMEOUT() external view returns (uint256);
     function CREATION_PERIOD_SECONDS() external view returns (uint256);
-    function L2_ORACLE() external view returns (IL2OutputOracle);
+    function L2_ORACLE() external view returns (IKromaL2OutputOracle);
     function L2_ORACLE_SUBMISSION_INTERVAL() external view returns (uint256);
     function PROVING_TIMEOUT() external view returns (uint256);
     function SECURITY_COUNCIL() external view returns (ISecurityCouncil);
@@ -107,7 +107,7 @@ interface IColosseum {
         uint256[] memory _segmentsLengths
     ) external;
     function isInCreationPeriod(uint256 _outputIndex) external view returns (bool);
-    function l2Oracle() external view returns (IL2OutputOracle);
+    function l2Oracle() external view returns (IKromaL2OutputOracle);
     function l2OracleSubmissionInterval() external view returns (uint256);
     function proveFaultWithZkVm(uint256 _outputIndex, uint256 _pos, KromaTypes.ZkVmProof memory _zkVmProof) external;
     function provingTimeout() external view returns (uint256);
