@@ -75,6 +75,8 @@ contract CommonTest is Test, Setup, Events {
         excludeContract(address(ffi));
         excludeContract(address(deploy));
         excludeContract(address(deploy.cfg()));
+        excludeContract(address(kromaDeploy));
+        excludeContract(address(kromaDeploy.cfg()));
 
         // Make sure the base fee is non zero
         vm.fee(1 gwei);

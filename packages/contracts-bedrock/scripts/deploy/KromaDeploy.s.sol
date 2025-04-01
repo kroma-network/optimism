@@ -70,20 +70,25 @@ contract KromaDeploy is Deployer {
     ////////////////////////////////////////////////////////////////
 
     function runWithStateDump() public {
-        console.log("== Starting kroma deployment with state dump ==");
+        console.log("== Starting kroma deployment with state dump : %s", Config.stateDumpPath(""));
         vm.chainId(cfg.l1ChainID());
+
+        // load stateDump from file
+        vm.loadAllocs(Config.stateDumpPath(""));
+
         _run();
+
         vm.dumpState(Config.stateDumpPath(""));
     }
 
     function run() public {
-        console.log("== Starting kroma deployment ==");
+        console.log("== Starting kroma deployment");
         _run();
     }
 
     function _run() public {
-        // load stateDump & deployment addresses
-        vm.loadAllocs(Config.stateDumpPath(""));
+        console.log("Kroma run... Config.stateDumpPath : ", Config.stateDumpPath(""));
+        // load deployment addresses from file
         string memory addresses = Config.deploymentOutfile();
         if (bytes(addresses).length > 0) {
             console.log("Loading addresses from: %s", addresses);

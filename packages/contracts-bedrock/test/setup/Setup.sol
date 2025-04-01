@@ -7,6 +7,7 @@ import { Vm } from "forge-std/Vm.sol";
 
 // Scripts
 import { Deploy } from "scripts/deploy/Deploy.s.sol";
+import { KromaDeploy } from "scripts/deploy/KromaDeploy.s.sol";
 import { Fork, LATEST_FORK } from "scripts/libraries/Config.sol";
 import { L2Genesis, L1Dependencies } from "scripts/L2Genesis.s.sol";
 import { OutputMode, Fork, ForkUtils } from "scripts/libraries/Config.sol";
@@ -20,7 +21,7 @@ import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { IOptimismPortal2 } from "interfaces/L1/IOptimismPortal2.sol";
 import { IL1CrossDomainMessenger } from "interfaces/L1/IL1CrossDomainMessenger.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IDataAvailabilityChallenge } from "interfaces/L1/IDataAvailabilityChallenge.sol";
@@ -64,6 +65,8 @@ contract Setup {
     /// @notice The address of the Deploy contract. Set into state with `etch` to avoid
     ///         mutating any nonces. MUST not have constructor logic.
     Deploy internal constant deploy = Deploy(address(uint160(uint256(keccak256(abi.encode("optimism.deploy"))))));
+    KromaDeploy internal constant kromaDeploy =
+        KromaDeploy(address(uint160(uint256(keccak256(abi.encode("kroma.deploy"))))));
 
     L2Genesis internal constant l2Genesis =
         L2Genesis(address(uint160(uint256(keccak256(abi.encode("optimism.l2genesis"))))));
@@ -77,7 +80,7 @@ contract Setup {
     IDelayedWETH delayedWeth;
     IOptimismPortal optimismPortal;
     IOptimismPortal2 optimismPortal2;
-    IL2OutputOracle l2OutputOracle;
+    IKromaL2OutputOracle l2OutputOracle;
     ISystemConfig systemConfig;
     IL1StandardBridge l1StandardBridge;
     IL1CrossDomainMessenger l1CrossDomainMessenger;
@@ -121,8 +124,11 @@ contract Setup {
     function setUp() public virtual {
         console.log("L1 setup start!");
         vm.etch(address(deploy), vm.getDeployedCode("Deploy.s.sol:Deploy"));
+        vm.etch(address(kromaDeploy), vm.getDeployedCode("KromaDeploy.s.sol:KromaDeploy"));
         vm.allowCheatcodes(address(deploy));
+        vm.allowCheatcodes(address(kromaDeploy));
         deploy.setUp();
+        kromaDeploy.setUp();
         console.log("L1 setup done!");
 
         console.log("L2 setup start!");
@@ -142,6 +148,7 @@ contract Setup {
         );
 
         deploy.run();
+        kromaDeploy.run();
         console.log("Setup: completed L1 deployment, registering addresses now");
 
         optimismPortal = IOptimismPortal(deploy.mustGetAddress("OptimismPortalProxy"));
@@ -183,7 +190,7 @@ contract Setup {
         vm.label(AddressAliasHelper.applyL1ToL2Alias(address(l1CrossDomainMessenger)), "L1CrossDomainMessenger_aliased");
 
         if (!deploy.cfg().useFaultProofs()) {
-            l2OutputOracle = IL2OutputOracle(deploy.mustGetAddress("L2OutputOracleProxy"));
+            l2OutputOracle = IKromaL2OutputOracle(deploy.mustGetAddress("L2OutputOracleProxy"));
             vm.label(address(l2OutputOracle), "L2OutputOracle");
             vm.label(deploy.mustGetAddress("L2OutputOracleProxy"), "L2OutputOracleProxy");
         }
