@@ -39,7 +39,6 @@ import { ProxyAdmin } from "../../src/universal/ProxyAdmin.sol";
 /// @title KromaDeploy
 /// @notice Deployment script for all Kroma L1 contracts.
 contract KromaDeploy is Deployer {
-
     ////////////////////////////////////////////////////////////////
     //                        Modifiers                           //
     ////////////////////////////////////////////////////////////////

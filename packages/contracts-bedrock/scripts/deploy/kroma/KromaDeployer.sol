@@ -16,7 +16,6 @@ import { IProxyAdmin } from "interfaces/universal/IProxyAdmin.sol";
 import { IProxy } from "interfaces/universal/IProxy.sol";
 import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
 import { IColosseum } from "interfaces/L1/IColosseum.sol";
 import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
