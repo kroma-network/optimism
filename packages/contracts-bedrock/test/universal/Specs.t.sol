@@ -19,6 +19,14 @@ import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { ISystemConfigInterop } from "interfaces/L1/ISystemConfigInterop.sol";
 import { IDataAvailabilityChallenge } from "interfaces/L1/IDataAvailabilityChallenge.sol";
 import { IProtocolVersions } from "interfaces/L1/IProtocolVersions.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+// [Kroma: START]
+import { IColosseum } from "interfaces/L1/IColosseum.sol";
+import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
+import { LegacyOptimismPortal } from "../../src/legacy/LegacyOptimismPortal.sol";
+import { SecurityCouncilToken } from "../../src/governance/SecurityCouncilToken.sol";
+import { UpgradeGovernor } from "../../src/governance/UpgradeGovernor.sol";
+// [Kroma: END]
 
 /// @title Specification_Test
 /// @dev Specifies common security properties of entrypoints to L1 contracts, including authorization and
@@ -904,6 +912,405 @@ contract Specification_Test is CommonTest {
         _addSpec({ _name: "LivenessModule", _sel: _getSel("safe()") });
         _addSpec({ _name: "LivenessModule", _sel: _getSel("thresholdPercentage()") });
         _addSpec({ _name: "LivenessModule", _sel: _getSel("version()") });
+
+        // [Kroma: START]
+        // AssetManager
+        _addSpec({ _name: "AssetManager", _sel: _getSel("ASSET_TOKEN()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("BOND_AMOUNT()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("DECIMAL_OFFSET()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("KGH()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("MIN_DELEGATION_PERIOD()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("SECURITY_COUNCIL()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("TAX_DENOMINATOR()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("TAX_NUMERATOR()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("VALIDATOR_MANAGER()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("VALIDATOR_REWARD_VAULT()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("assetToken()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("bondAmount()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("bondValidatorKro(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("canUndelegateKghAt(address,address,uint256)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("canUndelegateKroAt(address,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("canWithdrawAt(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("claimKghReward(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("decreaseBalanceWithChallenge(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("delegate(address,uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("delegateKgh(address,uint256)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("delegateKghBatch(address,uint256[])") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("deposit(uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("depositToRegister(address,uint128,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("getKghNum(address,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("getKghReward(address,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("getKroAssets(address,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("getKroTotalShareBalance(address,address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("getWithdrawAccount(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("increaseBalanceWithChallenge(address,uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("increaseBalanceWithReward(address,uint128,uint128,uint128)") });
+        _addSpec({
+            _name: "AssetManager",
+            _sel: _getSel("initialize(address,address,address,address,address,uint128,uint128)")
+        });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("kgh()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("minDelegationPeriod()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("onERC721Received(address,address,uint256,bytes)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("previewDelegate(address,uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("previewUndelegate(address,uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("reflectiveWeight(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("revertDecreaseBalanceWithChallenge(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("securityCouncil()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("totalKghNum(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("totalKroAssets(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("totalValidatorKro(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("totalValidatorKroBonded(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("totalValidatorKroNotBonded(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("unbondValidatorKro(address)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("undelegate(address,uint128)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("undelegateKgh(address,uint256)") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("undelegateKghBatch(address,uint256[])") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("validatorManager()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("validatorRewardVault()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("version()") });
+        _addSpec({ _name: "AssetManager", _sel: _getSel("withdraw(address,uint128)") });
+
+        // Colosseum
+        _addSpec({ _name: "Colosseum", _sel: _getSel("BISECTION_TIMEOUT()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("CREATION_PERIOD_SECONDS()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("L2_ORACLE()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("L2_ORACLE_SUBMISSION_INTERVAL()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("PROVING_TIMEOUT()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("SECURITY_COUNCIL()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("ZK_PROOF_VERIFIER()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("bisect(uint256,address,uint256,bytes32[])") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("bisectionTimeout()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("cancelChallenge(uint256)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("challengerTimeout(uint256,address)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("challenges(uint256,address)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("createChallenge(uint256,bytes32,uint256,bytes32[])") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("creationPeriodSeconds()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("deletedOutputs(uint256)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("dismissChallenge(uint256,address,address,bytes32,bytes32)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("forceDeleteOutput(uint256)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("getChallenge(uint256,address)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("getStatus(uint256,address)") });
+        _addSpec({
+            _name: "Colosseum",
+            _sel: _getSel("initialize(address,address,address,uint256,uint256,uint256,uint256,uint256[])")
+        });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("isInCreationPeriod(uint256)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("l2Oracle()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("l2OracleSubmissionInterval()") });
+        _addSpec({ _name: "Colosseum", _sel: IColosseum.proveFaultWithZkVm.selector });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("provingTimeout()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("securityCouncil()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("segmentsLengths(uint256)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("verifiedPublicInputs(bytes32)") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("version()") });
+        _addSpec({ _name: "Colosseum", _sel: _getSel("zkProofVerifier()") });
+
+        // KromaL2OutputOracle
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("COLOSSEUM()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("FINALIZATION_PERIOD_SECONDS()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("L2_BLOCK_TIME()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("SUBMISSION_INTERVAL()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("VALIDATOR_MANAGER()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("colosseum()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("computeL2Timestamp(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("finalizationPeriodSeconds()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("finalizedAt(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("getL2Output(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("getL2OutputAfter(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("getL2OutputIndexAfter(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("getSubmitter(uint256)") });
+        _addSpec({
+            _name: "KromaL2OutputOracle",
+            _sel: _getSel("initialize(address,address,uint256,uint256,uint256,uint256,uint256)")
+        });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("isFinalized(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("l2BlockTime()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("latestBlockNumber()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("latestOutputIndex()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("nextBlockNumber()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("nextFinalizeOutputIndex()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("nextOutputIndex()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("nextOutputMinL2Timestamp()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("replaceL2Output(uint256,bytes32,address)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("setNextFinalizeOutputIndex(uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("startingBlockNumber()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("startingTimestamp()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("submissionInterval()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("submitL2Output(bytes32,uint256,bytes32,uint256)") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("validatorManager()") });
+        _addSpec({ _name: "KromaL2OutputOracle", _sel: _getSel("version()") });
+
+        // SecurityCouncil
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("COLOSSEUM()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("GOVERNOR()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("clock()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("colosseum()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("confirmTransaction(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("confirmations(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("executeTransaction(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("generateTransactionId(address,uint256,bytes)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("getConfirmationCount(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("getVotes(address)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("governor()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("initialize(address,address)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("initialize(address)") }); // Overloaded version
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("isConfirmed(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("isConfirmedBy(uint256,address)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("outputsDeleteRequested(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("quorum()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("requestDeletion(uint256,bool)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("requestValidation(bytes32,uint256,bytes)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("revokeConfirmation(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("submitTransaction(address,uint256,bytes)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("transactionCount()") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("transactions(uint256)") });
+        _addSpec({ _name: "SecurityCouncil", _sel: _getSel("version()") });
+
+        // ValidatorManager
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("ASSET_MANAGER()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("BASE_REWARD()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("BOOSTED_REWARD_DENOM()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("BOOSTED_REWARD_NUMERATOR()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("COMMISSION_CHANGE_DELAY_SECONDS()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("COMMISSION_RATE_DENOM()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("HARD_JAIL_PERIOD_SECONDS()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("JAIL_THRESHOLD()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("L2_ORACLE()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("MAX_OUTPUT_FINALIZATIONS()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("MIN_ACTIVATE_AMOUNT()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("MIN_REGISTER_AMOUNT()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("ROUND_DURATION_SECONDS()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("SOFT_JAIL_PERIOD_SECONDS()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("TRUSTED_VALIDATOR()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("activateValidator()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("activatedValidatorCount()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("activatedValidatorTotalWeight()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("afterSubmitL2Output(uint256)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("assetManager()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("baseReward()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("bondValidatorKro(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("canFinalizeCommissionChangeAt(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("checkSubmissionEligibility(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("commissionChangeDelaySeconds()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("finalizeCommissionChange()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("getCommissionRate(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("getPendingCommissionRate(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("getStatus(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("getWeight(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("hardJailPeriodSeconds()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("inJail(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("initCommissionChange(uint8)") });
+        _addSpec({ _name: "ValidatorManager", _sel: IValidatorManager.initialize.selector });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("isActive(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("jailExpiresAt(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("jailThreshold()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("l2Oracle()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("maxOutputFinalizations()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("minActiveAmount()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("minRegisterAmount()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("nextValidator()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("noSubmissionCount(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("registerValidator(uint128,uint8,address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("revertSlash(uint256,address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("roundDurationSeconds()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("slash(uint256,address,address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("softJailPeriodSeconds()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("trustedValidator()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("tryActivateValidator(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("tryUnjail()") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("unbondValidatorKro(address)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("updateValidatorTree(address,bool)") });
+        _addSpec({ _name: "ValidatorManager", _sel: _getSel("version()") });
+
+        // ZKProofVerifier
+        _addSpec({ _name: "ZKProofVerifier", _sel: _getSel("version()") });
+        _addSpec({ _name: "ZKProofVerifier", _sel: _getSel("sp1Verifier()") });
+        _addSpec({ _name: "ZKProofVerifier", _sel: _getSel("zkVmProgramVKey()") });
+        _addSpec({ _name: "ZKProofVerifier", _sel: IZKProofVerifier.verifyZkVmProof.selector });
+
+        // SecurityCouncilToken
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("CLOCK_MODE()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("DOMAIN_SEPARATOR()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("approve(address,uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("balanceOf(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("burn(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("clock()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("delegate(address)") });
+        _addSpec({
+            _name: "SecurityCouncilToken",
+            _sel: _getSel("delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)")
+        });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("delegates(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("eip712Domain()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("getApproved(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("getPastTotalSupply(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("getPastVotes(address,uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("getVotes(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("initialize(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("isApprovedForAll(address,address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("locked(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("name()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("nonces(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("owner()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("ownerOf(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("pause()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("paused()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("renounceOwnership()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("safeMint(address,string)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("safeTransferFrom(address,address,uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("safeTransferFrom(address,address,uint256,bytes)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("setApprovalForAll(address,bool)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("supportsInterface(bytes4)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("symbol()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("tokenByIndex(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("tokenOfOwnerByIndex(address,uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("tokenURI(uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("totalSupply()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("transferFrom(address,address,uint256)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("transferOwnership(address)") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("unpause()") });
+        _addSpec({ _name: "SecurityCouncilToken", _sel: _getSel("version()") });
+
+        // TimeLock
+        _addSpec({ _name: "TimeLock", _sel: _getSel("CANCELLER_ROLE()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("DEFAULT_ADMIN_ROLE()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("EXECUTOR_ROLE()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("PROPOSER_ROLE()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("TIMELOCK_ADMIN_ROLE()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("cancel(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("execute(address,uint256,bytes,bytes32,bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("executeBatch(address[],uint256[],bytes[],bytes32,bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("getMinDelay()") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("getRoleAdmin(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("getTimestamp(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("grantRole(bytes32,address)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("hasRole(bytes32,address)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("hashOperation(address,uint256,bytes,bytes32,bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("hashOperationBatch(address[],uint256[],bytes[],bytes32,bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("initialize(uint256,address[],address[],address)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("isOperation(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("isOperationDone(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("isOperationPending(bytes32)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("isOperationReady(bytes32)") });
+        _addSpec({
+            _name: "TimeLock",
+            _sel: _getSel("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)")
+        });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("onERC1155Received(address,address,uint256,uint256,bytes)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("onERC721Received(address,address,uint256,bytes)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("renounceRole(bytes32,address)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("revokeRole(bytes32,address)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("schedule(address,uint256,bytes,bytes32,bytes32,uint256)") });
+        _addSpec({
+            _name: "TimeLock",
+            _sel: _getSel("scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)")
+        });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("supportsInterface(bytes4)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("updateDelay(uint256)") });
+        _addSpec({ _name: "TimeLock", _sel: _getSel("version()") });
+
+        // UpgradeGovernor
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("BALLOT_TYPEHASH()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("CLOCK_MODE()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("COUNTING_MODE()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("EXTENDED_BALLOT_TYPEHASH()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("cancel(address[],uint256[],bytes[],bytes32)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("castVote(uint256,uint8)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("castVoteBySig(uint256,uint8,uint8,bytes32,bytes32)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("castVoteWithReason(uint256,uint8,string)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("castVoteWithReasonAndParams(uint256,uint8,string,bytes)") });
+        _addSpec({
+            _name: "UpgradeGovernor",
+            _sel: _getSel("castVoteWithReasonAndParamsBySig(uint256,uint8,string,bytes,uint8,bytes32,bytes32)")
+        });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("clock()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("eip712Domain()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("execute(address[],uint256[],bytes[],bytes32)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("getVotes(address,uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("getVotesWithParams(address,uint256,bytes)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("hasVoted(uint256,address)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("hashProposal(address[],uint256[],bytes[],bytes32)") });
+        _addSpec({
+            _name: "UpgradeGovernor",
+            _sel: _getSel("initialize(address,address,uint256,uint256,uint256,uint256)")
+        });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("name()") });
+        _addSpec({
+            _name: "UpgradeGovernor",
+            _sel: _getSel("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)")
+        });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("onERC1155Received(address,address,uint256,uint256,bytes)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("onERC721Received(address,address,uint256,bytes)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalDeadline(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalEta(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalProposer(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalSnapshot(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalThreshold()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("proposalVotes(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("propose(address[],uint256[],bytes[],string)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("queue(address[],uint256[],bytes[],bytes32)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("quorum(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("quorumDenominator()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("quorumNumerator(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("quorumNumerator()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("relay(address,uint256,bytes)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("setProposalThreshold(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("setVotingDelay(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("setVotingPeriod(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("state(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("supportsInterface(bytes4)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("timelock()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("token()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("updateQuorumNumerator(uint256)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("updateTimelock(address)") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("version()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("votingDelay()") });
+        _addSpec({ _name: "UpgradeGovernor", _sel: _getSel("votingPeriod()") });
+
+        // KromaGovernanceToken
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("BRIDGE()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("DOMAIN_SEPARATOR()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("REMOTE_TOKEN()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("acceptOwnership()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("allowance(address,address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("approve(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("balanceOf(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("bridge()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("burn(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("checkpoints(address,uint32)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("decimals()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("decreaseAllowance(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("delegate(address)") });
+        _addSpec({
+            _name: "KromaGovernanceToken",
+            _sel: _getSel("delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)")
+        });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("delegates(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("getPastTotalSupply(uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("getPastVotes(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("getVotes(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("increaseAllowance(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("initialize(address,address,address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("mint(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("name()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("nonces(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("numCheckpoints(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("owner()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("pendingOwner()") });
+        _addSpec({
+            _name: "KromaGovernanceToken",
+            _sel: _getSel("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")
+        });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("remoteToken()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("renounceOwnership()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("supportsInterface(bytes4)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("symbol()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("totalSupply()") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("transfer(address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("transferFrom(address,address,uint256)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("transferOwnership(address)") });
+        _addSpec({ _name: "KromaGovernanceToken", _sel: _getSel("version()") });
     }
 
     /// @dev Computes the selector from a function signature.
@@ -1012,4 +1419,5 @@ contract Specification_Test is CommonTest {
         _assertRolesEq(dgmFuncSpecs[_getSel("setAnchorState(address,address)")].auth, Role.DEPUTYGUARDIAN);
         _assertRolesEq(anchorRegFuncSpecs[_getSel("setAnchorState(address)")].auth, Role.GUARDIAN);
     }
+    // [Kroma: START]
 }
