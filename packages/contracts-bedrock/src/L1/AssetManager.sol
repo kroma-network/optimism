@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 // Contracts
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { UnstructuredInitializable  } from "src/universal/UnstructuredInitializable.sol";
+import { UnstructuredInitializable } from "src/universal/UnstructuredInitializable.sol";
 
 // Libraries
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";

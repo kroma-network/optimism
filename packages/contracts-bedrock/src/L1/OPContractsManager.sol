@@ -6,13 +6,6 @@ import { Blueprint } from "src/libraries/Blueprint.sol";
 import { Constants } from "src/libraries/Constants.sol";
 import { Claim, Duration, GameType, GameTypes } from "src/dispute/lib/Types.sol";
 
-// Contracts
-import { AssetManager } from "src/L1/AssetManager.sol";
-import { L2OutputOracle } from "src/L1/L2OutputOracle.sol";
-import { SecurityCouncil } from "src/L1/SecurityCouncil.sol";
-import { SystemConfig } from "src/L1/SystemConfig.sol";
-import { ZKProofVerifier } from "src/L1/ZKProofVerifier.sol";
-
 // Interfaces
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
@@ -35,21 +28,6 @@ import { IL1CrossDomainMessenger } from "interfaces/L1/IL1CrossDomainMessenger.s
 import { IL1ERC721Bridge } from "interfaces/L1/IL1ERC721Bridge.sol";
 import { IL1StandardBridge } from "interfaces/L1/IL1StandardBridge.sol";
 import { IOptimismMintableERC20Factory } from "interfaces/universal/IOptimismMintableERC20Factory.sol";
-
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
-import { IColosseum } from "interfaces/L1/IColosseum.sol";
-import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
-import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
-import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
-import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
-import { ISP1Verifier } from "interfaces/vendor/sp1/ISP1Verifier.sol";
-import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
-import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
-import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
-import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 contract OPContractsManager is ISemver {
     // -------- Structs --------
@@ -83,39 +61,7 @@ contract OPContractsManager is ISemver {
         uint256 disputeSplitDepth;
         Duration disputeClockExtension;
         Duration disputeMaxClockDuration;
-        // [Kroma: START]
-        // Deploy configs for AssetManager.
-        IERC721 kgh;
-        address vault;
-        uint128 minDelegationPeriod;
-        uint128 bondAmount;
-        // Deploy configs for Colosseum.
-        IL2OutputOracle l2OutputOracle;
-        uint256 submissionInterval;
-        uint256 creationPeriodSeconds;
-        uint256 bisectionTimeout;
-        uint256 provingTimeout;
-        uint256[] segmentsLengths;
-        // Deploy configs for SecurityCouncil.
-        uint256 timeLockMinDelaySeconds;
-        // Deploy configs for UpgradeGovernor.
-        uint256 initialVotingDelay;
-        uint256 initialVotingPeriod;
-        uint256 initialProposalThreshold;
-        uint256 votesQuorumFraction;
-        // Deploy configs for ValidatorManager.
-        address trustedValidator;
-        uint128 minRegisterAmount;
-        uint128 minActivateAmount;
-        uint128 commissionChangeDelaySeconds;
-        uint128 roundDurationSeconds;
-        uint128 softJailPeriodSeconds;
-        uint128 hardJailPeriodSeconds;
-        uint128 jailThreshold;
-        uint128 maxFinalizations;
-        uint128 baseReward;
     }
-    // [Kroma: END]
 
     /// @notice The full set of outputs from deploying a new OP Stack chain.
     struct DeployOutput {
@@ -135,18 +81,7 @@ contract OPContractsManager is ISemver {
         IPermissionedDisputeGame permissionedDisputeGame;
         IDelayedWETH delayedWETHPermissionedGameProxy;
         IDelayedWETH delayedWETHPermissionlessGameProxy;
-        // [Kroma: START]
-        IAssetManager assetManagerProxy;
-        IColosseum colosseumProxy;
-        ISecurityCouncil securityCouncilProxy;
-        ISecurityCouncilToken securityCouncilTokenProxy;
-        ITimeLock timeLockProxy;
-        IUpgradeGovernor upgradeGovernorProxy;
-        IValidatorManager validatorManagerProxy;
-        IZKProofVerifier zkProofVerifierProxy;
-        IKromaGovernanceToken kromaGovernanceTokenProxy;
     }
-    // [Kroma: END]
 
     /// @notice Addresses of ERC-5202 Blueprint contracts. There are used for deploying full size
     /// contracts, to reduce the code size of this factory contract. If it deployed full contracts
@@ -175,17 +110,7 @@ contract OPContractsManager is ISemver {
         address disputeGameFactoryImpl;
         address delayedWETHImpl;
         address mipsImpl;
-        // [Kroma: START]
-        address assetManagerImpl;
-        address colosseumImpl;
-        address securityCouncilImpl;
-        address securityCouncilTokenImpl;
-        address timeLockImpl;
-        address upgradeGovernorImpl;
-        address validatorManagerImpl;
-        address zkProofVerifierImpl;
     }
-    // [Kroma: END]
 
     // -------- Constants and Variables --------
 
@@ -307,26 +232,6 @@ contract OPContractsManager is ISemver {
             IDisputeGameFactory(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "DisputeGameFactory"));
         output.anchorStateRegistryProxy =
             IAnchorStateRegistry(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "AnchorStateRegistry"));
-
-        // [Kroma: START]
-        output.kromaGovernanceTokenProxy =
-            IKromaGovernanceToken(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "KromaGovernanceToken"));
-        output.assetManagerProxy =
-            IAssetManager(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "AssetManager"));
-        output.colosseumProxy = IColosseum(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "Colosseum"));
-        output.securityCouncilProxy =
-            ISecurityCouncil(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "SecurityCouncil"));
-        output.securityCouncilTokenProxy =
-            ISecurityCouncilToken(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "SecurityCouncilToken"));
-        output.timeLockProxy =
-            ITimeLock(payable(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "TimeLock")));
-        output.upgradeGovernorProxy =
-            IUpgradeGovernor(payable(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "UpgradeGovernor")));
-        output.validatorManagerProxy =
-            IValidatorManager(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "ValidatorManager"));
-        output.zkProofVerifierProxy =
-            IZKProofVerifier(deployProxy(l2ChainId, output.opChainProxyAdmin, saltMixer, "ZKProofVerifier"));
-        // [Kroma: END]
 
         // Deploy legacy proxied contracts.
         output.l1StandardBridgeProxy = IL1StandardBridge(
@@ -450,37 +355,6 @@ contract OPContractsManager is ISemver {
             data
         );
 
-        // [Kroma: START]
-        data = encodeAssetManagerInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin, address(output.assetManagerProxy), implementation.assetManagerImpl, data
-        );
-        data = encodeColosseumInitializer(_input, output);
-        upgradeAndCall(output.opChainProxyAdmin, address(output.colosseumProxy), implementation.colosseumImpl, data);
-        data = encodeSecurityCouncilInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin, address(output.securityCouncilProxy), implementation.securityCouncilImpl, data
-        );
-        data = encodeSecurityCouncilTokenInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin,
-            address(output.securityCouncilTokenProxy),
-            implementation.securityCouncilTokenImpl,
-            data
-        );
-        data = encodeTimeLockInitializer(_input, output);
-        upgradeAndCall(output.opChainProxyAdmin, address(output.timeLockProxy), implementation.timeLockImpl, data);
-        data = encodeUpgradeGovernorInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin, address(output.upgradeGovernorProxy), implementation.upgradeGovernorImpl, data
-        );
-        data = encodeValidatorManagerInitializer(_input, output);
-        upgradeAndCall(
-            output.opChainProxyAdmin, address(output.validatorManagerProxy), implementation.validatorManagerImpl, data
-        );
-        upgrade(output.opChainProxyAdmin, address(output.zkProofVerifierProxy), implementation.zkProofVerifierImpl);
-        // [Kroma: END]
-
         // -------- Finalize Deployment --------
         // Transfer ownership of the ProxyAdmin from this contract to the specified owner.
         output.opChainProxyAdmin.transferOwnership(_input.roles.opChainProxyAdminOwner);
@@ -526,7 +400,7 @@ contract OPContractsManager is ISemver {
         string memory _saltMixer,
         string memory _contractName
     )
-        public
+        internal
         pure
         returns (bytes32)
     {
@@ -547,24 +421,6 @@ contract OPContractsManager is ISemver {
     {
         bytes32 salt = computeSalt(_l2ChainId, _saltMixer, _contractName);
         return Blueprint.deployFrom(blueprint.proxy, salt, abi.encode(_proxyAdmin));
-    }
-
-    /// @notice Returns the deterministically computed contract address
-    /// that will be deployed by the deployProxy function.
-    function computeDeployProxy(
-        uint256 _l2ChainId,
-        address owner,
-        string memory _saltMixer,
-        string memory _contractName,
-        address _bluePrintTarget,
-        address deployer
-    )
-        public
-        view
-        returns (address)
-    {
-        bytes32 salt = computeSalt(_l2ChainId, _saltMixer, _contractName);
-        return Blueprint.computeDeployAddress(_bluePrintTarget, salt, abi.encode(owner), deployer);
     }
 
     // -------- Initializer Encoding --------
@@ -737,184 +593,6 @@ contract OPContractsManager is ISemver {
         );
     }
 
-    // [Kroma: START]
-
-    /// @notice Helper method for encoding the AssetManager initializer data.
-    function encodeAssetManagerInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IAssetManager.initialize.selector;
-
-        return abi.encodeWithSelector(
-            selector,
-            _output.kromaGovernanceTokenProxy,
-            _input.kgh,
-            _output.securityCouncilProxy,
-            _input.vault,
-            _output.validatorManagerProxy,
-            _input.minDelegationPeriod,
-            _input.bondAmount
-        );
-    }
-
-    /// @notice Helper method for encoding the Colosseum initializer data.
-    function encodeColosseumInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IColosseum.initialize.selector;
-
-        return abi.encodeWithSelector(
-            selector,
-            _input.l2OutputOracle,
-            _output.zkProofVerifierProxy,
-            _output.securityCouncilProxy,
-            _input.submissionInterval,
-            _input.creationPeriodSeconds,
-            _input.bisectionTimeout,
-            _input.provingTimeout,
-            _input.segmentsLengths
-        );
-    }
-
-    /// @notice Helper method for encoding the SecurityCouncil initializer data.
-    function encodeSecurityCouncilInitializer(
-        DeployInput memory,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = SecurityCouncil.initialize.selector;
-
-        return abi.encodeWithSelector(selector, _output.colosseumProxy, _output.upgradeGovernorProxy);
-    }
-
-    /// @notice Helper method for encoding the SecurityCouncilToken initializer data.
-    function encodeSecurityCouncilTokenInitializer(
-        DeployInput memory,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = ISecurityCouncilToken.initialize.selector;
-
-        return abi.encodeWithSelector(selector, _output.upgradeGovernorProxy);
-    }
-
-    /// @notice Helper method for encoding the TimeLock initializer data.
-    function encodeTimeLockInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = ITimeLock.initialize.selector;
-        address[] memory proposers = new address[](1);
-        address[] memory executors = new address[](1);
-        proposers[0] = address(_output.upgradeGovernorProxy);
-        executors[0] = address(_output.upgradeGovernorProxy);
-
-        return abi.encodeWithSelector(
-            selector, _input.timeLockMinDelaySeconds, proposers, executors, address(_output.upgradeGovernorProxy)
-        );
-    }
-
-    /// @notice Helper method for encoding the UpgradeGovernor initializer data.
-    function encodeUpgradeGovernorInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IUpgradeGovernor.initialize.selector;
-        return abi.encodeWithSelector(
-            selector,
-            _output.securityCouncilTokenProxy,
-            _output.timeLockProxy,
-            _input.initialVotingDelay,
-            _input.initialVotingPeriod,
-            _input.initialProposalThreshold,
-            _input.votesQuorumFraction
-        );
-    }
-
-    /// @notice Helper method for encoding the ValidatorManager initializer data.
-    function encodeValidatorManagerInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IValidatorManager.initialize.selector;
-
-        IValidatorManager.InitializationParams memory params = IValidatorManager.InitializationParams({
-            _l2Oracle: _input.l2OutputOracle,
-            _assetManager: IAssetManager(_output.assetManagerProxy),
-            _trustedValidator: _input.trustedValidator,
-            _commissionChangeDelaySeconds: _input.commissionChangeDelaySeconds,
-            _roundDurationSeconds: _input.roundDurationSeconds,
-            _softJailPeriodSeconds: _input.softJailPeriodSeconds,
-            _hardJailPeriodSeconds: _input.hardJailPeriodSeconds,
-            _jailThreshold: _input.jailThreshold,
-            _maxOutputFinalizations: _input.maxFinalizations,
-            _baseReward: _input.baseReward,
-            _minRegisterAmount: _input.minRegisterAmount,
-            _minActivateAmount: _input.minActivateAmount
-        });
-
-        return abi.encodeWithSelector(selector, params);
-    }
-
-    /// @notice Helper method for encoding the KromaGovernanceToken initializer data.
-    function encodeKromaGovernanceTokenrInitializer(
-        DeployInput memory _input,
-        DeployOutput memory _output
-    )
-        internal
-        view
-        virtual
-        returns (bytes memory)
-    {
-        bytes4 selector = IKromaGovernanceToken.initialize.selector;
-        return abi.encodeWithSelector(
-            selector,
-            _output.securityCouncilTokenProxy,
-            _output.timeLockProxy,
-            _input.initialVotingDelay,
-            _input.initialVotingPeriod,
-            _input.initialProposalThreshold,
-            _input.votesQuorumFraction
-        );
-    }
-
-    // [Kroma: END]
-
     /// @notice Returns default, standard config arguments for the SystemConfig initializer.
     /// This is used by subclasses to reduce code duplication.
     function defaultSystemConfigParams(
@@ -967,15 +645,6 @@ contract OPContractsManager is ISemver {
         assertValidContractAddress(_implementation);
 
         _proxyAdmin.upgradeAndCall(payable(address(_target)), _implementation, _data);
-    }
-
-    /// @notice Makes an external call to the target to initialize the proxy.
-    function upgrade(IProxyAdmin _proxyAdmin, address _target, address _implementation) internal {
-        assertValidContractAddress(address(_proxyAdmin));
-        assertValidContractAddress(_target);
-        assertValidContractAddress(_implementation);
-
-        _proxyAdmin.upgrade(payable(address(_target)), _implementation);
     }
 
     function assertValidContractAddress(address _who) internal view {

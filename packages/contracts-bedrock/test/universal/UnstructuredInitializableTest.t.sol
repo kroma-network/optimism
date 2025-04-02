@@ -5,7 +5,7 @@ pragma solidity 0.8.15;
 import "forge-std/Test.sol";
 
 // Contracts
-import {UnstructuredInitializable} from "src/universal/UnstructuredInitializable.sol";
+import { UnstructuredInitializable } from "src/universal/UnstructuredInitializable.sol";
 
 /// @dev A simple contract that inherits UnstructuredInitializable for testing.
 contract TestContract is UnstructuredInitializable {

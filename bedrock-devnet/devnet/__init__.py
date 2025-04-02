@@ -147,8 +147,17 @@ def devnet_l1_allocs(paths):
       'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
     }, cwd=paths.contracts_bedrock_dir)
 
-    shutil.move(src=paths.forge_l1_dump_path, dst=paths.allocs_l1_path)
+    # To avoid address collisions during create1 deployments, we use a separate test account
+    # instead of the Optimism sender EOA. (optimism uses dev account index 3, we use index 4)
+    fqn = 'scripts/deploy/KromaDeploy.s.sol:KromaDeploy'
+    run_command([
+      'forge', 'script', fqn, "--sig", "runWithStateDump()", "--sender", "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+    ], env={
+      'DEPLOYMENT_OUTFILE': paths.l1_deployments_path,
+      'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
+    }, cwd=paths.contracts_bedrock_dir)
 
+    shutil.move(src=paths.forge_l1_dump_path, dst=paths.allocs_l1_path)
     shutil.copy(paths.l1_deployments_path, paths.addresses_json_path)
 
 

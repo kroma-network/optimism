@@ -7,13 +7,11 @@ pragma solidity 0.8.15;
 abstract contract UnstructuredInitializable {
     /// @notice The storage slot that holds the initialized version of the contract.
     /// @dev    Slot: `bytes32(uint256(keccak256("unstructured.initializable.initialized")) - 1)`
-    bytes32 internal constant _INITIALIZED_SLOT =
-        0xb25dec660ce7a75ea4eb44c1b5224935800fab1a1f943d17d507a18ac7a572ed;
+    bytes32 internal constant _INITIALIZED_SLOT = 0xb25dec660ce7a75ea4eb44c1b5224935800fab1a1f943d17d507a18ac7a572ed;
 
     /// @notice The storage slot that tracks whether the contract is in the middle of initializing.
     /// @dev    Slot: `bytes32(uint256(keccak256("unstructured.initializable.initializing")) - 1)`
-    bytes32 internal constant _INITIALIZING_SLOT =
-        0xd16b04d7a8aa3daae4087064b34e44bdfbd8a7259d9f2873842472ff4fff712a;
+    bytes32 internal constant _INITIALIZING_SLOT = 0xd16b04d7a8aa3daae4087064b34e44bdfbd8a7259d9f2873842472ff4fff712a;
 
     /// @notice Emitted whenever the contract is initialized or reinitialized.
     /// @param version The version number that was initialized.
@@ -24,8 +22,7 @@ abstract contract UnstructuredInitializable {
     modifier initializer() {
         bool isTopLevelCall = !_isInitializing();
         require(
-            _getInitializedVersion() < 1 || (isTopLevelCall && !_isInitialized()),
-            "Initializable: already initialized"
+            _getInitializedVersion() < 1 || (isTopLevelCall && !_isInitialized()), "Initializable: already initialized"
         );
 
         _setInitializedVersion(1);
@@ -44,10 +41,7 @@ abstract contract UnstructuredInitializable {
     /// @param version The initialization version to apply.
     modifier reinitializer(uint8 version) {
         require(!_isInitializing(), "Initializable: contract is initializing");
-        require(
-            _getInitializedVersion() < version,
-            "Initializable: already initialized"
-        );
+        require(_getInitializedVersion() < version, "Initializable: already initialized");
 
         _setInitializedVersion(version);
         _setInitializing(true);
