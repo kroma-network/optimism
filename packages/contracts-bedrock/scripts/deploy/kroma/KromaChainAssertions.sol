@@ -120,15 +120,11 @@ library KromaChainAssertions {
             require(address(colosseum.zkProofVerifier()) == address(output.zkProofVerifierProxy), "COLOSSEUM-40");
             require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == input.submissionInterval, "COLOSSEUM-50");
             require(colosseum.l2OracleSubmissionInterval() == input.submissionInterval, "COLOSSEUM-60");
-            require(colosseum.CREATION_PERIOD_SECONDS() == input.creationPeriodSeconds, "COLOSSEUM-70");
-            require(colosseum.creationPeriodSeconds() == input.creationPeriodSeconds, "COLOSSEUM-80");
-            require(colosseum.BISECTION_TIMEOUT() == input.bisectionTimeout, "COLOSSEUM-90");
-            require(colosseum.bisectionTimeout() == input.bisectionTimeout, "COLOSSEUM-100");
-            require(colosseum.PROVING_TIMEOUT() == input.provingTimeout, "COLOSSEUM-110");
-            require(colosseum.provingTimeout() == input.provingTimeout, "COLOSSEUM-120");
-            require(colosseum.segmentsLengths(0) == input.segmentsLengths[0], "COLOSSEUM-130");
-            require(address(colosseum.SECURITY_COUNCIL()) == address(output.securityCouncilProxy), "COLOSSEUM-140");
-            require(address(colosseum.securityCouncil()) == address(output.securityCouncilProxy), "COLOSSEUM-150");
+            require(address(colosseum.SECURITY_COUNCIL()) == address(output.securityCouncilProxy), "COLOSSEUM-70");
+            require(address(colosseum.securityCouncil()) == address(output.securityCouncilProxy), "COLOSSEUM-80");
+            require(colosseum.guardianPeriodSeconds() == input.guardianPeriodSeconds, "COLOSSEUM-90");
+            require(colosseum.maxClockDurationSeconds() == input.maxClockDurationSeconds, "COLOSSEUM-100");
+            require(colosseum.challengeGracePeriodSeconds() == input.challengeGracePeriodSeconds, "COLOSSEUM-110");
         } else {
             colosseum = IColosseum(output.colosseumImpl);
             DeployUtils.assertInitialized(address(colosseum), 0, 0);
@@ -138,15 +134,11 @@ library KromaChainAssertions {
             require(address(colosseum.zkProofVerifier()) == address(0), "COLOSSEUM-40");
             require(colosseum.L2_ORACLE_SUBMISSION_INTERVAL() == 0, "COLOSSEUM-50");
             require(colosseum.l2OracleSubmissionInterval() == 0, "COLOSSEUM-60");
-            require(colosseum.CREATION_PERIOD_SECONDS() == 0, "COLOSSEUM-70");
-            require(colosseum.creationPeriodSeconds() == 0, "COLOSSEUM-80");
-            require(colosseum.BISECTION_TIMEOUT() == 0, "COLOSSEUM-90");
-            require(colosseum.bisectionTimeout() == 0, "COLOSSEUM-100");
-            require(colosseum.PROVING_TIMEOUT() == 0, "COLOSSEUM-110");
-            require(colosseum.provingTimeout() == 0, "COLOSSEUM-120");
-            require(colosseum.segmentsLengths(0) == 0, "COLOSSEUM-130");
-            require(address(colosseum.SECURITY_COUNCIL()) == address(0), "COLOSSEUM-140");
-            require(address(colosseum.securityCouncil()) == address(0), "COLOSSEUM-150");
+            require(address(colosseum.SECURITY_COUNCIL()) == address(0), "COLOSSEUM-70");
+            require(address(colosseum.securityCouncil()) == address(0), "COLOSSEUM-80");
+            require(colosseum.guardianPeriodSeconds() == 0, "COLOSSEUM-90");
+            require(colosseum.maxClockDurationSeconds() == 0, "COLOSSEUM-100");
+            require(colosseum.challengeGracePeriodSeconds() == 0, "COLOSSEUM-110");
         }
     }
 

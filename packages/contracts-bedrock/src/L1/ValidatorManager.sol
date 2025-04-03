@@ -277,7 +277,7 @@ contract ValidatorManager is ISemver, UnstructuredInitializable {
 
     /// @notice A modifier that only allows Colosseum contract to call.
     modifier onlyColosseum() {
-        if (msg.sender != l2Oracle.COLOSSEUM()) revert NotAllowedCaller();
+        if (msg.sender != address(l2Oracle.colosseum())) revert NotAllowedCaller();
         _;
     }
 

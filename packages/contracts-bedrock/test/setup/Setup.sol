@@ -20,7 +20,7 @@ import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { IOptimismPortal2 } from "interfaces/L1/IOptimismPortal2.sol";
 import { IL1CrossDomainMessenger } from "interfaces/L1/IL1CrossDomainMessenger.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IDataAvailabilityChallenge } from "interfaces/L1/IDataAvailabilityChallenge.sol";
@@ -77,7 +77,7 @@ contract Setup {
     IDelayedWETH delayedWeth;
     IOptimismPortal optimismPortal;
     IOptimismPortal2 optimismPortal2;
-    IL2OutputOracle l2OutputOracle;
+    IKromaL2OutputOracle l2OutputOracle;
     ISystemConfig systemConfig;
     IL1StandardBridge l1StandardBridge;
     IL1CrossDomainMessenger l1CrossDomainMessenger;
@@ -183,7 +183,7 @@ contract Setup {
         vm.label(AddressAliasHelper.applyL1ToL2Alias(address(l1CrossDomainMessenger)), "L1CrossDomainMessenger_aliased");
 
         if (!deploy.cfg().useFaultProofs()) {
-            l2OutputOracle = IL2OutputOracle(deploy.mustGetAddress("L2OutputOracleProxy"));
+            l2OutputOracle = IKromaL2OutputOracle(deploy.mustGetAddress("L2OutputOracleProxy"));
             vm.label(address(l2OutputOracle), "L2OutputOracle");
             vm.label(deploy.mustGetAddress("L2OutputOracleProxy"), "L2OutputOracleProxy");
         }

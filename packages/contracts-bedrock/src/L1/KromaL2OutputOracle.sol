@@ -10,6 +10,7 @@ import { KromaConstants } from "src/libraries/KromaConstants.sol";
 import { KromaTypes } from "src/libraries/KromaTypes.sol";
 
 // Interfaces
+import { IColosseum } from "interfaces/L1/IColosseum.sol";
 import { ISemver } from "interfaces/universal/ISemver.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
@@ -162,7 +163,7 @@ contract KromaL2OutputOracle is Initializable, ISemver {
     /// @param _newOutputRoot The L2 output root to replace the existing one.
     /// @param _submitter     Address of the L2 output submitter.
     function replaceL2Output(uint256 _l2OutputIndex, bytes32 _newOutputRoot, address _submitter) external {
-        require(msg.sender == colosseum, "L2OutputOracle: only the colosseum contract can replace an output");
+        require(msg.sender == address(colosseum), "L2OutputOracle: only the colosseum contract can replace an output");
 
         require(_submitter != address(0), "L2OutputOracle: submitter address cannot be zero");
 
@@ -174,7 +175,7 @@ contract KromaL2OutputOracle is Initializable, ISemver {
         KromaTypes.CheckpointOutput storage output = l2Outputs[_l2OutputIndex];
         // Do not allow replacing any outputs that have already been finalized.
         require(
-            block.timestamp - output.timestamp < finalizationPeriodSeconds,
+            !IColosseum(colosseum).isFinalized(_l2OutputIndex),
             "L2OutputOracle: cannot replace an output that has already been finalized"
         );
 
@@ -247,6 +248,26 @@ contract KromaL2OutputOracle is Initializable, ISemver {
         );
 
         nextFinalizeOutputIndex = _outputIndex;
+    }
+
+    /// @notice Returns the latest finalized output.
+    /// @return Latest finalized output
+    function getLatestFinalizedOutput() external view returns (KromaTypes.CheckpointOutput memory) {
+        if (nextFinalizeOutputIndex > 0) {
+            return l2Outputs[nextFinalizeOutputIndex - 1];
+        } else {
+            return l2Outputs[nextFinalizeOutputIndex];
+        }
+    }
+
+    /// @notice Returns the index of the latest finalized output.
+    /// @return Latest finalized output index
+    function getLatestFinalizedOutputIndex() external view returns (uint256) {
+        if (nextFinalizeOutputIndex > 0) {
+            return nextFinalizeOutputIndex - 1;
+        } else {
+            return nextFinalizeOutputIndex;
+        }
     }
 
     /// @notice Returns an output by index. Reverts if output is not found at the given index.
@@ -346,13 +367,6 @@ contract KromaL2OutputOracle is Initializable, ISemver {
     /// @param _outputIndex Index of an output.
     /// @return If the given output is finalized or not.
     function isFinalized(uint256 _outputIndex) external view returns (bool) {
-        return finalizedAt(_outputIndex) <= block.timestamp;
-    }
-
-    /// @notice Returns the finalization time of given output index.
-    /// @param _outputIndex Index of an output.
-    /// @return The finalization time of given output index.
-    function finalizedAt(uint256 _outputIndex) public view returns (uint256) {
-        return l2Outputs[_outputIndex].timestamp + finalizationPeriodSeconds;
+        return IColosseum(colosseum).isFinalized(_outputIndex);
     }
 }

@@ -58,10 +58,9 @@ library KromaInitializers {
             mustGetAddress("ZKProofVerifierProxy"),
             mustGetAddress("SecurityCouncilProxy"),
             input.submissionInterval,
-            input.creationPeriodSeconds,
-            input.bisectionTimeout,
-            input.provingTimeout,
-            input.segmentsLengths
+            input.guardianPeriodSeconds,
+            input.maxClockDurationSeconds,
+            input.challengeGracePeriodSeconds
         );
     }
 

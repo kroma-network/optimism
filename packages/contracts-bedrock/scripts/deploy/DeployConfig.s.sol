@@ -114,10 +114,9 @@ contract DeployConfig is Script {
     uint256 public timeLockMinDelaySeconds;
     uint256 public l2GovernorVotingPeriodBlocks;
     uint256 public l2TimeLockMinDelaySeconds;
-    uint256 public colosseumCreationPeriodSeconds;
-    uint256 public colosseumBisectionTimeout;
-    uint256 public colosseumProvingTimeout;
-    uint256[] public colosseumSegmentsLengths;
+    uint256 public colosseumGuardianPeriodSeconds;
+    uint256 public colosseumMaxClockDurationSeconds;
+    uint256 public colosseumChallengeGracePeriodSeconds;
     address public zkProofVerifierSP1Verifier;
     bytes32 public zkProofVerifierVKey;
     // [Kroma: END]
@@ -235,10 +234,9 @@ contract DeployConfig is Script {
         timeLockMinDelaySeconds = stdJson.readUint(_json, "$.timeLockMinDelaySeconds");
         l2GovernorVotingPeriodBlocks = stdJson.readUint(_json, "$.l2GovernorVotingPeriodBlocks");
         l2TimeLockMinDelaySeconds = stdJson.readUint(_json, "$.l2TimeLockMinDelaySeconds");
-        colosseumCreationPeriodSeconds = stdJson.readUint(_json, "$.colosseumCreationPeriodSeconds");
-        colosseumBisectionTimeout = stdJson.readUint(_json, "$.colosseumBisectionTimeout");
-        colosseumProvingTimeout = stdJson.readUint(_json, "$.colosseumProvingTimeout");
-        colosseumSegmentsLengths = stdJson.readUintArray(_json, "$.colosseumSegmentsLengths");
+        colosseumGuardianPeriodSeconds = stdJson.readUint(_json, "$.colosseumGuardianPeriodSeconds");
+        colosseumMaxClockDurationSeconds = stdJson.readUint(_json, "$.colosseumMaxClockDurationSeconds");
+        colosseumChallengeGracePeriodSeconds = stdJson.readUint(_json, "$.colosseumChallengeGracePeriodSeconds");
         zkProofVerifierSP1Verifier = stdJson.readAddress(_json, "$.zkProofVerifierSP1Verifier");
         zkProofVerifierVKey = stdJson.readBytes32(_json, "$.zkProofVerifierVKey");
         // [Kroma: END]
@@ -282,12 +280,6 @@ contract DeployConfig is Script {
         }
         return uint256(_l2OutputOracleStartingTimestamp);
     }
-
-    // [Kroma: START]
-    function getColosseumSegmentsLengths() public view returns (uint256[] memory) {
-        return colosseumSegmentsLengths;
-    }
-    // [Kroma: END]
 
     /// @notice Allow the `useAltDA` config to be overridden in testing environments
     function setUseAltDA(bool _useAltDA) public {

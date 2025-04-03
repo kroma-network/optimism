@@ -23,10 +23,9 @@ struct KromaDeployInput {
     // Colosseum
     IKromaL2OutputOracle l2OutputOracle;
     uint256 submissionInterval;
-    uint256 creationPeriodSeconds;
-    uint256 bisectionTimeout;
-    uint256 provingTimeout;
-    uint256[] segmentsLengths;
+    uint256 guardianPeriodSeconds;
+    uint256 maxClockDurationSeconds;
+    uint256 challengeGracePeriodSeconds;
     // SecurityCouncil
     uint256 timeLockMinDelaySeconds;
     // UpgradeGovernor

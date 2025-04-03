@@ -47,11 +47,11 @@ contract Colosseum is Initializable, ISemver {
         READY_TO_PROVE
     }
 
-    /// @notice Length of segment array for each turn.
-    mapping(uint256 => uint256) public segmentsLengths;
+    /// @notice legacy space for the mapping of segmentsLengths.
+    uint256 private spacer_1_0_32;
 
-    /// @notice A mapping of the challenge.
-    mapping(uint256 => mapping(address => KromaTypes.Challenge)) public challenges;
+    /// @notice legacy space for the mapping of the challenge.
+    uint256 private spacer_2_0_32;
 
     /// @notice A mapping indicating whether a public input is verified or not.
     mapping(bytes32 => bool) public verifiedPublicInputs;
@@ -68,18 +68,22 @@ contract Colosseum is Initializable, ISemver {
     /// @notice Address that has the ability to approve the challenge.
     ISecurityCouncil public securityCouncil;
 
-    /// @notice The period seconds for which challenges can be created per each output.
-    uint256 public creationPeriodSeconds;
-
-    /// @notice Timeout seconds for the bisection.
-    uint256 public bisectionTimeout;
-
-    /// @notice Timeout seconds for the proving.
-    uint256 public provingTimeout;
-
     /// @notice The interval in L2 blocks at which checkpoints must be
     ///         submitted on L2OutputOracle contract.
     uint256 public l2OracleSubmissionInterval;
+
+    /// @notice A period during which guardians verify whether the challenge result is correct.
+    uint256 public guardianPeriodSeconds;
+
+    /// @notice A duration for asserter(or challenger) timeout.
+    uint256 public maxClockDurationSeconds;
+
+    /// @notice The grace period that provides additional time for the challenger's timer
+    ///         to allow for zk proof generation.
+    uint256 public challengeGracePeriodSeconds;
+
+    /// @notice Maps each output index to its corresponding assertion object.
+    mapping(uint256 => KromaTypes.Assertion) public assertions;
 
     /// @notice Emitted when the challenge is created.
     /// @param outputIndex Index of the L2 checkpoint output.
@@ -95,7 +99,7 @@ contract Colosseum is Initializable, ISemver {
     /// @param challenger  Address of the challenger.
     /// @param turn        The current turn.
     /// @param timestamp   The timestamp when bisected.
-    event Bisected(uint256 indexed outputIndex, address indexed challenger, uint8 turn, uint256 timestamp);
+    event Bisected(uint256 indexed outputIndex, address indexed challenger, uint256 turn, uint256 timestamp);
 
     /// @notice Emitted when it is ready to be proved.
     /// @param outputIndex Index of the L2 checkpoint output.
@@ -165,20 +169,8 @@ contract Colosseum is Initializable, ISemver {
     /// @notice Reverts when the status of challenge is improper to cancel challenge.
     error ImproperChallengeStatusToCancel();
 
-    /// @notice Reverts when the creation period is already passed.
-    error CreationPeriodPassed();
-
     /// @notice Reverts when L1 is reorged.
     error L1Reorged();
-
-    /// @notice Reverts when segments length is invalid.
-    error InvalidSegmentsLength();
-
-    /// @notice Reverts when the first segment is mismatched.
-    error FirstSegmentMismatched();
-
-    /// @notice Reverts when the last segment is matched.
-    error LastSegmentMatched();
 
     /// @notice Reverts when the public input is already verified.
     error AlreadyVerifiedPublicInput();
@@ -186,15 +178,48 @@ contract Colosseum is Initializable, ISemver {
     /// @notice Reverts when the public input hash is invalid.
     error InvalidPublicInputHash();
 
-    /// @notice Reverts when turn is invalid.
-    error InvalidTurn();
+    /// @notice Reverts when the public input is invalid.
+    error InvalidPublicInput();
 
     /// @notice Reverts when challenge cannot be cancelled.
     error CannotCancelChallenge();
 
+    /// @notice Reverts when assertion for the output is already created
+    error AssertionAlreadyCreated();
+
+    /// @notice Reverts when an asserter has timed out
+    error AsserterTimeout();
+
+    /// @notice Reverts when a challenger has timed out
+    error ChallengerTimeout();
+
+    /// @notice Reverts when a challenge cannot be created or progressed
+    error NotChallengeable();
+
+    /// @notice Reverts when the challenge has been already created
+    error ChallengeAlreadyCreated();
+
+    /// @notice Reverts when bisecting is attempted when the challenge is already in a "ready to prove" state
+    error BisectUnnecessary();
+
+    /// @notice Reverts when pos is invalid in bisect
+    error InvalidSegmentPosition();
+
+    /// @notice Reverts when an assertion cannot be accepted due to unmet conditions
+    error AssertionNotAcceptable();
+
+    /// @notice Reverts when an assertion doesn't exist
+    error AssertionNotFound();
+
+    /// @notice A modifier that only allows L2OutputOracle contract to call.
+    modifier onlyL2OutputOracle() {
+        if (msg.sender != address(l2Oracle)) revert NotAllowedCaller();
+        _;
+    }
+
     /// @notice Semantic version.
-    /// @custom:semver 2.1.0
-    string public constant version = "2.1.0";
+    /// @custom:semver 3.0.0
+    string public constant version = "3.0.0";
 
     /// @notice Constructs the Colosseum contract.
     constructor() {
@@ -202,50 +227,32 @@ contract Colosseum is Initializable, ISemver {
     }
 
     /// @notice Initializer
-    /// @param _l2Oracle              Address of the L2OutputOracle contract.
-    /// @param _zkProofVerifier       Address of the ZKProofVerifier contract.
-    /// @param _securityCouncil       Address of security council.
-    /// @param _submissionInterval    Interval in blocks at which checkpoints must be submitted.
-    /// @param _creationPeriodSeconds Seconds The period seconds for which challenges can be created per each output.
-    /// @param _bisectionTimeout      Timeout seconds for the bisection.
-    /// @param _provingTimeout        Timeout seconds for the proving.
-    /// @param _segmentsLengths       Lengths of segments.
-    function initialize(
-        IKromaL2OutputOracle _l2Oracle,
+    /// @param _l2Oracle                Address of the L2OutputOracle contract
+    /// @param _zkProofVerifier         Address of the ZKProofVerifier contract
+    /// @param _submissionInterval      Interval in blocks at which checkpoints must be submitted
+    /// @param _securityCouncil         Address of security council
+    /// @param _guardianPeriod          A period during which guardians verify whether the challenge result is correct
+    /// @param _maxClockDurationSeconds A duration for asserter(or challenger) timeout
+    /// @param _challengeGracePeriod    The grace period that provides additional time for the challenger's timer
+   function initialize(
+        address _l2Oracle,
         IZKProofVerifier _zkProofVerifier,
-        ISecurityCouncil _securityCouncil,
         uint256 _submissionInterval,
-        uint256 _creationPeriodSeconds,
-        uint256 _bisectionTimeout,
-        uint256 _provingTimeout,
-        uint256[] memory _segmentsLengths
+        address _securityCouncil,
+        uint256 _guardianPeriod,
+        uint256 _maxClockDurationSeconds,
+        uint256 _challengeGracePeriod
     )
         public
         reinitializer(2)
     {
         l2Oracle = IKromaL2OutputOracle(_l2Oracle);
         zkProofVerifier = IZKProofVerifier(_zkProofVerifier);
-        securityCouncil = ISecurityCouncil(_securityCouncil);
         l2OracleSubmissionInterval = _submissionInterval;
-        creationPeriodSeconds = _creationPeriodSeconds;
-        bisectionTimeout = _bisectionTimeout;
-        provingTimeout = _provingTimeout;
-
-        // _segmentsLengths length should be an even number in order to let challenger submit
-        // invalidity proof at the last turn.
-        if (_segmentsLengths.length % 2 != 0) revert InvalidSegmentsLength();
-
-        uint256 sum = 1;
-        for (uint256 i = 0; i < _segmentsLengths.length;) {
-            segmentsLengths[i] = _segmentsLengths[i];
-            sum = sum * (_segmentsLengths[i] - 1);
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        if (sum != l2OracleSubmissionInterval) revert InvalidSegmentsLength();
+        securityCouncil = ISecurityCouncil(_securityCouncil);
+        guardianPeriodSeconds = _guardianPeriod;
+        maxClockDurationSeconds = _maxClockDurationSeconds;
+        challengeGracePeriodSeconds = _challengeGracePeriod;
     }
 
     /// @notice Getter for the l2OutputOracle address.
@@ -272,30 +279,6 @@ contract Colosseum is Initializable, ISemver {
         return securityCouncil;
     }
 
-    /// @notice Getter for the creationPeriodSeconds.
-    ///         Public getter is legacy and will be removed in the future. Use `creationPeriodSeconds` instead.
-    /// @return The period seconds for which challenges can be created per each output.
-    /// @custom:legacy
-    function CREATION_PERIOD_SECONDS() external view returns (uint256) {
-        return creationPeriodSeconds;
-    }
-
-    /// @notice Getter for the bisectionTimeout.
-    ///         Public getter is legacy and will be removed in the future. Use `bisectionTimeout` instead.
-    /// @return Timeout seconds for the bisection.
-    /// @custom:legacy
-    function BISECTION_TIMEOUT() external view returns (uint256) {
-        return bisectionTimeout;
-    }
-
-    /// @notice Getter for the provingTimeout.
-    ///         Public getter is legacy and will be removed in the future. Use `provingTimeout` instead.
-    /// @return Timeout seconds for the proving.
-    /// @custom:legacy
-    function PROVING_TIMEOUT() external view returns (uint256) {
-        return provingTimeout;
-    }
-
     /// @notice Getter for the l2OracleSubmissionInterval.
     ///         Public getter is legacy and will be removed in the future. Use `l2OracleSubmissionInterval` instead.
     /// @return The interval in L2 blocks at which checkpoints must be submitted on L2OutputOracle contract.
@@ -304,43 +287,61 @@ contract Colosseum is Initializable, ISemver {
         return l2OracleSubmissionInterval;
     }
 
+    /// @notice Creates a new assertion for a specific L2 output.
+    /// @param _outputIndex The index of the L2 output being asserted.
+    /// @param asserter     The address of the validator making the assertion.
+    function createAssertion(uint256 _outputIndex, address asserter) external onlyL2OutputOracle {
+        if (_outputIndex == 0) revert NotAllowedGenesisOutput();
+
+        uint256 latestFinalizedOutputIndex = l2Oracle.getLatestFinalizedOutputIndex();
+
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+
+        if (assertion.asserter != address(0)) {
+            revert AssertionAlreadyCreated();
+        }
+
+        assertion.latestFinalizedOutputIndex = latestFinalizedOutputIndex;
+        assertion.asserter = asserter;
+        assertion.assertedAt = block.timestamp;
+    }
+
     /// @notice Creates a challenge against an invalid output.
     /// @param _outputIndex   Index of the invalid L2 checkpoint output.
     /// @param _l1BlockHash   The block hash of L1 at the time the output L2 block was created.
     /// @param _l1BlockNumber The block number of L1 with the specified L1 block hash.
-    /// @param _segments      Array of the segment. A segment is the first output root of a specific range.
     function createChallenge(
         uint256 _outputIndex,
         bytes32 _l1BlockHash,
-        uint256 _l1BlockNumber,
-        bytes32[] calldata _segments
-    )
-        external
-    {
+        uint256 _l1BlockNumber
+    ) external {
         if (_outputIndex == 0) revert NotAllowedGenesisOutput();
 
         // Only the validators whose status is active can create challenge.
-        if (!l2Oracle.VALIDATOR_MANAGER().isActive(msg.sender)) {
+        if (!l2Oracle.validatorManager().isActive(msg.sender))
             revert ImproperValidatorStatus();
-        }
 
-        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        KromaTypes.Challenge storage challenge = assertion.challenges[msg.sender];
 
         if (challenge.turn >= TURN_INIT) {
             if (_challengeStatus(challenge) != ChallengeStatus.CHALLENGER_TIMEOUT) {
                 revert ImproperChallengeStatus();
             }
-
             _challengerTimeout(_outputIndex, msg.sender);
         }
 
-        KromaTypes.CheckpointOutput memory targetOutput = l2Oracle.getL2Output(_outputIndex);
-
-        if (targetOutput.timestamp + creationPeriodSeconds < block.timestamp) {
-            revert CreationPeriodPassed();
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+        if (
+            assertionStatus == KromaTypes.AssertionStatus.REJECTED ||
+            assertionStatus == KromaTypes.AssertionStatus.ENFORCED
+        ) {
+            revert NotChallengeable();
         }
 
-        if (targetOutput.outputRoot == DELETED_OUTPUT_ROOT) revert OutputAlreadyDeleted();
+        assertion.numChallenges++;
+
+        KromaTypes.CheckpointOutput memory targetOutput = l2Oracle.getL2Output(_outputIndex);
 
         if (msg.sender == targetOutput.submitter) revert NotAllowedCaller();
 
@@ -349,83 +350,128 @@ contract Colosseum is Initializable, ISemver {
             if (blockhash(_l1BlockNumber) != _l1BlockHash) revert L1Reorged();
         }
 
-        KromaTypes.CheckpointOutput memory prevOutput = l2Oracle.getL2Output(_outputIndex - 1);
+        challenge.challenger = msg.sender;
+        challenge.asserter = assertion.asserter;
+        challenge.turn = TURN_INIT;
 
-        // If the previous output has been deleted, the first segment will not be compared with the previous output.
-        if (prevOutput.outputRoot == DELETED_OUTPUT_ROOT) {
-            _validateSegments(TURN_INIT, _segments[0], targetOutput.outputRoot, _segments);
-        } else {
-            _validateSegments(TURN_INIT, prevOutput.outputRoot, targetOutput.outputRoot, _segments);
+        uint256 elapsed = block.timestamp - assertion.assertedAt;
+        if (elapsed > maxClockDurationSeconds) {
+            revert ChallengerTimeout();
         }
 
-        // Bond validator KRO to reserve slashing amount.
-        l2Oracle.VALIDATOR_MANAGER().bondValidatorKro(msg.sender);
-
-        _updateSegments(
-            challenge, _segments, targetOutput.l2BlockNumber - l2OracleSubmissionInterval, l2OracleSubmissionInterval
+        KromaTypes.CheckpointOutput memory latestFinalizedOutput = l2Oracle.getL2Output(
+            assertion.latestFinalizedOutputIndex
         );
-        challenge.turn = TURN_INIT;
-        challenge.asserter = targetOutput.submitter;
-        challenge.challenger = msg.sender;
-        challenge.l1Head = blockhash(block.number - 1);
-        _updateTimeout(challenge);
 
-        emit ChallengeCreated(_outputIndex, targetOutput.submitter, msg.sender, block.timestamp);
+        challenge.challengerTimeLeft = maxClockDurationSeconds - elapsed;
+        challenge.asserterTimeLeft = maxClockDurationSeconds;
+        challenge.updatedAt = block.timestamp;
+        challenge.segment.start = latestFinalizedOutput.l2BlockNumber;
+        challenge.segment.startOutput = latestFinalizedOutput.outputRoot;
+        challenge.segment.end = targetOutput.l2BlockNumber;
+        challenge.segment.endOutput = targetOutput.outputRoot;
+        challenge.segment.pos = (targetOutput.l2BlockNumber + latestFinalizedOutput.l2BlockNumber) /  2;
+        challenge.segment.output = targetOutput.outputRoot;
+        challenge.l1Head = blockhash(block.number - 1);
+
+        // Bond validator KRO to reserve slashing amount.
+        l2Oracle.validatorManager().bondValidatorKro(msg.sender);
+
+        emit ChallengeCreated(_outputIndex, assertion.asserter, msg.sender, block.timestamp);
     }
 
-    /// @notice Selects an invalid section and submit segments of that section.
+    /// @notice Finds the latest block that both parties agree on.
+    ///         This function performs a bisection search to locate the most recent block
+    ///         where both participants have consensus.
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _challenger  Address of the challenger.
-    /// @param _pos         Position of the last valid segment.
-    /// @param _segments    Array of the segment. A segment is the first output root of a specific range.
-    function bisect(uint256 _outputIndex, address _challenger, uint256 _pos, bytes32[] calldata _segments) external {
-        _checkOutputNotFinalized(_outputIndex);
+    /// @param _pos         The midpoint position between the current start and end in the bisection process.
+    /// @param _output      The output value at the given position `_pos`.
+    function bisect(
+        uint256 _outputIndex,
+        address _challenger,
+        uint256 _pos,
+        bytes32 _output
+    ) external {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
 
-        KromaTypes.Challenge storage challenge = challenges[_outputIndex][_challenger];
+        // If assertion doesn't exist
+        if (assertion.assertedAt == 0) {
+            revert InvalidOutputGiven();
+        }
+
+        KromaTypes.Challenge storage challenge = assertion.challenges[_challenger];
         ChallengeStatus status = _challengeStatus(challenge);
-
-        if (_cancelIfOutputDeleted(_outputIndex, challenge.challenger, status)) {
+        if (_cancelIfChallengeImpossible(_outputIndex, challenge.challenger, status)) {
             return;
         }
 
-        address expectedSender;
-        if (status == ChallengeStatus.CHALLENGER_TURN) {
-            expectedSender = challenge.challenger;
-        } else if (status == ChallengeStatus.ASSERTER_TURN) {
-            expectedSender = challenge.asserter;
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+        if (
+            assertionStatus == KromaTypes.AssertionStatus.REJECTED ||
+            assertionStatus == KromaTypes.AssertionStatus.ENFORCED
+        ) {
+            revert NotChallengeable();
         }
-        if (msg.sender != expectedSender) revert NotAllowedCaller();
 
-        uint8 newTurn = challenge.turn + 1;
+        if (status == ChallengeStatus.ASSERTER_TURN) {
+            if (msg.sender != challenge.asserter) {
+                revert NotAllowedCaller();
+            }
+            uint256 elapsed = block.timestamp - challenge.updatedAt;
+            challenge.asserterTimeLeft -= elapsed;
+        } else if (status == ChallengeStatus.CHALLENGER_TURN) {
+            if (msg.sender != challenge.challenger) {
+                revert NotAllowedCaller();
+            }
+            uint256 elapsed = block.timestamp - challenge.updatedAt;
+            challenge.challengerTimeLeft -= elapsed;
+        } else if (status == ChallengeStatus.ASSERTER_TIMEOUT) {
+            revert AsserterTimeout();
+        } else if (status == ChallengeStatus.CHALLENGER_TIMEOUT) {
+            revert ChallengerTimeout();
+        } else if (status == ChallengeStatus.NONE) {
+            revert ImproperChallengeStatus();
+        } else if (status == ChallengeStatus.READY_TO_PROVE) {
+            revert BisectUnnecessary();
+        }
 
-        _validateSegments(newTurn, challenge.segments[_pos], challenge.segments[_pos + 1], _segments);
+        if (_pos < challenge.segment.pos) {
+            challenge.segment.end = challenge.segment.pos;
+            challenge.segment.endOutput = challenge.segment.output;
+        } else if (_pos > challenge.segment.pos) {
+            challenge.segment.start = challenge.segment.pos;
+            challenge.segment.startOutput = challenge.segment.output;
+        } else {
+            revert InvalidSegmentPosition();
+        }
 
-        uint256 segSize = _nextSegSize(challenge);
-        _updateSegments(challenge, _segments, challenge.segStart + _pos * segSize, segSize);
+        if (_pos != (challenge.segment.start + challenge.segment.end) / 2) {
+            revert InvalidSegmentPosition();
+        }
 
+        uint256 newTurn = challenge.turn + 1;
         challenge.turn = newTurn;
-        _updateTimeout(challenge);
+        challenge.segment.output = _output;
+        challenge.updatedAt = block.timestamp;
+        challenge.segment.pos = _pos;
 
-        emit Bisected(_outputIndex, _challenger, newTurn, block.timestamp);
-
-        if (!_isAbleToBisect(challenge)) {
+        if (_challengeStatus(challenge) == ChallengeStatus.READY_TO_PROVE) {
             emit ReadyToProve(_outputIndex, _challenger);
         }
+
+        emit Bisected(_outputIndex, _challenger, newTurn, block.timestamp);
     }
 
     /// @notice Proves that a specific output is invalid using zkVM proof.
     ///         This function can only be called in the READY_TO_PROVE and ASSERTER_TIMEOUT statuses.
     /// @param _outputIndex Index of the L2 checkpoint output.
-    /// @param _pos         Position of the last valid segment.
     /// @param _zkVmProof   The public input and proof using zkVM.
     function proveFaultWithZkVm(
         uint256 _outputIndex,
-        uint256 _pos,
         KromaTypes.ZkVmProof calldata _zkVmProof
-    )
-        external
-    {
-        _proveFault(_outputIndex, _pos, _zkVmProof);
+    ) external {
+        _proveFault(_outputIndex, _zkVmProof);
     }
 
     /// @notice Calls a private function that deletes the challenge because the challenger has timed out.
@@ -433,22 +479,44 @@ contract Colosseum is Initializable, ISemver {
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _challenger  Address of the challenger.
     function challengerTimeout(uint256 _outputIndex, address _challenger) external {
-        if (_challengeStatus(challenges[_outputIndex][_challenger]) != ChallengeStatus.CHALLENGER_TIMEOUT) {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        if (_challengeStatus(assertion.challenges[_challenger]) != ChallengeStatus.CHALLENGER_TIMEOUT)
             revert ImproperChallengeStatus();
-        }
 
         _challengerTimeout(_outputIndex, _challenger);
+    }
+
+    /// @notice Accepts an assertion if there are no active challenges and the timeout period has elapsed.
+    /// @param _outputIndex Index of the L2 checkpoint output.
+    function acceptAssertion(uint256 _outputIndex) external {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+
+        if (
+            assertion.numChallenges > 0 ||
+            assertionStatus != KromaTypes.AssertionStatus.IN_PROGRESS ||
+            block.timestamp - assertion.assertedAt < maxClockDurationSeconds
+        ) {
+            revert AssertionNotAcceptable();
+        }
+
+        assertion.acceptedAt = block.timestamp;
     }
 
     /// @notice Cancels the challenge.
     ///         Reverts if is not possible to cancel the sender's challenge for the given output index.
     /// @param _outputIndex Index of the L2 checkpoint output.
     function cancelChallenge(uint256 _outputIndex) external {
-        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        KromaTypes.Challenge storage challenge = assertion.challenges[msg.sender];
 
-        if (!_cancelIfOutputDeleted(_outputIndex, challenge.challenger, _challengeStatus(challenge))) {
-            revert CannotCancelChallenge();
-        }
+        if (
+            !_cancelIfChallengeImpossible(
+                _outputIndex,
+                challenge.challenger,
+                _challengeStatus(challenge)
+            )
+        ) revert CannotCancelChallenge();
     }
 
     /// @notice Dismisses the challenge and rollback l2 output.
@@ -464,15 +532,12 @@ contract Colosseum is Initializable, ISemver {
         address _asserter,
         bytes32 _outputRoot,
         bytes32 _publicInputHash
-    )
-        external
-    {
+    ) external {
         _checkSecurityCouncil();
         _checkOutputNotFinalized(_outputIndex);
 
-        if (l2Oracle.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
+        if (l2Oracle.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT)
             revert OutputNotDeleted();
-        }
         if (_outputRoot != deletedOutputs[_outputIndex].outputRoot) revert InvalidOutputGiven();
         if (_challenger != l2Oracle.getSubmitter(_outputIndex) || _asserter != deletedOutputs[_outputIndex].submitter) {
             revert InvalidAddressGiven();
@@ -485,10 +550,13 @@ contract Colosseum is Initializable, ISemver {
         // Rollback output root.
         l2Oracle.replaceL2Output(_outputIndex, _outputRoot, _asserter);
 
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        assertion.isEnforced = true;
+
         // Revert slash asserter.
-        l2Oracle.VALIDATOR_MANAGER().revertSlash(_outputIndex, _asserter);
+        l2Oracle.validatorManager().revertSlash(_outputIndex, _asserter);
         // Slash challenger.
-        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, _asserter, _challenger);
+        l2Oracle.validatorManager().slash(_outputIndex, _asserter, _challenger);
 
         emit ChallengeDismissed(_outputIndex, _challenger, block.timestamp);
     }
@@ -506,9 +574,11 @@ contract Colosseum is Initializable, ISemver {
 
         // Delete output root.
         l2Oracle.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, address(securityCouncil));
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        assertion.isEnforced = true;
 
         // Slash the asserter's asset and move it to pending challenge reward for the output.
-        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, address(securityCouncil), output.submitter);
+        l2Oracle.validatorManager().slash(_outputIndex, address(securityCouncil), output.submitter);
 
         emit OutputForceDeleted(_outputIndex, output.submitter, block.timestamp);
     }
@@ -524,79 +594,48 @@ contract Colosseum is Initializable, ISemver {
         if (l2Oracle.isFinalized(_outputIndex)) revert OutputAlreadyFinalized();
     }
 
-    /// @notice Reverts if the given segments are invalid.
-    /// @param _turn      The current turn.
-    /// @param _prevFirst The first segment of previous turn.
-    /// @param _prevLast  The last segment of previous turn.
-    /// @param _segments  Array of the segment.
-    function _validateSegments(
-        uint8 _turn,
-        bytes32 _prevFirst,
-        bytes32 _prevLast,
-        bytes32[] memory _segments
-    )
-        internal
-        view
-    {
-        if (segmentsLengths[_turn - 1] != _segments.length) revert InvalidSegmentsLength();
-        if (_prevFirst != _segments[0]) revert FirstSegmentMismatched();
-        if (_prevLast == _segments[_segments.length - 1]) revert LastSegmentMatched();
-    }
-
-    /// @notice Updates the segment information for a given challenge.
-    /// @param _challenge The challenge data.
-    /// @param _segments  Array of the segment.
-    /// @param _segStart  The L2 block number of the first segment.
-    /// @param _segSize   The number of L2 blocks.
-    function _updateSegments(
-        KromaTypes.Challenge storage _challenge,
-        bytes32[] memory _segments,
-        uint256 _segStart,
-        uint256 _segSize
-    )
-        private
-    {
-        _challenge.segments = _segments;
-        _challenge.segStart = _segStart;
-        _challenge.segSize = _segSize;
-    }
-
-    /// @notice Updates timestamp of the challenge timeout.
-    /// @param _challenge The challenge data to update.
-    function _updateTimeout(KromaTypes.Challenge storage _challenge) private {
-        if (!_isAbleToBisect(_challenge)) {
-            _challenge.timeoutAt = uint64(block.timestamp + provingTimeout);
-        } else {
-            _challenge.timeoutAt = uint64(block.timestamp + bisectionTimeout);
-        }
-    }
-
     /// @notice Proves that a specific output is invalid using ZKP.
     /// @param _outputIndex Index of the L2 checkpoint output.
-    /// @param _pos         Position of the last valid segment.
     /// @param _zkVmProof   The public input and proof using zkVM.
-    function _proveFault(uint256 _outputIndex, uint256 _pos, KromaTypes.ZkVmProof memory _zkVmProof) private {
-        _checkOutputNotFinalized(_outputIndex);
-
-        KromaTypes.Challenge storage challenge = challenges[_outputIndex][msg.sender];
+    function _proveFault(uint256 _outputIndex, KromaTypes.ZkVmProof calldata _zkVmProof) private {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        KromaTypes.Challenge storage challenge = assertion.challenges[msg.sender];
         ChallengeStatus status = _challengeStatus(challenge);
 
-        if (_cancelIfOutputDeleted(_outputIndex, challenge.challenger, status)) {
+        if (_cancelIfChallengeImpossible(_outputIndex, challenge.challenger, status)) {
             return;
         }
 
-        if (status != ChallengeStatus.READY_TO_PROVE && status != ChallengeStatus.ASSERTER_TIMEOUT) {
-            revert ImproperChallengeStatus();
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+        if (
+            assertionStatus == KromaTypes.AssertionStatus.REJECTED ||
+            assertionStatus == KromaTypes.AssertionStatus.ENFORCED
+        ) {
+            revert NotChallengeable();
         }
 
-        bytes32 srcSegment = challenge.segments[_pos];
-        // If asserter timeout, the bisection of segments may not have ended.
-        // Therefore, segment validation only proceeds when bisection is not possible.
-        bytes32 dstSegment;
-        if (!_isAbleToBisect(challenge)) dstSegment = challenge.segments[_pos + 1];
+        if (status != ChallengeStatus.READY_TO_PROVE && status != ChallengeStatus.ASSERTER_TIMEOUT)
+            revert ImproperChallengeStatus();
 
-        // Verify ZK proof.
-        bytes32 publicInputHash = zkProofVerifier.verifyZkVmProof(_zkVmProof, srcSegment, dstSegment, challenge.l1Head);
+        // Slice from index 8 to 40 to extract the srcOutputRoot,
+        // as publicValues contains concatenated bytes32 values.
+        // Each bytes32 value occupies 32 bytes, so this range corresponds to the first public input.
+        bytes32 srcOutput = bytes32(_zkVmProof.publicValues[8:40]);
+        bytes32 dstOutput;
+        if (srcOutput == challenge.segment.output) {
+            dstOutput = challenge.segment.endOutput;
+        } else if (srcOutput == challenge.segment.startOutput) {
+            dstOutput = challenge.segment.output;
+        } else {
+            revert InvalidPublicInput();
+        }
+        bytes32 publicInputHash = zkProofVerifier.verifyZkVmProof(
+            _zkVmProof,
+            srcOutput,
+            dstOutput,
+            challenge.l1Head
+        );
+
         if (verifiedPublicInputs[publicInputHash]) revert AlreadyVerifiedPublicInput();
 
         emit Proven(_outputIndex, msg.sender, block.timestamp);
@@ -615,85 +654,120 @@ contract Colosseum is Initializable, ISemver {
             );
 
             // Request outputRoot validation to security council
-            securityCouncil.requestValidation(output.outputRoot, output.l2BlockNumber, callbackData);
+            securityCouncil.requestValidation(
+                output.outputRoot,
+                output.l2BlockNumber,
+                callbackData
+            );
 
             deletedOutputs[_outputIndex] = output;
         }
 
-        // Slash the asseter's asset and move it to pending challenge reward for the output.
-        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, msg.sender, challenge.asserter);
+        // Slash the asserter's asset and move it to pending challenge reward for the output.
+        l2Oracle.validatorManager().slash(_outputIndex, msg.sender, challenge.asserter);
 
         verifiedPublicInputs[publicInputHash] = true;
-        delete challenges[_outputIndex][msg.sender];
+        delete assertion.challenges[msg.sender];
+
+        assertion.rejectedAt = block.timestamp;
 
         // Delete output root.
         l2Oracle.replaceL2Output(_outputIndex, DELETED_OUTPUT_ROOT, msg.sender);
     }
 
-    /// @notice Cancels the challenge if the output root to be challenged has already been deleted.
-    ///         If the output root has been deleted, delete the challenge.
-    ///         Reverts when challenger is timed out or called by non-challenger.
-    ///
+
+    /// @notice Cancels the challenge if it can no longer be progressed.
+    ///         A challenge becomes unresolvable when the associated assertion is either RESTORED or REJECTED.
+    ///         Reverts if the challenger is timed out or called by a non-challenger.
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _challenger  Address of the challenger.
     /// @param _status      Current status of the challenge.
     /// @return Whether the challenge was canceled.
-    function _cancelIfOutputDeleted(
+    function _cancelIfChallengeImpossible(
         uint256 _outputIndex,
         address _challenger,
         ChallengeStatus _status
-    )
-        private
-        returns (bool)
-    {
-        if (l2Oracle.getL2Output(_outputIndex).outputRoot != DELETED_OUTPUT_ROOT) {
+    ) private returns (bool) {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+
+        // If assertion doesn't exist
+        if (assertion.assertedAt == 0) {
+            revert InvalidOutputGiven();
+        }
+
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+
+        if (
+            assertionStatus == KromaTypes.AssertionStatus.IN_PROGRESS ||
+            assertionStatus == KromaTypes.AssertionStatus.ACCEPTED
+        ) {
             return false;
         }
 
-        // If the output is deleted, the asserter does not need to do anything further.
+        // If the challenge can no longer be progressed. the asserter does not need to do anything further.
         if (msg.sender != _challenger) revert OnlyChallengerCanCancel();
 
-        if (_status == ChallengeStatus.NONE || _status == ChallengeStatus.CHALLENGER_TIMEOUT) {
+        if (_status == ChallengeStatus.NONE || _status == ChallengeStatus.CHALLENGER_TIMEOUT)
             revert ImproperChallengeStatusToCancel();
-        }
 
-        delete challenges[_outputIndex][msg.sender];
+        delete assertion.challenges[msg.sender];
         emit ChallengeCanceled(_outputIndex, msg.sender, block.timestamp);
 
-        l2Oracle.VALIDATOR_MANAGER().unbondValidatorKro(msg.sender);
+        l2Oracle.validatorManager().unbondValidatorKro(msg.sender);
 
         return true;
     }
 
-    /// @notice Deletes the challenge because the challenger timed out.
-    ///         The winner is the asserter, and challenger loses their asset.
-    /// @param _outputIndex Index of the L2 checkpoint output.
-    /// @param _challenger  Address of the challenger.
+    /// @notice Handles the challenger timeout scenario by removing the challenge and transferring assets.
+    ///         When a challenger times out, the asserter wins and the challenger forfeits their bond.
+    /// @param _outputIndex The index of the L2 checkpoint output being challenged
+    /// @param _challenger  The address of the challenger who timed out
     function _challengerTimeout(uint256 _outputIndex, address _challenger) private {
-        delete challenges[_outputIndex][_challenger];
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        delete assertion.challenges[_challenger];
+        assertion.numChallenges--;
         emit ChallengerTimedOut(_outputIndex, _challenger, block.timestamp);
 
-        l2Oracle.VALIDATOR_MANAGER().slash(_outputIndex, l2Oracle.getSubmitter(_outputIndex), _challenger);
+        l2Oracle.validatorManager().slash(
+            _outputIndex,
+            l2Oracle.getSubmitter(_outputIndex),
+            _challenger
+        );
     }
 
-    /// @notice Returns the number of L2 blocks for the next turn.
-    /// @param _challenge The current challenge data.
-    /// @return The number of L2 blocks for the next turn.
-    function _nextSegSize(KromaTypes.Challenge storage _challenge) internal view returns (uint256) {
-        return _challenge.segSize / (segmentsLengths[_challenge.turn - 1] - 1);
-    }
 
     /// @notice Determines if bisection is possible.
     /// @param _challenge The current challenge data.
     /// @return Whether bisection is possible.
     function _isAbleToBisect(KromaTypes.Challenge storage _challenge) internal view returns (bool) {
-        return _nextSegSize(_challenge) > 1;
+        return _challenge.segment.start + 2 < _challenge.segment.end;
+    }
+    /// @notice Returns status of a given assertion.
+    /// @param _assertion The assertion data.
+    /// @return The status of the assertion.
+    function _assertionStatus(
+        KromaTypes.Assertion storage _assertion
+    ) internal view returns (KromaTypes.AssertionStatus) {
+        if (_assertion.assertedAt == 0) {
+            revert AssertionNotFound();
+        }
+        if (_assertion.isEnforced) {
+            return KromaTypes.AssertionStatus.ENFORCED;
+        } else if (_assertion.acceptedAt != 0) {
+            return KromaTypes.AssertionStatus.ACCEPTED;
+        } else if (_assertion.rejectedAt != 0) {
+            return KromaTypes.AssertionStatus.REJECTED;
+        } else {
+            return KromaTypes.AssertionStatus.IN_PROGRESS;
+        }
     }
 
     /// @notice Returns status of a given challenge.
     /// @param _challenge The challenge data.
     /// @return The status of the challenge.
-    function _challengeStatus(KromaTypes.Challenge storage _challenge) internal view returns (ChallengeStatus) {
+    function _challengeStatus(
+        KromaTypes.Challenge storage _challenge
+    ) internal view returns (ChallengeStatus) {
         if (_challenge.turn < TURN_INIT) {
             return ChallengeStatus.NONE;
         }
@@ -703,20 +777,14 @@ contract Colosseum is Initializable, ISemver {
         bool isChallengerTurn = _challenge.turn % 2 == 0;
 
         // Check if it's a timed out challenge.
-        if (block.timestamp > _challenge.timeoutAt) {
-            // timeout on challenger turn
-            if (isChallengerTurn) {
+        if (isChallengerTurn) {
+            if (_isTimeout(_challenge, _challenge.challenger)) {
                 return ChallengeStatus.CHALLENGER_TIMEOUT;
             }
-
-            // If the asserter times out and the challenger does not prove fault,
-            // the challenger is assumed to have timed out.
-            if (block.timestamp > _challenge.timeoutAt + provingTimeout) {
-                return ChallengeStatus.CHALLENGER_TIMEOUT;
+        } else {
+            if (_isTimeout(_challenge, _challenge.asserter)) {
+                return ChallengeStatus.ASSERTER_TIMEOUT;
             }
-
-            // timeout on asserter turn
-            return ChallengeStatus.ASSERTER_TIMEOUT;
         }
 
         // If bisection is not possible, the Challenger must execute the fault proof.
@@ -727,6 +795,7 @@ contract Colosseum is Initializable, ISemver {
         return isChallengerTurn ? ChallengeStatus.CHALLENGER_TURN : ChallengeStatus.ASSERTER_TURN;
     }
 
+
     /// @notice Returns the challenge corresponding to the given L2 output index and challenger.
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _challenger  Address of the challenger.
@@ -734,28 +803,99 @@ contract Colosseum is Initializable, ISemver {
     function getChallenge(
         uint256 _outputIndex,
         address _challenger
-    )
-        external
-        view
-        returns (KromaTypes.Challenge memory)
-    {
-        return challenges[_outputIndex][_challenger];
+    ) external view returns (KromaTypes.Challenge memory) {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        return assertion.challenges[_challenger];
+    }
+
+    /// @notice Returns the assertion data for a given output index
+    /// @param _outputIndex Index of the L2 checkpoint output
+    /// @return The assertion view data
+    function getAssertion(uint256 _outputIndex) external view returns (KromaTypes.AssertionView memory) {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+
+        return
+            KromaTypes.AssertionView({
+                latestFinalizedOutputIndex: assertion.latestFinalizedOutputIndex,
+                assertedAt: assertion.assertedAt,
+                acceptedAt: assertion.acceptedAt,
+                rejectedAt: assertion.rejectedAt,
+                numberOfChallenges: assertion.numChallenges,
+                asserter: assertion.asserter,
+                isEnforced: assertion.isEnforced
+            });
     }
 
     /// @notice Returns the challenge status corresponding to the given L2 output index.
     /// @param _outputIndex Index of the L2 checkpoint output.
     /// @param _challenger  Address of the challenger.
     /// @return The status of the challenge.
-    function getStatus(uint256 _outputIndex, address _challenger) external view returns (ChallengeStatus) {
-        return _challengeStatus(challenges[_outputIndex][_challenger]);
+    function getStatus(
+        uint256 _outputIndex,
+        address _challenger
+    ) external view returns (ChallengeStatus) {
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        KromaTypes.Challenge storage challenge = assertion.challenges[_challenger];
+        return _challengeStatus(challenge);
     }
 
-    /// @notice Determines whether current timestamp is in challenge creation period corresponding to the given L2
-    /// output
-    /// index.
+    /// @notice Returns the assertion status corresponding to the given L2 output index.
     /// @param _outputIndex Index of the L2 checkpoint output.
-    /// @return Whether current timestamp is in challenge creation period.
-    function isInCreationPeriod(uint256 _outputIndex) external view returns (bool) {
-        return l2Oracle.getL2Output(_outputIndex).timestamp + creationPeriodSeconds >= block.timestamp;
+    /// @return The status of the assertion.
+    function getAssertionStatus(
+        uint256 _outputIndex
+    ) external view returns (KromaTypes.AssertionStatus) {
+        return _assertionStatus(assertions[_outputIndex]);
+    }
+
+    /// @notice Returns whether the actor is timed out.
+    /// @param _challenge The target challenge stored in storage.
+    /// @param _actor     The address of either the challenger or the asserter.
+    /// @return Whether the actor has timed out
+    function _isTimeout(
+        KromaTypes.Challenge storage _challenge,
+        address _actor
+    ) internal view returns (bool) {
+        if (_actor == _challenge.challenger) {
+            if (_isAbleToBisect(_challenge)) {
+                return block.timestamp >= _challenge.updatedAt + _challenge.challengerTimeLeft;
+            } else {
+                return block.timestamp >= _challenge.updatedAt + _challenge.challengerTimeLeft + guardianPeriodSeconds;
+            }
+        } else if (_actor == _challenge.asserter) {
+            return block.timestamp >= _challenge.updatedAt + _challenge.asserterTimeLeft;
+        } else {
+            revert InvalidAddressGiven();
+        }
+    }
+
+    /// @notice Returns if the output of given index is finalized.
+    /// @param _outputIndex Index of an output.
+    /// @return If the given output is finalized or not.
+    function isFinalized(uint256 _outputIndex) external view returns (bool) {
+        // The genesis output is treated as a finalized output.
+        if (_outputIndex == 0) {
+            return true;
+        }
+
+        KromaTypes.Assertion storage assertion = assertions[_outputIndex];
+        if (assertion.assertedAt == 0) {
+            return false;
+        }
+
+        KromaTypes.AssertionStatus assertionStatus = _assertionStatus(assertion);
+
+        // Check if output is finalized based on assertion status
+        if (assertionStatus == KromaTypes.AssertionStatus.ENFORCED) {
+            return l2Oracle.getL2Output(_outputIndex).outputRoot != bytes32(0);
+        }
+        if (assertionStatus == KromaTypes.AssertionStatus.ACCEPTED) {
+            return block.timestamp > assertion.acceptedAt + guardianPeriodSeconds;
+        }
+        if (assertionStatus == KromaTypes.AssertionStatus.IN_PROGRESS) {
+            return assertion.numChallenges == 0 &&
+                   block.timestamp > assertion.assertedAt + guardianPeriodSeconds + maxClockDurationSeconds;
+        }
+        return false;
     }
 }
