@@ -136,6 +136,8 @@ contract Setup {
     IOptimismSuperchainERC20Factory l2OptimismSuperchainERC20Factory =
         IOptimismSuperchainERC20Factory(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_FACTORY);
 
+    bool internal useInterop;
+
     /// @dev Deploys the Deploy contract without including its bytecode in the bytecode
     ///      of this contract by fetching the bytecode dynamically using `vm.getCode()`.
     ///      If the Deploy bytecode is included in this contract, then it will double
@@ -145,12 +147,15 @@ contract Setup {
     function setUp() public virtual {
         console.log("L1 setup start!");
         vm.etch(address(deploy), vm.getDeployedCode("Deploy.s.sol:Deploy"));
-        vm.etch(address(kromaDeploy), vm.getDeployedCode("KromaDeploy.s.sol:KromaDeploy"));
         vm.allowCheatcodes(address(deploy));
-        vm.allowCheatcodes(address(kromaDeploy));
-
         deploy.setUp();
-        kromaDeploy.setUp();
+
+        if (!useInterop) {
+            vm.etch(address(kromaDeploy), vm.getDeployedCode("KromaDeploy.s.sol:KromaDeploy"));
+            vm.allowCheatcodes(address(kromaDeploy));
+            kromaDeploy.setUp();
+        }
+
         console.log("L1 setup done!");
 
         console.log("L2 setup start!");
@@ -171,7 +176,9 @@ contract Setup {
 
         deploy.run();
         Deployment[] memory deployments = deploy.newDeployments();
-        kromaDeploy.runWithStateDump(deployments, true);
+        if (!useInterop) {
+            kromaDeploy.runWithStateDump(deployments, true);
+        }
 
         console.log("Setup: completed L1 deployment, registering addresses now");
 
