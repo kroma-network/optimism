@@ -90,6 +90,13 @@ contract KromaDeploy is Deployer {
         // Since the contract is already deployed via deploy.s.sol, we reset the artifacts to start fresh.
         removeDeploymentByName("OptimismPortalProxy");
         KromaDeployer.deployProxies(mustGetAddress("ProxyAdmin"), Artifacts(this), vm);
+        // update OptimismPortal address in SystemConfig
+        bytes32 OPTIMISM_PORTAL_SLOT = ISystemConfig(mustGetAddress("SystemConfigProxy")).OPTIMISM_PORTAL_SLOT();
+        vm.store(
+            mustGetAddress("SystemConfigProxy"),
+            bytes32(OPTIMISM_PORTAL_SLOT),
+            bytes32(uint256(uint160(address(mustGetAddress("OptimismPortalProxy")))))
+        );
 
         // update OptimismPortal address in L1CrossDomainMessenger
         vm.store(
