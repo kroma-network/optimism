@@ -2,15 +2,18 @@
 pragma solidity 0.8.15;
 
 import { CommonTest } from "test/setup/CommonTest.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle as IL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 import { Vm } from "forge-std/Vm.sol";
 
 contract L2OutputOracle_Proposer {
     IL2OutputOracle internal oracle;
+    IValidatorManager internal validatorManager;
     Vm internal vm;
 
-    constructor(IL2OutputOracle _oracle, Vm _vm) {
+    constructor(IL2OutputOracle _oracle, IValidatorManager _validatorManager, Vm _vm) {
         oracle = _oracle;
+        validatorManager = _validatorManager;
         vm = _vm;
     }
 
@@ -23,9 +26,9 @@ contract L2OutputOracle_Proposer {
     )
         external
     {
-        // Act as the proposer and propose a new output.
-        vm.prank(oracle.PROPOSER());
-        oracle.proposeL2Output(_outputRoot, _l2BlockNumber, _l1BlockHash, _l1BlockNumber);
+        // Act as the validator and submit a new output.
+        vm.prank(validatorManager.nextValidator());
+        oracle.submitL2Output(_outputRoot, _l2BlockNumber, _l1BlockHash, _l1BlockNumber);
     }
 }
 
@@ -37,7 +40,9 @@ contract L2OutputOracle_MonotonicBlockNumIncrease_Invariant is CommonTest {
         super.setUp();
 
         // Create a proposer actor.
-        actor = new L2OutputOracle_Proposer(IL2OutputOracle(address(l2OutputOracle)), vm);
+        actor = new L2OutputOracle_Proposer(
+            IL2OutputOracle(address(l2OutputOracle)), IValidatorManager(address(validatorManager)), vm
+        );
 
         // Set the target contract to the proposer actor.
         targetContract(address(actor));

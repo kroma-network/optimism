@@ -112,7 +112,7 @@ contract L2OutputOracle_TestBase is CommonTest {
     //         vm.prank(deploy.cfg().l2OutputOracleProposer());
     //         l2OutputOracle.proposeL2Output(proposedOutput1, nextBlockNumber, 0, 0);
 
-    //         Types.OutputProposal memory proposal = l2OutputOracle.getL2Output(nextOutputIndex);
+    //         KromaTypes.CheckpointOutput memory proposal = l2OutputOracle.getL2Output(nextOutputIndex);
     //         assertEq(proposal.outputRoot, proposedOutput1);
     //         assertEq(proposal.timestamp, block.timestamp);
 
@@ -127,8 +127,8 @@ contract L2OutputOracle_TestBase is CommonTest {
     //     function test_getL2OutputAfter_succeeds() external {
     //         uint8 iterations = 5;
 
-    //         Types.OutputProposal memory output;
-    //         Types.OutputProposal memory expectedOutput;
+    //         KromaTypes.CheckpointOutput memory output;
+    //         KromaTypes.CheckpointOutput memory expectedOutput;
 
     //         for (uint8 i; i < iterations; i++) {
     //             proposeAnotherOutput();
@@ -376,7 +376,7 @@ contract L2OutputOracle_TestBase is CommonTest {
 
     //         uint256 latestBlockNumber = l2OutputOracle.latestBlockNumber();
     //         uint256 latestOutputIndex = l2OutputOracle.latestOutputIndex();
-    //         Types.OutputProposal memory newLatestOutput = l2OutputOracle.getL2Output(latestOutputIndex - 1);
+    //         KromaTypes.CheckpointOutput memory newLatestOutput = l2OutputOracle.getL2Output(latestOutputIndex - 1);
 
     //         vm.prank(l2OutputOracle.CHALLENGER());
     //         vm.prank(l2OutputOracle.challenger());
@@ -391,7 +391,7 @@ contract L2OutputOracle_TestBase is CommonTest {
     //         assertEq(latestBlockNumber - submissionInterval, latestBlockNumberAfter);
 
     //         // validate that the new latest output is as expected.
-    //         Types.OutputProposal memory proposal = l2OutputOracle.getL2Output(latestOutputIndexAfter);
+    //         KromaTypes.CheckpointOutput memory proposal = l2OutputOracle.getL2Output(latestOutputIndexAfter);
     //         assertEq(newLatestOutput.outputRoot, proposal.outputRoot);
     //         assertEq(newLatestOutput.timestamp, proposal.timestamp);
     //     }
@@ -405,7 +405,7 @@ contract L2OutputOracle_TestBase is CommonTest {
 
     //         uint256 latestBlockNumber = l2OutputOracle.latestBlockNumber();
     //         uint256 latestOutputIndex = l2OutputOracle.latestOutputIndex();
-    //         Types.OutputProposal memory newLatestOutput = l2OutputOracle.getL2Output(latestOutputIndex - 3);
+    //         KromaTypes.CheckpointOutput memory newLatestOutput = l2OutputOracle.getL2Output(latestOutputIndex - 3);
 
     //         vm.prank(l2OutputOracle.CHALLENGER());
     //         vm.prank(l2OutputOracle.challenger());
@@ -420,7 +420,7 @@ contract L2OutputOracle_TestBase is CommonTest {
     //         assertEq(latestBlockNumber - submissionInterval * 3, latestBlockNumberAfter);
 
     //         // validate that the new latest output is as expected.
-    //         Types.OutputProposal memory proposal = l2OutputOracle.getL2Output(latestOutputIndexAfter);
+    //         KromaTypes.CheckpointOutput memory proposal = l2OutputOracle.getL2Output(latestOutputIndexAfter);
     //         assertEq(newLatestOutput.outputRoot, proposal.outputRoot);
     //         assertEq(newLatestOutput.timestamp, proposal.timestamp);
     //     }
