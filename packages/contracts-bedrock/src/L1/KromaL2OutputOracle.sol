@@ -222,6 +222,8 @@ contract KromaL2OutputOracle is Initializable, ISemver {
             );
         }
 
+        uint256 outputIndex = nextOutputIndex();
+
         l2Outputs.push(
             KromaTypes.CheckpointOutput({
                 submitter: msg.sender,
@@ -230,8 +232,6 @@ contract KromaL2OutputOracle is Initializable, ISemver {
                 l2BlockNumber: uint128(_l2BlockNumber)
             })
         );
-
-        uint256 outputIndex = nextOutputIndex();
 
         emit OutputSubmitted(_outputRoot, outputIndex, _l2BlockNumber, block.timestamp);
 
@@ -339,6 +339,9 @@ contract KromaL2OutputOracle is Initializable, ISemver {
     /// @param _outputIndex Index of an output.
     /// @return Address of the submitter.
     function getSubmitter(uint256 _outputIndex) external view returns (address) {
+        //        if (_outputIndex == 0) {
+        //            return validatorManager.trustedValidator();
+        //        }
         return l2Outputs[_outputIndex].submitter;
     }
 
