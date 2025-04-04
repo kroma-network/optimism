@@ -26,7 +26,7 @@ abstract contract StandardBridge {
     /// @notice The L2 gas limit set when eth is depoisited using the receive() function.
     uint32 internal constant RECEIVE_DEFAULT_GAS_LIMIT = 200_000;
 
-    /* [Kroma: START]
+    /* [Kroma: START] Kroma does not have a spacer for the legacy messenger variable.
     /// @custom:legacy
     /// @custom:spacer messenger
     /// @notice Spacer for backwards compatibility.
@@ -49,6 +49,11 @@ abstract contract StandardBridge {
     /// @custom:network-specific
     StandardBridge public otherBridge;
 
+    // [Kroma: START]
+    /// @custom:spacer otherBridge slot spacing
+    /// @notice Spacer for backwards compatibility.
+    bytes12 private spacer_2_20_12;
+
     /// @notice Indicates that the contract has been initialized, from OpenZeppelin's Initializable.sol.
     /// @custom:oz
     uint8 private _initialized;
@@ -62,6 +67,7 @@ abstract contract StandardBridge {
     ///         A gap size of 47 was chosen here, so that the first slot used in a child contract
     ///         would be a multiple of 50.
     uint256[47] private __gap;
+    // [Kroma: END]
 
     /// @notice Triggered when the contract has been initialized, from OpenZeppelin's Initializable.sol.
     /// @custom:oz

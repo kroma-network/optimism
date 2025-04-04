@@ -113,7 +113,7 @@
     "name": "L2_ORACLE",
     "outputs": [
       {
-        "internalType": "contract IL2OutputOracle",
+        "internalType": "contract IKromaL2OutputOracle",
         "name": "",
         "type": "address"
       }
@@ -462,7 +462,7 @@
       {
         "components": [
           {
-            "internalType": "contract IL2OutputOracle",
+            "internalType": "contract IKromaL2OutputOracle",
             "name": "_l2Oracle",
             "type": "address"
           },
@@ -588,7 +588,7 @@
     "name": "l2Oracle",
     "outputs": [
       {
-        "internalType": "contract IL2OutputOracle",
+        "internalType": "contract IKromaL2OutputOracle",
         "name": "",
         "type": "address"
       }

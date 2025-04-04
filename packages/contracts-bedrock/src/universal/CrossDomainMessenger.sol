@@ -77,26 +77,6 @@ contract CrossDomainMessengerLegacySpacer1 {
     mapping(bytes32 => bool) private spacer_202_0_32;
 }
 
-contract KromaCrossDomainMessengerLegacySpacer {
-    /// @custom:legacy
-    /// @custom:spacer ContextUpgradable's __gap
-    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
-    ///         ContextUpgradable.
-    uint256[50] private spacer_1_0_1600;
-
-    /// @custom:legacy
-    /// @custom:spacer PausableUpgradable's _paused
-    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
-    ///         PausableUpgradable.
-    bool private spacer_51_0_1;
-
-    /// @custom:legacy
-    /// @custom:spacer PausableUpgradable's __gap
-    /// @notice Spacer for backwards compatibility. Comes from OpenZeppelin
-    ///         PausableUpgradable.
-    uint256[49] private spacer_52_0_1568;
-}
-
 /// @custom:upgradeable
 /// @title CrossDomainMessenger
 /// @notice CrossDomainMessenger is a base contract that provides the core logic for the L1 and L2
@@ -105,7 +85,11 @@ contract KromaCrossDomainMessengerLegacySpacer {
 ///         chain it's deployed on. Currently only designed for message passing between two paired
 ///         chains and does not support one-to-many interactions.
 ///         Any changes to this contract MUST result in a semver bump for contracts that inherit it.
-abstract contract CrossDomainMessenger is Initializable, KromaCrossDomainMessengerLegacySpacer {
+abstract contract CrossDomainMessenger is
+    CrossDomainMessengerLegacySpacer0,
+    Initializable,
+    CrossDomainMessengerLegacySpacer1
+{
     /// @notice Current message version identifier.
     uint16 public constant MESSAGE_VERSION = 1;
 
@@ -246,7 +230,10 @@ abstract contract CrossDomainMessenger is Initializable, KromaCrossDomainMesseng
         // If the message is version 0, then it's a migrated legacy withdrawal. We therefore need
         // to check that the legacy version of the message has not already been relayed.
         if (version == 0) {
-            bytes32 oldHash = Hashing.hashCrossDomainMessageV0(_target, _sender, _message, _nonce);
+            // [Kroma: START] In Kroma, version 0 messages use the same format as version 1 messages.
+            // bytes32 oldHash = Hashing.hashCrossDomainMessageV0(_target, _sender, _message, _nonce);
+            bytes32 oldHash = Hashing.hashCrossDomainMessageV1(_nonce, _sender, _target, _value, _minGasLimit, _message);
+            // [Kroma: END]
             require(successfulMessages[oldHash] == false, "CrossDomainMessenger: legacy withdrawal already relayed");
         }
 
