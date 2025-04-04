@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 // Testing
+import { console2 as console } from "forge-std/console2.sol";
 import { Setup } from "test/setup/Setup.sol";
 import { Events } from "test/setup/Events.sol";
 import { FFIInterface } from "test/setup/FFIInterface.sol";
@@ -14,6 +15,9 @@ import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
 
 // Contracts
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // Libraries
 import { Constants } from "src/libraries/Constants.sol";
@@ -21,12 +25,22 @@ import { Constants } from "src/libraries/Constants.sol";
 // Interfaces
 import { IOptimismMintableERC20Full } from "interfaces/universal/IOptimismMintableERC20Full.sol";
 import { ILegacyMintableERC20Full } from "interfaces/legacy/ILegacyMintableERC20Full.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 
 /// @title CommonTest
 /// @dev An extenstion to `Test` that sets up the optimism smart contracts.
 contract CommonTest is Test, Setup, Events {
     address alice;
     address bob;
+    // [Kroma: START]
+    address trusted;
+    address asserter;
+    address challenger;
+    address delegator;
+    address validatorRewardVault;
+    address multisig;
+    address withdrawAcc;
+    // [Kroma: END]
 
     bytes32 constant nonZeroHash = keccak256(abi.encode("NON_ZERO"));
 
@@ -48,8 +62,21 @@ contract CommonTest is Test, Setup, Events {
     function setUp() public virtual override {
         alice = makeAddr("alice");
         bob = makeAddr("bob");
+        trusted = makeAddr("trusted");
+        asserter = makeAddr("asserter");
+        challenger = makeAddr("challenger");
+        delegator = makeAddr("delegator");
+        validatorRewardVault = makeAddr("validatorRewardVault");
+        multisig = makeAddr("multisig");
+        withdrawAcc = makeAddr("withdrawAcc");
+
         vm.deal(alice, 10000 ether);
         vm.deal(bob, 10000 ether);
+        vm.deal(trusted, 10000 ether);
+        vm.deal(asserter, 10000 ether);
+        vm.deal(challenger, 10000 ether);
+        vm.deal(delegator, 10000 ether);
+        vm.deal(multisig, 10000 ether);
 
         Setup.setUp();
 
@@ -75,6 +102,8 @@ contract CommonTest is Test, Setup, Events {
         excludeContract(address(ffi));
         excludeContract(address(deploy));
         excludeContract(address(deploy.cfg()));
+        excludeContract(address(kromaDeploy));
+        excludeContract(address(kromaDeploy.cfg()));
 
         // Make sure the base fee is non zero
         vm.fee(1 gwei);
@@ -90,6 +119,70 @@ contract CommonTest is Test, Setup, Events {
 
         // Call bridge initializer setup function
         bridgeInitializerSetUp();
+
+        // Setup validator
+        setupValidator();
+    }
+
+    function setupValidator() internal {
+        // Set up to give actors some amount
+        assetToken.mint(trusted, deploy.cfg().validatorManagerMinActivateAmount() * 10);
+        assetToken.mint(asserter, deploy.cfg().validatorManagerMinActivateAmount() * 10);
+        assetToken.mint(challenger, deploy.cfg().validatorManagerMinActivateAmount() * 10);
+        assetToken.mint(delegator, deploy.cfg().validatorManagerMinActivateAmount() * 10);
+
+        // Set up validatorRewardVault
+        assetToken.mint(validatorRewardVault, deploy.cfg().validatorManagerBaseReward() * 1000);
+
+        // Give actors some ETH
+        vm.deal(trusted, deploy.cfg().assetManagerBondAmount() * 10);
+        vm.deal(asserter, deploy.cfg().assetManagerBondAmount() * 10);
+        vm.deal(challenger, deploy.cfg().assetManagerBondAmount() * 10);
+
+        // Allow AssetManager contract can get asset token from validatorRewardVault
+        vm.prank(validatorRewardVault);
+        assetToken.approve(address(assetManager), deploy.cfg().validatorManagerBaseReward() * 1000);
+
+        // Set default output submitter as trusted
+        uint256 trustedValidatorSlot = 9;
+        vm.store(address(validatorManager), bytes32(trustedValidatorSlot), bytes32(uint256(uint160(trusted))));
+
+        // update trusted validator
+        registerValidator(trusted, deploy.cfg().validatorManagerMinActivateAmount() * 10);
+        warpToSubmitTime();
+        submitL2OutputV2(trusted, false);
+    }
+
+    function registerValidator(address validator, uint128 assets) internal {
+        vm.startPrank(validator, validator);
+        assetToken.approve(address(assetManager), uint256(assets));
+        validatorManager.registerValidator(assets, 10, withdrawAcc);
+        vm.stopPrank();
+    }
+
+    function statusToString(IValidatorManager.ValidatorStatus status) internal pure returns (string memory) {
+        if (status == IValidatorManager.ValidatorStatus.NONE) return "NONE";
+        if (status == IValidatorManager.ValidatorStatus.EXITED) return "EXITED";
+        if (status == IValidatorManager.ValidatorStatus.REGISTERED) return "REGISTERED";
+        if (status == IValidatorManager.ValidatorStatus.READY) return "READY";
+        if (status == IValidatorManager.ValidatorStatus.INACTIVE) return "INACTIVE";
+        if (status == IValidatorManager.ValidatorStatus.ACTIVE) return "ACTIVE";
+        return "UNKNOWN";
+    }
+
+    function submitL2OutputV2(address submitter, bool isPublicRound) internal {
+        uint256 nextBlockNumber = l2OutputOracle.nextBlockNumber();
+        bytes32 outputRoot = keccak256(abi.encode(nextBlockNumber));
+
+        if (!isPublicRound) {
+            vm.prank(validatorManager.nextValidator());
+        }
+
+        IValidatorManager.ValidatorStatus status = validatorManager.getStatus(submitter);
+
+        console.log("Validator status: %s", statusToString(status));
+        vm.prank(submitter);
+        l2OutputOracle.submitL2Output(outputRoot, nextBlockNumber, 0, 0);
     }
 
     function bridgeInitializerSetUp() public {
@@ -165,6 +258,11 @@ contract CommonTest is Test, Setup, Events {
         emit TransactionDeposited(_from, _to, 0, abi.encodePacked(_mint, _value, _gasLimit, _isCreation, _data));
     }
 
+    // Advance the evm's time to meet the L2OutputOracle's requirements for submitL2Output
+    function warpToSubmitTime() public {
+        vm.warp(l2OutputOracle.nextOutputMinL2Timestamp());
+    }
+
     // @dev Advance the evm's time to meet the L2OutputOracle's requirements for proposeL2Output
     function warpToProposeTime(uint256 _nextBlockNumber) public {
         vm.warp(l2OutputOracle.computeL2Timestamp(_nextBlockNumber) + 1);
@@ -209,5 +307,21 @@ contract CommonTest is Test, Setup, Events {
         }
 
         useInteropOverride = true;
+    }
+}
+
+contract MockKro is ERC20 {
+    constructor() ERC20("Kroma", "KRO") { }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
+
+contract MockKgh is ERC721 {
+    constructor() ERC721("Test", "TST") { }
+
+    function mint(address to, uint256 tokenId) external {
+        _mint(to, tokenId);
     }
 }
