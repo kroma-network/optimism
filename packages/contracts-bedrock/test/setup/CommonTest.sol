@@ -60,13 +60,19 @@ contract CommonTest is Test, Setup, Events {
     IOptimismMintableERC20Full RemoteL1Token;
 
     function setUp() public virtual override {
+        if (!useInteropOverride) {
+            useInterop = false;
+            enableLegacyContracts();
+        } else {
+            useInterop = true;
+        }
+
         alice = makeAddr("alice");
         bob = makeAddr("bob");
         trusted = makeAddr("trusted");
         asserter = makeAddr("asserter");
         challenger = makeAddr("challenger");
         delegator = makeAddr("delegator");
-        validatorRewardVault = makeAddr("validatorRewardVault");
         multisig = makeAddr("multisig");
         withdrawAcc = makeAddr("withdrawAcc");
 
@@ -102,8 +108,10 @@ contract CommonTest is Test, Setup, Events {
         excludeContract(address(ffi));
         excludeContract(address(deploy));
         excludeContract(address(deploy.cfg()));
-        excludeContract(address(kromaDeploy));
-        excludeContract(address(kromaDeploy.cfg()));
+        if (!useInteropOverride) {
+            excludeContract(address(kromaDeploy));
+            excludeContract(address(kromaDeploy.cfg()));
+        }
 
         // Make sure the base fee is non zero
         vm.fee(1 gwei);
@@ -120,8 +128,10 @@ contract CommonTest is Test, Setup, Events {
         // Call bridge initializer setup function
         bridgeInitializerSetUp();
 
-        // Setup validator
-        setupValidator();
+        if (!useInteropOverride) {
+            // Setup validator
+            setupValidator();
+        }
     }
 
     function setupValidator() internal {
@@ -132,7 +142,7 @@ contract CommonTest is Test, Setup, Events {
         assetToken.mint(delegator, deploy.cfg().validatorManagerMinActivateAmount() * 10);
 
         // Set up validatorRewardVault
-        assetToken.mint(validatorRewardVault, deploy.cfg().validatorManagerBaseReward() * 1000);
+        assetToken.mint(deploy.cfg().assetManagerVault(), deploy.cfg().validatorManagerBaseReward() * 1000);
 
         // Give actors some ETH
         vm.deal(trusted, deploy.cfg().assetManagerBondAmount() * 10);
@@ -140,8 +150,9 @@ contract CommonTest is Test, Setup, Events {
         vm.deal(challenger, deploy.cfg().assetManagerBondAmount() * 10);
 
         // Allow AssetManager contract can get asset token from validatorRewardVault
-        vm.prank(validatorRewardVault);
+        vm.startPrank(deploy.cfg().assetManagerVault());
         assetToken.approve(address(assetManager), deploy.cfg().validatorManagerBaseReward() * 1000);
+        vm.stopPrank();
 
         // Set default output submitter as trusted
         uint256 trustedValidatorSlot = 9;
