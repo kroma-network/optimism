@@ -7,6 +7,8 @@ import { Vm } from "forge-std/Vm.sol";
 
 // Scripts
 import { Deploy } from "scripts/deploy/Deploy.s.sol";
+import { KromaDeploy, MyERC20, MyERC721 } from "scripts/deploy/KromaDeploy.s.sol";
+import { Deployment } from "scripts/Artifacts.s.sol";
 import { Fork, LATEST_FORK } from "scripts/libraries/Config.sol";
 import { L2Genesis, L1Dependencies } from "scripts/L2Genesis.s.sol";
 import { OutputMode, Fork, ForkUtils } from "scripts/libraries/Config.sol";
@@ -20,7 +22,7 @@ import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { IOptimismPortal2 } from "interfaces/L1/IOptimismPortal2.sol";
 import { IL1CrossDomainMessenger } from "interfaces/L1/IL1CrossDomainMessenger.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { ISystemConfig } from "interfaces/L1/ISystemConfig.sol";
 import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
 import { IDataAvailabilityChallenge } from "interfaces/L1/IDataAvailabilityChallenge.sol";
@@ -49,6 +51,14 @@ import { IWETH98 } from "interfaces/universal/IWETH98.sol";
 import { IGovernanceToken } from "interfaces/governance/IGovernanceToken.sol";
 import { ILegacyMessagePasser } from "interfaces/legacy/ILegacyMessagePasser.sol";
 import { ISuperchainTokenBridge } from "interfaces/L2/ISuperchainTokenBridge.sol";
+import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
+import { IColosseum } from "interfaces/L1/IColosseum.sol";
+import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
+import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
+import { ISecurityCouncil } from "interfaces/L1/ISecurityCouncil.sol";
+import { ISecurityCouncilToken } from "interfaces/governance/ISecurityCouncilToken.sol";
+import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
+import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
 
 /// @title Setup
 /// @dev This contact is responsible for setting up the contracts in state. It currently
@@ -64,6 +74,8 @@ contract Setup {
     /// @notice The address of the Deploy contract. Set into state with `etch` to avoid
     ///         mutating any nonces. MUST not have constructor logic.
     Deploy internal constant deploy = Deploy(address(uint160(uint256(keccak256(abi.encode("optimism.deploy"))))));
+    KromaDeploy internal constant kromaDeploy =
+        KromaDeploy(address(uint160(uint256(keccak256(abi.encode("kroma.deploy"))))));
 
     L2Genesis internal constant l2Genesis =
         L2Genesis(address(uint160(uint256(keccak256(abi.encode("optimism.l2genesis"))))));
@@ -77,7 +89,6 @@ contract Setup {
     IDelayedWETH delayedWeth;
     IOptimismPortal optimismPortal;
     IOptimismPortal2 optimismPortal2;
-    IL2OutputOracle l2OutputOracle;
     ISystemConfig systemConfig;
     IL1StandardBridge l1StandardBridge;
     IL1CrossDomainMessenger l1CrossDomainMessenger;
@@ -87,6 +98,19 @@ contract Setup {
     IProtocolVersions protocolVersions;
     ISuperchainConfig superchainConfig;
     IDataAvailabilityChallenge dataAvailabilityChallenge;
+
+    // Kroma L1 contracts
+    IKromaL2OutputOracle l2OutputOracle;
+    IAssetManager assetManager;
+    IColosseum colosseum;
+    ISecurityCouncil securityCouncil;
+    ISecurityCouncilToken securityCouncilToken;
+    ITimeLock timeLock;
+    IUpgradeGovernor upgradeGovernor;
+    IValidatorManager validatorManager;
+    IZKProofVerifier zKProofVerifier;
+    MyERC20 assetToken;
+    MyERC721 kgh;
 
     // L2 contracts
     IL2CrossDomainMessenger l2CrossDomainMessenger =
@@ -121,8 +145,12 @@ contract Setup {
     function setUp() public virtual {
         console.log("L1 setup start!");
         vm.etch(address(deploy), vm.getDeployedCode("Deploy.s.sol:Deploy"));
+        vm.etch(address(kromaDeploy), vm.getDeployedCode("KromaDeploy.s.sol:KromaDeploy"));
         vm.allowCheatcodes(address(deploy));
+        vm.allowCheatcodes(address(kromaDeploy));
+
         deploy.setUp();
+        kromaDeploy.setUp();
         console.log("L1 setup done!");
 
         console.log("L2 setup start!");
@@ -142,6 +170,9 @@ contract Setup {
         );
 
         deploy.run();
+        Deployment[] memory deployments = deploy.newDeployments();
+        kromaDeploy.runWithStateDump(deployments, true);
+
         console.log("Setup: completed L1 deployment, registering addresses now");
 
         optimismPortal = IOptimismPortal(deploy.mustGetAddress("OptimismPortalProxy"));
@@ -183,9 +214,51 @@ contract Setup {
         vm.label(AddressAliasHelper.applyL1ToL2Alias(address(l1CrossDomainMessenger)), "L1CrossDomainMessenger_aliased");
 
         if (!deploy.cfg().useFaultProofs()) {
-            l2OutputOracle = IL2OutputOracle(deploy.mustGetAddress("L2OutputOracleProxy"));
-            vm.label(address(l2OutputOracle), "L2OutputOracle");
-            vm.label(deploy.mustGetAddress("L2OutputOracleProxy"), "L2OutputOracleProxy");
+            optimismPortal = IOptimismPortal(kromaDeploy.mustGetAddress("OptimismPortalProxy"));
+            vm.label(address(optimismPortal), "OptimismPortal");
+            vm.label(address(optimismPortal), "OptimismPortalProxy");
+
+            l2OutputOracle = IKromaL2OutputOracle(kromaDeploy.mustGetAddress("KromaL2OutputOracleProxy"));
+            vm.label(address(l2OutputOracle), "KromaL2OutputOracle");
+            vm.label(address(l2OutputOracle), "KromaL2OutputOracleProxy");
+
+            assetManager = IAssetManager(kromaDeploy.mustGetAddress("AssetManagerProxy"));
+            vm.label(address(assetManager), "AssetManager");
+            vm.label(address(assetManager), "AssetManagerProxy");
+
+            colosseum = IColosseum(kromaDeploy.mustGetAddress("ColosseumProxy"));
+            vm.label(address(colosseum), "Colosseum");
+            vm.label(address(colosseum), "ColosseumProxy");
+
+            securityCouncil = ISecurityCouncil(kromaDeploy.mustGetAddress("SecurityCouncilProxy"));
+            vm.label(address(securityCouncil), "SecurityCouncil");
+            vm.label(address(securityCouncil), "SecurityCouncilProxy");
+
+            securityCouncilToken = ISecurityCouncilToken(kromaDeploy.mustGetAddress("SecurityCouncilTokenProxy"));
+            vm.label(address(securityCouncilToken), "SecurityCouncilToken");
+            vm.label(address(securityCouncilToken), "SecurityCouncilTokenProxy");
+
+            timeLock = ITimeLock(kromaDeploy.mustGetAddress("TimeLockProxy"));
+            vm.label(address(timeLock), "TimeLock");
+            vm.label(address(timeLock), "TimeLockProxy");
+
+            upgradeGovernor = IUpgradeGovernor(kromaDeploy.mustGetAddress("UpgradeGovernorProxy"));
+            vm.label(address(upgradeGovernor), "UpgradeGovernor");
+            vm.label(address(upgradeGovernor), "UpgradeGovernorProxy");
+
+            validatorManager = IValidatorManager(kromaDeploy.mustGetAddress("ValidatorManagerProxy"));
+            vm.label(address(validatorManager), "ValidatorManager");
+            vm.label(address(validatorManager), "ValidatorManagerProxy");
+
+            zKProofVerifier = IZKProofVerifier(kromaDeploy.mustGetAddress("ZKProofVerifierProxy"));
+            vm.label(address(zKProofVerifier), "ZKProofVerifier");
+            vm.label(address(zKProofVerifier), "ZKProofVerifierProxy");
+
+            assetToken = MyERC20(kromaDeploy.mustGetAddress("AssetToken"));
+            vm.label(address(assetToken), "AssetToken");
+
+            kgh = MyERC721(kromaDeploy.mustGetAddress("KGH"));
+            vm.label(address(kgh), "KGH");
         }
 
         if (deploy.cfg().useAltDA()) {
