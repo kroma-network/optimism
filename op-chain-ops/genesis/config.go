@@ -811,6 +811,8 @@ type KromaFaultProofDeployConfig struct {
 	// ValidatorManagerBaseReward is the amount of the base reward in hex value.
 	ValidatorManagerBaseReward *hexutil.Big `json:"validatorManagerBaseReward"`
 
+	// AssetManagerToken represents the address of the asset token contract.
+	AssetManagerToken common.Address `json:"assetManagerToken"`
 	// AssetManagerKgh represents the address of the KGH NFT contract.
 	AssetManagerKgh common.Address `json:"assetManagerKgh"`
 	// AssetManagerVault represents the address of the validator reward vault.

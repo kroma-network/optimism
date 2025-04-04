@@ -358,7 +358,7 @@ library DeployUtils {
         bytes32 slotVal = vm.load(_contractAddress, bytes32(_slot));
         uint8 value = uint8((uint256(slotVal) >> (_offset * 8)) & 0xFF);
         require(
-            value == 1 || value == type(uint8).max,
+            value >= 1 || value == type(uint8).max,
             "DeployUtils: value at the given slot and offset does not indicate initialization"
         );
     }
