@@ -32,8 +32,7 @@ library Predeploys {
 
     /// @notice Address of the GasPriceOracle predeploy. Includes fee information
     ///         and helpers for computing the L1 portion of the transaction fee.
-    ///         Note that the address is for Kroma.
-    address internal constant GAS_PRICE_ORACLE = 0x4200000000000000000000000000000000000005;
+    address internal constant GAS_PRICE_ORACLE = 0x420000000000000000000000000000000000000F;
 
     /// @notice Address of the L2StandardBridge predeploy. Note that the address is for Kroma.
     address internal constant L2_STANDARD_BRIDGE = 0x4200000000000000000000000000000000000009;
