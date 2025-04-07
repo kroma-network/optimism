@@ -118,12 +118,14 @@ contract Initializer_Test is CommonTest {
                 initCalldata: abi.encodeCall(delayedWeth.initialize, (address(0), ISuperchainConfig(address(0))))
             })
         );
+        /* [Kroma: START] We changed the L2OutputOracle contract, so exclude it.
         // L2OutputOracleImpl
         contracts.push(
             InitializeableContract({
                 name: "L2OutputOracle",
                 target: deploy.mustGetAddress("L2OutputOracle"),
-                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (address(0), address(0), 0, 0, 0, 0, 0))
+                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (0, 0, 0, 0, address(0), address(0),
+                0))
             })
         );
         // L2OutputOracleProxy
@@ -131,9 +133,11 @@ contract Initializer_Test is CommonTest {
             InitializeableContract({
                 name: "L2OutputOracleProxy",
                 target: address(l2OutputOracle),
-                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (address(0), address(0), 0, 0, 0, 0, 0))
+                initCalldata: abi.encodeCall(l2OutputOracle.initialize, (0, 0, 0, 0, address(0), address(0),
+                0))
             })
         );
+        [Kroma: END] */
         // OptimismPortalImpl
         contracts.push(
             InitializeableContract({
@@ -391,7 +395,7 @@ contract Initializer_Test is CommonTest {
     ///         3. The `initialize()` function of each contract cannot be called again.
     function test_cannotReinitialize_succeeds() public {
         // Collect exclusions.
-        string[] memory excludes = new string[](9);
+        string[] memory excludes = new string[](22);
         // TODO: Neither of these contracts are labeled properly in the deployment script. Both are
         //       currently being labeled as their non-interop versions. Remove these exclusions once
         //       the deployment script is fixed.
@@ -412,6 +416,22 @@ contract Initializer_Test is CommonTest {
         excludes[7] = "src/L1/OPContractsManagerInterop.sol";
         // The L2OutputOracle is not always deployed (and is no longer being modified)
         excludes[8] = "src/L1/L2OutputOracle.sol";
+        // Kroma contracts
+        excludes[9] = "src/L1/AssetManager.sol";
+        excludes[10] = "src/L1/Colosseum.sol";
+        excludes[11] = "src/L1/SecurityCouncil.sol";
+        excludes[12] = "src/L1/ValidatorManager.sol";
+        excludes[13] = "src/L1/KromaL2OutputOracle.sol";
+        excludes[14] = "src/L1/ZKProofVerifier.sol";
+        excludes[15] = "src/governance/SecurityCouncilToken.sol";
+        excludes[16] = "src/governance/TimeLock.sol";
+        excludes[17] = "src/governance/UpgradeGovernor.sol";
+        excludes[18] = "src/governance/KromaGovernanceToken.sol";
+        excludes[19] = "src/universal/KromaVestingWallet.sol";
+        excludes[20] = "src/universal/TokenMultiSigWallet.sol";
+
+        // Legacy contracts
+        excludes[21] = "src/legacy/LegacyOptimismPortal.sol";
 
         // Get all contract names in the src directory, minus the excluded contracts.
         string[] memory contractNames = ForgeArtifacts.getContractNames("src/*", excludes);
