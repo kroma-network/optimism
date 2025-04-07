@@ -101,7 +101,7 @@ contract KromaDeploy is Deployer {
         // update OptimismPortal address in L1CrossDomainMessenger
         vm.store(
             mustGetAddress("L1CrossDomainMessengerProxy"),
-            bytes32(uint256(150)),
+            bytes32(uint256(252)),
             bytes32(uint256(uint160(address(mustGetAddress("OptimismPortalProxy")))))
         );
 

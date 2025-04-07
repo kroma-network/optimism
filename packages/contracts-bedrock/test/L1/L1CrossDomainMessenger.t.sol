@@ -414,7 +414,7 @@ contract L1CrossDomainMessenger_Test is CommonTest {
         // Set the value of op.l2Sender() to be the L2 Cross Domain Messenger.
         vm.store(address(optimismPortal), bytes32(senderSlotIndex), bytes32(abi.encode(sender)));
         // Mark legacy message as already relayed.
-        uint256 successfulMessagesSlot = 101;
+        uint256 successfulMessagesSlot = 203;
         bytes32 oldHash = Hashing.hashCrossDomainMessageV0(target, sender, hex"1111", 0);
         bytes32 slot = keccak256(abi.encode(oldHash, successfulMessagesSlot));
         vm.store(address(l1CrossDomainMessenger), slot, bytes32(uint256(1)));
@@ -871,7 +871,7 @@ contract L1CrossDomainMessenger_ReinitReentryTest is CommonTest {
 
         // A requisite for the attack is that the message has already been attempted and written to the failedMessages
         // mapping, so that it can be replayed.
-        vm.store(address(l1CrossDomainMessenger), keccak256(abi.encode(hash, 104)), bytes32(uint256(1)));
+        vm.store(address(l1CrossDomainMessenger), keccak256(abi.encode(hash, 206)), bytes32(uint256(1)));
         assertTrue(l1CrossDomainMessenger.failedMessages(hash));
 
         vm.expectEmit(address(l1CrossDomainMessenger));
