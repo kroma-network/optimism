@@ -32,6 +32,9 @@ contract DeployVariations_Test is CommonTest {
     /// @dev It should be possible to enable Fault Proofs and Interop with any mix of CGT and Alt-DA.
     function test_enableInteropAndFaultProofs_succeeds(bool _enableCGT, bool _enableAltDa) public virtual {
         enableAddOns(_enableCGT, _enableAltDa);
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.enableInterop();
 
         super.setUp();

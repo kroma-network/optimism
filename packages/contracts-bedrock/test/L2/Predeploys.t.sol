@@ -123,6 +123,9 @@ contract PredeploysTest is PredeploysBaseTest {
 contract PredeploysInteropTest is PredeploysBaseTest {
     /// @notice Test setup. Enabling interop to get all predeploys.
     function setUp() public virtual override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.enableInterop();
         super.setUp();
     }

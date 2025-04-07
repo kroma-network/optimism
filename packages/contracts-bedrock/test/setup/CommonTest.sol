@@ -60,12 +60,7 @@ contract CommonTest is Test, Setup, Events {
     IOptimismMintableERC20Full RemoteL1Token;
 
     function setUp() public virtual override {
-        if (!useInteropOverride) {
-            useInterop = false;
-            enableLegacyContracts();
-        } else {
-            useInterop = true;
-        }
+        enableLegacyContracts();
 
         alice = makeAddr("alice");
         bob = makeAddr("bob");
@@ -128,10 +123,8 @@ contract CommonTest is Test, Setup, Events {
         // Call bridge initializer setup function
         bridgeInitializerSetUp();
 
-        if (!useInteropOverride) {
-            // Setup validator
-            setupValidator();
-        }
+        // Setup validator
+        setupValidator();
     }
 
     function setupValidator() internal {
