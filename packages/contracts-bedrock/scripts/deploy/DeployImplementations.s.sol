@@ -359,18 +359,14 @@ contract DeployImplementationsOutput is BaseDeployIO {
     function assertValidL1CrossDomainMessengerImpl(DeployImplementationsInput) internal view {
         IL1CrossDomainMessenger messenger = l1CrossDomainMessengerImpl();
 
-        // [Kroma: START]
-        DeployUtils.assertInitialized({ _contractAddress: address(messenger), _slot: 0, _offset: 0 });
-        // [Kroma: END]
+        DeployUtils.assertInitialized({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
         require(address(messenger.OTHER_MESSENGER()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "L1xDM-10");
         require(address(messenger.otherMessenger()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "L1xDM-20");
         require(address(messenger.PORTAL()) == address(0), "L1xDM-30");
         require(address(messenger.portal()) == address(0), "L1xDM-40");
         require(address(messenger.superchainConfig()) == address(0), "L1xDM-50");
 
-        // [Kroma: START]
-        bytes32 xdmSenderSlot = vm.load(address(messenger), bytes32(uint256(102)));
-        // [Kroma: END]
+        bytes32 xdmSenderSlot = vm.load(address(messenger), bytes32(uint256(204)));
         require(address(uint160(uint256(xdmSenderSlot))) == Constants.DEFAULT_L2_SENDER, "L1xDM-60");
     }
 
@@ -389,9 +385,7 @@ contract DeployImplementationsOutput is BaseDeployIO {
     function assertValidL1StandardBridgeImpl(DeployImplementationsInput) internal view {
         IL1StandardBridge bridge = l1StandardBridgeImpl();
 
-        // [Kroma: START]
-        DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 2, _offset: 20 });
-        // [Kroma: END]
+        DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 3, _offset: 0 });
 
         require(address(bridge.MESSENGER()) == address(0), "L1SB-10");
         require(address(bridge.messenger()) == address(0), "L1SB-20");

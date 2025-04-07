@@ -173,9 +173,7 @@ library ChainAssertions {
         require(address(messenger) != address(0), "CHECK-L1XDM-10");
 
         // Check that the contract is initialized
-        // [Kroma: START]
-        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 0 });
-        // [Kroma: END]
+        assertInitializedSlotIsSet({ _contractAddress: address(messenger), _slot: 0, _offset: 20 });
 
         require(address(messenger.OTHER_MESSENGER()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-20");
         require(address(messenger.otherMessenger()) == Predeploys.L2_CROSS_DOMAIN_MESSENGER, "CHECK-L1XDM-30");
@@ -184,9 +182,7 @@ library ChainAssertions {
             require(address(messenger.PORTAL()) == _contracts.OptimismPortal, "CHECK-L1XDM-40");
             require(address(messenger.portal()) == _contracts.OptimismPortal, "CHECK-L1XDM-50");
             require(address(messenger.superchainConfig()) == _contracts.SuperchainConfig, "CHECK-L1XDM-60");
-            // [Kroma: START]
-            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(102)));
-            // [Kroma: END]
+            bytes32 xdmSenderSlot = _vm.load(address(messenger), bytes32(uint256(204)));
             require(address(uint160(uint256(xdmSenderSlot))) == Constants.DEFAULT_L2_SENDER, "CHECK-L1XDM-70");
         } else {
             require(address(messenger.PORTAL()) == address(0), "CHECK-L1XDM-80");
@@ -207,7 +203,7 @@ library ChainAssertions {
 
         // Check that the contract is initialized
         // [Kroma: START]
-        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 2, _offset: 20 });
+        assertInitializedSlotIsSet({ _contractAddress: address(bridge), _slot: 3, _offset: 0 });
         // [Kroma: END]
 
         if (_isProxy) {
