@@ -339,9 +339,9 @@ contract KromaL2OutputOracle is Initializable, ISemver {
     /// @param _outputIndex Index of an output.
     /// @return Address of the submitter.
     function getSubmitter(uint256 _outputIndex) external view returns (address) {
-        //        if (_outputIndex == 0) {
-        //            return validatorManager.trustedValidator();
-        //        }
+        if (_outputIndex == 0) {
+            return validatorManager.trustedValidator();
+        }
         return l2Outputs[_outputIndex].submitter;
     }
 
