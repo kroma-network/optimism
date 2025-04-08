@@ -46,7 +46,7 @@ contract Events {
     );
     event WhatHappened(bool success, bytes returndata);
 
-    event OutputProposed(
+    event OutputSubmitted(
         bytes32 indexed outputRoot, uint256 indexed l2OutputIndex, uint256 indexed l2BlockNumber, uint256 l1Timestamp
     );
 
