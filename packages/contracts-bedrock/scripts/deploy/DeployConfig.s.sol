@@ -102,6 +102,7 @@ contract DeployConfig is Script {
     uint128 public validatorManagerJailThreshold;
     uint128 public validatorManagerMaxFinalizations;
     uint128 public validatorManagerBaseReward;
+    address public assetManagerToken;
     address public assetManagerKgh;
     address public assetManagerVault;
     uint128 public assetManagerMinDelegationPeriod;
@@ -223,6 +224,7 @@ contract DeployConfig is Script {
         validatorManagerJailThreshold = uint128(stdJson.readUint(_json, "$.validatorManagerJailThreshold"));
         validatorManagerMaxFinalizations = uint128(stdJson.readUint(_json, "$.validatorManagerMaxFinalizations"));
         validatorManagerBaseReward = uint128(stdJson.readUint(_json, "$.validatorManagerBaseReward"));
+        assetManagerToken = stdJson.readAddress(_json, "$.assetManagerToken");
         assetManagerKgh = stdJson.readAddress(_json, "$.assetManagerKgh");
         assetManagerVault = stdJson.readAddress(_json, "$.assetManagerVault");
         assetManagerMinDelegationPeriod = uint128(stdJson.readUint(_json, "$.assetManagerMinDelegationPeriod"));

@@ -74,6 +74,7 @@
   "validatorManagerJailThreshold": 2,
   "validatorManagerMaxFinalizations": 10,
   "validatorManagerBaseReward": "0x14",
+  "assetManagerToken": "0xff00000000000000000000000000000000000fff",
   "assetManagerKgh": "0xff000000000000000000000000000000000000ff",
   "assetManagerVault": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
   "assetManagerMinDelegationPeriod": 120,
@@ -92,7 +93,7 @@
   "colosseumCreationPeriodSeconds": 100,
   "colosseumBisectionTimeout": 30,
   "colosseumProvingTimeout": 30,
-  "colosseumSegmentsLengths": [2,2,3,3],
+  "colosseumSegmentsLengths": [2,2,3,4],
   "zkProofVerifierSP1Verifier": "0x0000000000000000000000000000000000000001",
   "zkProofVerifierVKey": "0x00ad7cc293beb89796e8a9713ab7189b33faf6975325da0707d2d9cb129db055"
 }
