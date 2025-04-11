@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Libraries
-import { KromaDeployInput, KromaDeployOutput } from "scripts/deploy/kroma/KromaDeployTypes.sol";
+// Scripts
+import { DeployConfig } from "scripts/deploy/DeployConfig.s.sol";
 
 // Interfaces
 import { IAssetManager } from "interfaces/L1/IAssetManager.sol";
@@ -13,6 +13,7 @@ import { ITimeLock } from "interfaces/governance/ITimeLock.sol";
 import { IUpgradeGovernor } from "interfaces/governance/IUpgradeGovernor.sol";
 import { IValidatorManager } from "interfaces/L1/IValidatorManager.sol";
 import { IZKProofVerifier } from "interfaces/L1/IZKProofVerifier.sol";
+import { IKromaL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { IKromaGovernanceToken } from "interfaces/governance/IKromaGovernanceToken.sol";
 
 // Contracts
@@ -24,7 +25,7 @@ import { SecurityCouncil } from "src/L1/SecurityCouncil.sol";
 library KromaInitializers {
     /// @notice Encodes initializer data for the AssetManager contract.
     function encodeAssetManagerInitializer(
-        KromaDeployInput memory input,
+        DeployConfig _cfg,
         function(string memory) view returns (address payable) mustGetAddress
     )
         internal
@@ -33,19 +34,19 @@ library KromaInitializers {
     {
         return abi.encodeWithSelector(
             IAssetManager.initialize.selector,
-            mustGetAddress("KromaGovernanceTokenProxy"),
-            input.kgh,
+            mustGetAddress("AssetToken"),
+            mustGetAddress("KGH"),
             mustGetAddress("SecurityCouncilProxy"),
-            input.vault,
+            _cfg.assetManagerVault(),
             mustGetAddress("ValidatorManagerProxy"),
-            input.minDelegationPeriod,
-            input.bondAmount
+            _cfg.assetManagerMinDelegationPeriod(),
+            _cfg.assetManagerBondAmount()
         );
     }
 
     /// @notice Encodes initializer data for the Colosseum contract.
     function encodeColosseumInitializer(
-        KromaDeployInput memory input,
+        DeployConfig _cfg,
         function(string memory) view returns (address payable) mustGetAddress
     )
         internal
@@ -54,14 +55,14 @@ library KromaInitializers {
     {
         return abi.encodeWithSelector(
             IColosseum.initialize.selector,
-            input.l2OutputOracle,
+            mustGetAddress("KromaL2OutputOracleProxy"),
             mustGetAddress("ZKProofVerifierProxy"),
             mustGetAddress("SecurityCouncilProxy"),
-            input.submissionInterval,
-            input.creationPeriodSeconds,
-            input.bisectionTimeout,
-            input.provingTimeout,
-            input.segmentsLengths
+            _cfg.l2OutputOracleSubmissionInterval(),
+            _cfg.colosseumCreationPeriodSeconds(),
+            _cfg.colosseumBisectionTimeout(),
+            _cfg.colosseumProvingTimeout(),
+            _cfg.getColosseumSegmentsLengths()
         );
     }
 
@@ -91,7 +92,7 @@ library KromaInitializers {
 
     /// @notice Encodes initializer data for the TimeLock contract.
     function encodeTimeLockInitializer(
-        KromaDeployInput memory input,
+        DeployConfig _cfg,
         function(string memory) view returns (address payable) mustGetAddress
     )
         internal
@@ -105,13 +106,13 @@ library KromaInitializers {
         executors[0] = upgradeGovernorProxy;
 
         return abi.encodeWithSelector(
-            ITimeLock.initialize.selector, input.timeLockMinDelaySeconds, proposers, executors, upgradeGovernorProxy
+            ITimeLock.initialize.selector, _cfg.timeLockMinDelaySeconds(), proposers, executors, upgradeGovernorProxy
         );
     }
 
     /// @notice Encodes initializer data for the UpgradeGovernor contract.
     function encodeUpgradeGovernorInitializer(
-        KromaDeployInput memory input,
+        DeployConfig _cfg,
         function(string memory) view returns (address payable) mustGetAddress
     )
         internal
@@ -122,16 +123,16 @@ library KromaInitializers {
             IUpgradeGovernor.initialize.selector,
             mustGetAddress("SecurityCouncilTokenProxy"),
             mustGetAddress("TimeLockProxy"),
-            input.initialVotingDelay,
-            input.initialVotingPeriod,
-            input.initialProposalThreshold,
-            input.votesQuorumFraction
+            _cfg.governorVotingDelayBlocks(),
+            _cfg.governorVotingPeriodBlocks(),
+            _cfg.governorProposalThreshold(),
+            _cfg.governorVotesQuorumFractionPercent()
         );
     }
 
     /// @notice Encodes initializer data for the ValidatorManager contract.
     function encodeValidatorManagerInitializer(
-        KromaDeployInput memory input,
+        DeployConfig _cfg,
         function(string memory) view returns (address payable) mustGetAddress
     )
         internal
@@ -139,18 +140,18 @@ library KromaInitializers {
         returns (bytes memory)
     {
         IValidatorManager.InitializationParams memory params = IValidatorManager.InitializationParams({
-            _l2Oracle: input.l2OutputOracle,
+            _l2Oracle: IKromaL2OutputOracle(mustGetAddress("KromaL2OutputOracleProxy")),
             _assetManager: IAssetManager(mustGetAddress("AssetManagerProxy")),
-            _trustedValidator: input.trustedValidator,
-            _commissionChangeDelaySeconds: input.commissionChangeDelaySeconds,
-            _roundDurationSeconds: input.roundDurationSeconds,
-            _softJailPeriodSeconds: input.softJailPeriodSeconds,
-            _hardJailPeriodSeconds: input.hardJailPeriodSeconds,
-            _jailThreshold: input.jailThreshold,
-            _maxOutputFinalizations: input.maxFinalizations,
-            _baseReward: input.baseReward,
-            _minRegisterAmount: input.minRegisterAmount,
-            _minActivateAmount: input.minActivateAmount
+            _trustedValidator: _cfg.validatorManagerTrustedValidator(),
+            _commissionChangeDelaySeconds: _cfg.validatorManagerCommissionChangeDelaySeconds(),
+            _roundDurationSeconds: _cfg.validatorManagerRoundDurationSeconds(),
+            _softJailPeriodSeconds: _cfg.validatorManagerSoftJailPeriodSeconds(),
+            _hardJailPeriodSeconds: _cfg.validatorManagerHardJailPeriodSeconds(),
+            _jailThreshold: _cfg.validatorManagerJailThreshold(),
+            _maxOutputFinalizations: _cfg.validatorManagerMaxFinalizations(),
+            _baseReward: _cfg.validatorManagerBaseReward(),
+            _minRegisterAmount: _cfg.validatorManagerMinRegisterAmount(),
+            _minActivateAmount: _cfg.validatorManagerMinActivateAmount()
         });
 
         return abi.encodeWithSelector(IValidatorManager.initialize.selector, params);

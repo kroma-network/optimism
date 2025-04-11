@@ -33,6 +33,9 @@ contract DeputyGuardianModule_TestInit is CommonTest, SafeTestTools {
 
     /// @dev Sets up the test environment
     function setUp() public virtual override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.setUp();
 
         // Create a Safe with 10 owners

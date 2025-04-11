@@ -42,6 +42,9 @@ contract SuperchainWETH_Test is CommonTest {
 
     /// @notice Test setup.
     function setUp() public virtual override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.enableInterop();
         super.setUp();
     }

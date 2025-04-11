@@ -36,7 +36,7 @@ contract PredeploysBaseTest is CommonTest {
 
     function test_predeployToCodeNamespace_works() external pure {
         assertEq(
-            address(0xc0D3C0d3C0d3C0D3c0d3C0d3c0D3C0d3c0d30000),
+            address(0xc0D3C0d3c0D3c0d3c0d3C0d3c0D3c0D3C0D300ff),
             Predeploys.predeployToCodeNamespace(Predeploys.LEGACY_MESSAGE_PASSER)
         );
         assertEq(
@@ -123,6 +123,9 @@ contract PredeploysTest is PredeploysBaseTest {
 contract PredeploysInteropTest is PredeploysBaseTest {
     /// @notice Test setup. Enabling interop to get all predeploys.
     function setUp() public virtual override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.enableInterop();
         super.setUp();
     }

@@ -85,6 +85,7 @@
   "validatorManagerJailThreshold": 2,
   "validatorManagerMaxFinalizations": 10,
   "validatorManagerBaseReward": "0x14",
+  "assetManagerToken": "0xff00000000000000000000000000000000000fff",
   "assetManagerKgh": "0xff000000000000000000000000000000000000ff",
   "assetManagerVault": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
   "assetManagerMinDelegationPeriod": 120,

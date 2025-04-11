@@ -586,7 +586,9 @@ contract DeployOPChain is Script {
         IL1StandardBridge bridge = _doo.l1StandardBridgeProxy();
         IL1CrossDomainMessenger messenger = _doo.l1CrossDomainMessengerProxy();
 
-        DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 0, _offset: 0 });
+        // [Kroma: START]
+        DeployUtils.assertInitialized({ _contractAddress: address(bridge), _slot: 3, _offset: 0 });
+        // [Kroma: END]
 
         require(address(bridge.MESSENGER()) == address(messenger), "L1SB-10");
         require(address(bridge.messenger()) == address(messenger), "L1SB-20");

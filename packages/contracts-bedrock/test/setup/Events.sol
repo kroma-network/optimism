@@ -46,11 +46,11 @@ contract Events {
     );
     event WhatHappened(bool success, bytes returndata);
 
-    event OutputProposed(
+    event OutputSubmitted(
         bytes32 indexed outputRoot, uint256 indexed l2OutputIndex, uint256 indexed l2BlockNumber, uint256 l1Timestamp
     );
 
-    event OutputsDeleted(uint256 indexed prevNextOutputIndex, uint256 indexed newNextOutputIndex);
+    event OutputReplaced(uint256 indexed outputIndex, address indexed newSubmitter, bytes32 newOutputRoot);
 
     event Withdrawal(uint256 value, address to, address from);
     event Withdrawal(uint256 value, address to, address from, Types.WithdrawalNetwork withdrawalNetwork);

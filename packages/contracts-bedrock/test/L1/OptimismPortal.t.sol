@@ -24,7 +24,7 @@ import "src/libraries/PortalErrors.sol";
 
 // Interfaces
 import { IResourceMetering } from "interfaces/L1/IResourceMetering.sol";
-import { IL2OutputOracle } from "interfaces/L1/IL2OutputOracle.sol";
+import { IKromaL2OutputOracle as IL2OutputOracle } from "interfaces/L1/IKromaL2OutputOracle.sol";
 import { IL1Block } from "interfaces/L2/IL1Block.sol";
 import { IOptimismPortal } from "interfaces/L1/IOptimismPortal.sol";
 import { IProxy } from "interfaces/universal/IProxy.sol";
@@ -407,7 +407,9 @@ contract OptimismPortal_Test is CommonTest {
         vm.mockCall(
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
-            abi.encode(Types.OutputProposal(bytes32(uint256(1)), uint128(ts), uint128(startingBlockNumber)))
+            abi.encode(
+                KromaTypes.CheckpointOutput(trusted, bytes32(uint256(1)), uint128(ts), uint128(startingBlockNumber))
+            )
         );
 
         // warp to the finalization period
@@ -426,9 +428,9 @@ contract OptimismPortal_Test is CommonTest {
         uint256 checkpoint = l2OutputOracle.nextBlockNumber();
         uint256 nextOutputIndex = l2OutputOracle.nextOutputIndex();
         vm.roll(checkpoint);
-        vm.warp(l2OutputOracle.computeL2Timestamp(checkpoint) + 1);
-        vm.prank(l2OutputOracle.PROPOSER());
-        l2OutputOracle.proposeL2Output(keccak256(abi.encode(2)), checkpoint, 0, 0);
+        warpToSubmitTime();
+        vm.prank(trusted);
+        l2OutputOracle.submitL2Output(keccak256(abi.encode(2)), checkpoint, 0, 0);
 
         // warp to the final second of the finalization period
         uint256 finalizationHorizon = block.timestamp + l2OutputOracle.FINALIZATION_PERIOD_SECONDS();
@@ -616,9 +618,9 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
     /// @dev Setup the system for a ready-to-use state.
     function setUp() public virtual override {
         // Configure the oracle to return the output root we've prepared.
-        vm.warp(l2OutputOracle.computeL2Timestamp(_proposedBlockNumber) + 1);
-        vm.prank(l2OutputOracle.PROPOSER());
-        l2OutputOracle.proposeL2Output(_outputRoot, _proposedBlockNumber, 0, 0);
+        warpToSubmitTime();
+        vm.prank(trusted);
+        l2OutputOracle.submitL2Output(_outputRoot, _proposedBlockNumber, 0, 0);
 
         // Warp beyond the finalization period for the block we've proposed.
         vm.warp(
@@ -746,8 +748,8 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         KromaTypes.CheckpointOutput memory proposal = optimismPortal.l2Oracle().getL2Output(_proposedOutputIndex);
 
         // Propose the same output root again, creating the same output at a different index + l2BlockNumber.
-        vm.startPrank(optimismPortal.l2Oracle().PROPOSER());
-        optimismPortal.l2Oracle().proposeL2Output(
+        vm.startPrank(trusted);
+        optimismPortal.l2Oracle().submitL2Output(
             proposal.outputRoot, optimismPortal.l2Oracle().nextBlockNumber(), blockhash(block.number), block.number
         );
         vm.stopPrank();
@@ -839,8 +841,8 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         // this case we just use bytes32(uint256(1)).
         vm.mockCall(
             address(optimismPortal.l2Oracle()),
-            abi.encodePacked(IL2OutputOracle.getL2Output.selector),
-            abi.encode(bytes32(uint256(1)), _proposedBlockNumber)
+            abi.encodePacked(l2OutputOracle.getL2Output.selector),
+            abi.encode(address(0), bytes32(uint256(1)), _proposedBlockNumber)
         );
 
         vm.expectRevert("OptimismPortal: proven withdrawal finalization period has not elapsed");
@@ -896,7 +898,9 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.OutputProposal(bytes32(uint256(0)), uint128(block.timestamp), uint128(_proposedBlockNumber))
+                KromaTypes.CheckpointOutput(
+                    trusted, bytes32(uint256(0)), uint128(block.timestamp), uint128(_proposedBlockNumber)
+                )
             )
         );
 
@@ -926,7 +930,11 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         vm.mockCall(
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
-            abi.encode(Types.OutputProposal(_outputRoot, uint128(block.timestamp + 1), uint128(_proposedBlockNumber)))
+            abi.encode(
+                KromaTypes.CheckpointOutput(
+                    trusted, _outputRoot, uint128(block.timestamp + 1), uint128(_proposedBlockNumber)
+                )
+            )
         );
 
         // Attempt to finalize the withdrawal
@@ -1001,7 +1009,8 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
             address(l2OutputOracle),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.OutputProposal(
+                KromaTypes.CheckpointOutput(
+                    trusted,
                     _outputRoot_noData,
                     l2OutputOracle.getL2Output(_proposedOutputIndex).timestamp,
                     uint128(_proposedBlockNumber)
@@ -1059,7 +1068,8 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
             address(l2OutputOracle),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.OutputProposal(
+                KromaTypes.CheckpointOutput(
+                    trusted,
                     _outputRoot_noData,
                     l2OutputOracle.getL2Output(_proposedOutputIndex).timestamp,
                     uint128(_proposedBlockNumber)
@@ -1098,7 +1108,11 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         vm.mockCall(
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
-            abi.encode(Types.OutputProposal(_outputRoot, uint128(recentTimestamp), uint128(_proposedBlockNumber)))
+            abi.encode(
+                KromaTypes.CheckpointOutput(
+                    trusted, _outputRoot, uint128(recentTimestamp), uint128(_proposedBlockNumber)
+                )
+            )
         );
 
         optimismPortal.proveWithdrawalTransaction(_defaultTx, _proposedOutputIndex, _outputRootProof, _withdrawalProof);
@@ -1151,7 +1165,8 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
             abi.encode(
-                Types.OutputProposal(
+                KromaTypes.CheckpointOutput(
+                    trusted,
                     Hashing.hashOutputRootProof(outputRootProof),
                     uint128(block.timestamp),
                     uint128(_proposedBlockNumber)
@@ -1199,7 +1214,11 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         vm.mockCall(
             address(optimismPortal.l2Oracle()),
             abi.encodePacked(IL2OutputOracle.getL2Output.selector),
-            abi.encode(Types.OutputProposal(outputRoot, uint128(finalizedTimestamp), uint128(_proposedBlockNumber)))
+            abi.encode(
+                KromaTypes.CheckpointOutput(
+                    trusted, outputRoot, uint128(finalizedTimestamp), uint128(_proposedBlockNumber)
+                )
+            )
         );
 
         vm.expectEmit(true, true, true, true);
@@ -1273,7 +1292,7 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         vm.mockCall(
             address(l2OutputOracle),
             abi.encodePacked(l2OutputOracle.getL2Output.selector),
-            abi.encode(outputRoot, block.timestamp, 100)
+            abi.encode(address(0), outputRoot, block.timestamp, 100)
         );
 
         // Prove the withdrawal transaction

@@ -497,10 +497,9 @@ contract Deploy is Deployer {
         addr_ = DeployUtils.create2AndSave({
             _save: this,
             _salt: _implSalt(),
-            _name: "LegacyOptimismPortal",
+            _name: "OptimismPortal",
             _args: DeployUtils.encodeConstructor(abi.encodeCall(IOptimismPortal.__constructor__, ()))
         });
-        save("OptimismPortal", addr_);
 
         // Override the `OptimismPortal` contract to the deployed implementation. This is necessary
         // to check the `OptimismPortal` implementation alongside dependent contracts, which

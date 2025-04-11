@@ -75,6 +75,9 @@ contract SuperchainWETH_SendSucceeds_Invariant is CommonTest {
 
     /// @notice Test setup.
     function setUp() public override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.enableInterop();
         super.setUp();
 

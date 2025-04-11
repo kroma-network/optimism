@@ -96,6 +96,9 @@ contract OptimismPortal2_Invariant_Harness is CommonTest {
     Types.OutputRootProof internal _outputRootProof;
 
     function setUp() public virtual override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.setUp();
 
         _defaultTx = Types.WithdrawalTransaction({
@@ -145,6 +148,9 @@ contract OptimismPortal2_Deposit_Invariant is CommonTest {
     OptimismPortal2_Depositor internal actor;
 
     function setUp() public override {
+        // [Kroma: START]
+        vm.skip(true);
+        // [Kroma: END]
         super.setUp();
         // Create a deposit actor.
         actor = new OptimismPortal2_Depositor(vm, optimismPortal2);

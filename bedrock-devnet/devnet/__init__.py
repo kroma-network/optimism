@@ -136,22 +136,11 @@ def devnet_l1_allocs(paths):
     log.info('Generating L1 genesis allocs')
     init_devnet_l1_deploy_config(paths)
 
-    fqn = 'scripts/deploy/Deploy.s.sol:Deploy'
+    # Orchestrator is used to execute both the Optimism and Kroma deployment scripts
+    # within the same EVM instance to ensure a unified deployment environment.
+    fqn = 'scripts/deploy/KromaDeployOrchestrator.s.sol:KromaDeployOrchestrator'
     run_command([
-        # We need to set the sender here to an account we know the private key of,
-        # because the sender ends up being the owner of the ProxyAdmin SAFE
-        # (which we need to enable the Custom Gas Token feature).
-        'forge', 'script', fqn, "--sig", "runWithStateDump()", "--sender", "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
-    ], env={
-      'DEPLOYMENT_OUTFILE': paths.l1_deployments_path,
-      'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
-    }, cwd=paths.contracts_bedrock_dir)
-
-    # To avoid address collisions during create1 deployments, we use a separate test account
-    # instead of the Optimism sender EOA. (optimism uses dev account index 3, we use index 4)
-    fqn = 'scripts/deploy/KromaDeploy.s.sol:KromaDeploy'
-    run_command([
-      'forge', 'script', fqn, "--sig", "runWithStateDump()", "--sender", "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+      'forge', 'script', fqn, "--sig", "runWithStateDump()", "--sender", "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
     ], env={
       'DEPLOYMENT_OUTFILE': paths.l1_deployments_path,
       'DEPLOY_CONFIG_PATH': paths.devnet_config_path,
